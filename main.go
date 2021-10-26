@@ -44,9 +44,9 @@ func check(err error) {
 
 func convertToVideo() {
 	cmd := exec.Command("ffmpeg",
-		"-i", inputImagePath, // take stdin as input
-		"-i", inputAudioPath, // strip out all (mostly) metadata
-		outputPath,
+		"-i", inputImagePath, // input image
+		"-i", inputAudioPath, // input audio
+		outputPath, // output
 	)
 
 	err := cmd.Start() // Start a process on another goroutine
