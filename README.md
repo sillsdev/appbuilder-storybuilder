@@ -12,4 +12,6 @@ Proof of Work Repo (Python): https://github.com/sillsdev/storybuilder/tree/v2<br
 
 # Plans/Ideas for Project:
 
-
+# First Steps
+1. Download FFmpeg
+2. Edit the base paths for repository and FFmpeg in main.go
