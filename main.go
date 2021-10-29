@@ -3,14 +3,12 @@ package main
 import (
 	"log"
 	"os/exec"
-
-	"github.com/xfrr/goffmpeg/ffmpeg"
-	"github.com/xfrr/goffmpeg/transcoder"
 )
 
 //location of your repository
-var basePath = "C:/Users/sehee/OneDrive - Gordon College/Desktop/Gordon/Senior/Senior Project/SIL-Video" //sehee
+//var basePath = "C:/Users/sehee/OneDrive - Gordon College/Desktop/Gordon/Senior/Senior Project/SIL-Video" //sehee
 // var basePath = "/Users/hyungyu/Documents/SIL-Video"	//hyungyu
+var basePath = "C:/Users/damar/Documents/GitHub/SIL-Video/" // david
 
 //image name
 var imageName = "VB-John 4v43-44.jpg"
@@ -54,29 +52,4 @@ func convertToVideo() {
 
 	err = cmd.Wait() // wait until ffmpeg finish
 	check(err)
-}
-
-func imageToVideo() {
-	// Create new instance of transcoder
-	trans := new(transcoder.Transcoder)
-	trans.SetConfiguration(ffmpeg.Configuration{
-		FfmpegBin:  FfmpegBinPath,
-		FfprobeBin: FfprobeBinPath,
-	})
-
-	err := trans.Initialize(inputImagePath, outputPath)
-	log.Println(err)
-
-	trans.MediaFile().SetFrameRate(1)
-	trans.MediaFile().SetVideoCodec("libx264")
-	trans.MediaFile().SetOutputFormat("mp4")
-
-	trans.Run(true)
-
-	progress := trans.Output()
-
-	// Example of printing transcoding progress
-	for msg := range progress {
-		log.Println(msg)
-	}
 }
