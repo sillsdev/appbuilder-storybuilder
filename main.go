@@ -5,8 +5,8 @@ import (
 	"os/exec"
 )
 
-//location of your repository
-//var basePath = "C:/Users/sehee/OneDrive - Gordon College/Desktop/Gordon/Senior/Senior Project/SIL-Video" //sehee
+// File Location of Repository **CHANGE THIS FILEPATH TO YOUR REPOSITORY FILEPATH**
+// var basePath = "C:/Users/sehee/OneDrive - Gordon College/Desktop/Gordon/Senior/Senior Project/SIL-Video" //sehee
 // var basePath = "/Users/hyungyu/Documents/SIL-Video"	//hyungyu
 var basePath = "C:/Users/damar/Documents/GitHub/SIL-Video/" // david
 
