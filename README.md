@@ -15,5 +15,5 @@ Proof of Work Repo (Python): https://github.com/sillsdev/storybuilder/tree/v2<br
 # How-To Documentation
 1. Download FFmpeg https://www.ffmpeg.org and GO https://golang.org/dl/
 2. Edit the base paths for repository and FFmpeg in main.go
-3. Put an image (.png, .jpg, etc) and audio (.mp3, .wav, etc) into the corresponding input folders and change the variable names in main.go to the names of your files
+3. Put an image (.png, .jpg, etc) and audio (.mp3, .wav, etc) into the corresponding input folders and change the variable names in inputs.json to the names of your files
 4. Run code in CLI set to main directory of repo with "go run main.go"
