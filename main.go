@@ -8,9 +8,9 @@ import (
 )
 
 // File Location of Repository **CHANGE THIS FILEPATH TO YOUR REPOSITORY FILEPATH**
-// var basePath = "C:/Users/sehee/OneDrive - Gordon College/Desktop/Gordon/Senior/Senior Project/SIL-Video" //sehee
+var basePath = "C:/Users/sehee/OneDrive - Gordon College/Desktop/Gordon/Senior/Senior Project/SIL-Video" //sehee
 // var basePath = "/Users/hyungyu/Documents/SIL-Video"	//hyungyu
-var basePath = "C:/Users/damar/Documents/GitHub/SIL-Video" // david
+// var basePath = "C:/Users/damar/Documents/GitHub/SIL-Video" // david
 
 //location of where you downloaded FFmpeg
 var baseFFmpegPath = "C:/FFmpeg" //windows
@@ -25,8 +25,8 @@ var inputFilePath = basePath + "/inputs.json"
 var outputPath string
 
 type InputTest struct {
-	AudioLocation string
-	ImageLocation string
+	AudioLocation  string
+	ImageLocation  string
 	OutputLocation string
 }
 
@@ -34,14 +34,15 @@ func main() {
 	// First we read in the input file and parse the json
 	data, err := ioutil.ReadFile(inputFilePath)
 	check(err)
-	var inputConfig InputTest;
+	var inputConfig InputTest
 	err = json.Unmarshal(data, &inputConfig)
 	check(err)
 	// Set all the path vars
-    inputAudioPath = inputConfig.AudioLocation
+	inputAudioPath = inputConfig.AudioLocation
 	inputImagePath = inputConfig.ImageLocation
 	outputPath = inputConfig.OutputLocation
-	convertToVideo()
+	// convertToVideo()
+	readData()
 }
 
 func check(err error) {
