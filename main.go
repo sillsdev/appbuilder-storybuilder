@@ -2,15 +2,16 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os/exec"
 )
 
 // File Location of Repository **CHANGE THIS FILEPATH TO YOUR REPOSITORY FILEPATH**
-var basePath = "C:/Users/sehee/OneDrive - Gordon College/Desktop/Gordon/Senior/Senior Project/SIL-Video" //sehee
+//var basePath = "C:/Users/sehee/OneDrive - Gordon College/Desktop/Gordon/Senior/Senior Project/SIL-Video" //sehee
 // var basePath = "/Users/hyungyu/Documents/SIL-Video"	//hyungyu
-// var basePath = "C:/Users/damar/Documents/GitHub/SIL-Video" // david
+var basePath = "C:/Users/damar/Documents/GitHub/SIL-Video" // david
 
 //location of where you downloaded FFmpeg
 var baseFFmpegPath = "C:/FFmpeg" //windows
@@ -42,7 +43,9 @@ func main() {
 	inputImagePath = inputConfig.ImageLocation
 	outputPath = inputConfig.OutputLocation
 	// convertToVideo()
-	readData()
+	var slideshow = readData()
+	var trans1 = slideshow.Slide[0].Transition.Type
+	fmt.Println(trans1)
 }
 
 func check(err error) {
