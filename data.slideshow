@@ -3,7 +3,7 @@
 
   <slide>
     <audio background="play">
-      <background-filename volume="50">../music-intro-SA.mp3</background-filename>
+      <background-filename volume="50">./music-intro-SA.mp3</background-filename>
     </audio>
     <image>MAT2-title.jpg</image>
     <timing start="0" duration="7000"/>

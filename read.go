@@ -52,7 +52,7 @@ type Transition struct {
 }
 
 func readData() *Slideshow {
-	data, _ := ioutil.ReadFile("./input/data.slideshow")
+	data, _ := ioutil.ReadFile("./data.slideshow")
 
 	slideshow := &Slideshow{}
 

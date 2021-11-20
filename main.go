@@ -1,11 +1,9 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
-	"os/exec"
+	//"os/exec"
 )
 
 // File Location of Repository **CHANGE THIS FILEPATH TO YOUR REPOSITORY FILEPATH**
@@ -20,32 +18,33 @@ var baseFFmpegPath = "C:/FFmpeg" //windows
 var FfmpegBinPath = baseFFmpegPath + "/bin/ffmpeg"
 var FfprobeBinPath = baseFFmpegPath + "/bin/ffprobe"
 
-var inputImagePath string
-var inputAudioPath string
-var inputFilePath = basePath + "/inputs.json"
-var outputPath string
 
-type InputTest struct {
-	AudioLocation  string
-	ImageLocation  string
-	OutputLocation string
-}
 
 func main() {
 	// First we read in the input file and parse the json
-	data, err := ioutil.ReadFile(inputFilePath)
-	check(err)
-	var inputConfig InputTest
-	err = json.Unmarshal(data, &inputConfig)
-	check(err)
-	// Set all the path vars
-	inputAudioPath = inputConfig.AudioLocation
-	inputImagePath = inputConfig.ImageLocation
-	outputPath = inputConfig.OutputLocation
-	// convertToVideo()
+	//convertToVideo()
+
+	// First we parse in the various pieces from the template
+	var outputPath = "./output"
 	var slideshow = readData()
-	var trans1 = slideshow.Slide[0].Transition.Type
-	fmt.Println(trans1)
+	var titleimg = slideshow.Slide[0].Image.Name
+
+	var img1 = slideshow.Slide[1].Image.Name
+
+	var img2 = slideshow.Slide[2].Image.Name
+
+	var img3 = slideshow.Slide[3].Image.Name
+
+	var introAudio = slideshow.Slide[0].Audio.Background_Filename.Path
+
+	var audio1 = slideshow.Slide[1].Audio.Filename.Name
+
+	// Place them all inside a string slice
+	paths := []string{outputPath, titleimg, img1, img2, img3, introAudio}
+	// Using append, this can made variable for slides of any length/size
+	paths = append(paths, audio1)
+	// Pass our paths parameter to the convert function
+	convertToVideo(paths...)
 }
 
 func check(err error) {
@@ -54,16 +53,23 @@ func check(err error) {
 	}
 }
 
-func convertToVideo() {
-	cmd := exec.Command("ffmpeg",
-		"-i", inputImagePath, // input image
-		"-i", inputAudioPath, // input audio
-		outputPath, // output
-	)
+func convertToVideo(paths ...string) {
+	// Here we can parse an individual element from paths
+	fmt.Println(paths[0])
+	// Here we can iterate through each element and access it
+	for index, value := range paths{
+		fmt.Println(index)
+		fmt.Println(value)
+	}
+	// cmd := exec.Command("ffmpeg",
+	// 	"-i", img1, // input image
+	// 	"-i", inputAudioPath, // input audio
+	// 	outputPath, // output
+	// )
 
-	err := cmd.Start() // Start a process on another goroutine
-	check(err)
+	// err := cmd.Start() // Start a process on another goroutine
+	// check(err)
 
-	err = cmd.Wait() // wait until ffmpeg finish
-	check(err)
+	// err = cmd.Wait() // wait until ffmpeg finish
+	// check(err)
 }
