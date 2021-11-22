@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"os/exec"
 	//"os/exec"
 )
 
@@ -17,8 +18,6 @@ var baseFFmpegPath = "C:/FFmpeg" //windows
 
 var FfmpegBinPath = baseFFmpegPath + "/bin/ffmpeg"
 var FfprobeBinPath = baseFFmpegPath + "/bin/ffprobe"
-
-
 
 func main() {
 	// First we read in the input file and parse the json
@@ -57,19 +56,20 @@ func convertToVideo(paths ...string) {
 	// Here we can parse an individual element from paths
 	fmt.Println(paths[0])
 	// Here we can iterate through each element and access it
-	for index, value := range paths{
+	for index, value := range paths {
 		fmt.Println(index)
 		fmt.Println(value)
 	}
-	// cmd := exec.Command("ffmpeg",
-	// 	"-i", img1, // input image
-	// 	"-i", inputAudioPath, // input audio
-	// 	outputPath, // output
-	// )
 
-	// err := cmd.Start() // Start a process on another goroutine
-	// check(err)
+	cmd := exec.Command("ffmpeg",
+		"-i", "C:/Users/sehee/OneDrive - Gordon College/Desktop/Gordon/Senior/Senior Project/SIL-Video/input/VB-John 4v43-44.jpg", // input image
+		"-i", "C:/Users/sehee/OneDrive - Gordon College/Desktop/Gordon/Senior/Senior Project/SIL-Video/input/inputs_mp3_44-JHNgul-01.mp3", // input audio
+		"C:/Users/sehee/OneDrive - Gordon College/Desktop/Gordon/Senior/Senior Project/SIL-Video/output/output.mp4", // output
+	)
 
-	// err = cmd.Wait() // wait until ffmpeg finish
-	// check(err)
+	err := cmd.Start() // Start a process on another goroutine
+	check(err)
+
+	err = cmd.Wait() // wait until ffmpeg finish
+	check(err)
 }
