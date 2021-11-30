@@ -8,10 +8,10 @@ import (
 )
 
 // File Location of Repository **CHANGE THIS FILEPATH TO YOUR REPOSITORY FILEPATH**
-//var basePath = "C:/Users/sehee/OneDrive - Gordon College/Desktop/Gordon/Senior/Senior Project/SIL-Video" //sehee
+var basePath = "C:/Users/sehee/OneDrive - Gordon College/Desktop/Gordon/Senior/Senior Project/SIL-Video" //sehee
 // var basePath = "/Users/hyungyu/Documents/SIL-Video"	//hyungyu
 //var basePath = "C:/Users/damar/Documents/GitHub/SIL-Video" // david
-var basePath = "/Users/roddy/Desktop/SeniorProject/SIL-Video/"
+// var basePath = "/Users/roddy/Desktop/SeniorProject/SIL-Video/"
 
 //location of where you downloaded FFmpeg
 var baseFFmpegPath = "C:/FFmpeg" //windows
@@ -64,10 +64,10 @@ func convertToVideo(paths ...string) {
 
 	cmd := exec.Command("ffmpeg",
 		"-framerate", "1", // frame  to define how fast the pictures are read in, in this case, 1 picture per second
-		"-i", "/Users/roddy/Desktop/SeniorProject/SIL-Video/image-%d.jpg", // input image
+		"-i", basePath+"/image-%d.jpg", // input image
 		"-r", "30", // the framerate of the output video
-		"-i", "/Users/roddy/Desktop/SeniorProject/SIL-Video/narration-001.mp3", // input audio
-		"/Users/roddy/Desktop/SeniorProject/SIL-Video/output/output.mp4", // output
+		"-i", basePath+"/narration-001.mp3", // input audio
+		basePath+"/output/output.mp4", // output
 	)
 
 	err := cmd.Start() // Start a process on another goroutine
