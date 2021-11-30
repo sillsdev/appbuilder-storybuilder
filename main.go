@@ -39,12 +39,23 @@ func main() {
 
 	var audio1 = slideshow.Slide[1].Audio.Filename.Name
 
+	var title_start = slideshow.Slide[0].Timing.Start
+	var title_duration = slideshow.Slide[0].Timing.Duration
+
+	var img1_start = slideshow.Slide[1].Timing.Start
+	var img1_duration = slideshow.Slide[1].Timing.Duration
+
+	var img2_start = slideshow.Slide[2].Timing.Start
+	var img2_duration = slideshow.Slide[2].Timing.Duration
+
 	// Place them all inside a string slice
-	paths := []string{outputPath, titleimg, img1, img2, img3, introAudio}
-	// Using append, this can made variable for slides of any length/size
-	paths = append(paths, audio1)
+	paths := []string{outputPath, titleimg, img1, img2, img3, introAudio, audio1, title_start, title_duration, img1_start, img1_duration, img2_start, img2_duration}
+	// // Using append, this can made variable for slides of any length/size
+	// paths = append(paths, audio1)
 	// Pass our paths parameter to the convert function
-	convertToVideo(paths...)
+	//convertToVideo(paths...)
+	crateTempVideos(paths...)
+
 }
 
 func check(err error) {
@@ -53,9 +64,29 @@ func check(err error) {
 	}
 }
 
+func crateTempVideos(paths ...string) {
+	for i := 1; i <= 3; i++ {
+		cmd := exec.Command("ffmpeg",
+			"-framerate", "1", // frame  to define how fast the pictures are read in, in this case, 1 picture per second
+			"-i", fmt.Sprintf("%s/image-%d.jpg", basePath, i), // input image
+			"-r", "30", // the framerate of the output video
+			"-ss", paths[7+2*i-2]+"ms",
+			"-t", paths[8+2*i-2]+"ms",
+			"-i", basePath+"/narration-001.mp3", // input audio
+			fmt.Sprintf("%s/output/output%d.mp4", basePath, i), // output
+		)
+
+		err := cmd.Start() // Start a process on another goroutine
+		check(err)
+
+		err = cmd.Wait() // wait until ffmpeg finishg
+		check(err)
+	}
+}
+
 func convertToVideo(paths ...string) {
 	// Here we can parse an individual element from paths
-	fmt.Println(paths[0])
+	fmt.Println(paths)
 	// Here we can iterate through each element and access it
 	for index, value := range paths {
 		fmt.Println(index)
