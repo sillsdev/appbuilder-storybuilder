@@ -48,13 +48,16 @@ func main() {
 	var img2_start = slideshow.Slide[2].Timing.Start
 	var img2_duration = slideshow.Slide[2].Timing.Duration
 
+	var img3_start = slideshow.Slide[3].Timing.Start
+	var img3_duration = slideshow.Slide[3].Timing.Duration
+
 	// Place them all inside a string slice
-	paths := []string{outputPath, titleimg, img1, img2, img3, introAudio, audio1, title_start, title_duration, img1_start, img1_duration, img2_start, img2_duration}
+	paths := []string{outputPath, titleimg, img1, img2, img3, introAudio, audio1, title_start, title_duration, img1_start, img1_duration, img2_start, img2_duration, img3_start, img3_duration}
 	// // Using append, this can made variable for slides of any length/size
 	// paths = append(paths, audio1)
 	// Pass our paths parameter to the convert function
 	//convertToVideo(paths...)
-	crateTempVideos(paths...)
+	createTempVideos(paths...)
 
 }
 
@@ -64,14 +67,15 @@ func check(err error) {
 	}
 }
 
-func crateTempVideos(paths ...string) {
+func createTempVideos(paths ...string) {
+	fmt.Println(paths)
 	for i := 1; i <= 3; i++ {
 		cmd := exec.Command("ffmpeg",
 			"-framerate", "1", // frame  to define how fast the pictures are read in, in this case, 1 picture per second
 			"-i", fmt.Sprintf("%s/image-%d.jpg", basePath, i), // input image
 			"-r", "30", // the framerate of the output video
-			"-ss", paths[7+2*i-2]+"ms",
-			"-t", paths[8+2*i-2]+"ms",
+			"-ss", paths[9+2*i-2]+"ms",
+			"-t", paths[10+2*i-2]+"ms",
 			"-i", basePath+"/narration-001.mp3", // input audio
 			fmt.Sprintf("%s/output/output%d.mp4", basePath, i), // output
 		)
