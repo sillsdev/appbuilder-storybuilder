@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/xml"
-	"fmt"
 	"io/ioutil"
 )
 
@@ -52,12 +51,11 @@ type Transition struct {
 	Type     string `xml:",chardata"`
 }
 
-func readData() {
-	data, _ := ioutil.ReadFile("./input/data.slideshow")
+func readData() *Slideshow {
+	data, _ := ioutil.ReadFile("./data.slideshow")
 
 	slideshow := &Slideshow{}
 
 	_ = xml.Unmarshal([]byte(data), &slideshow)
-
-	fmt.Println(slideshow)
+	return slideshow
 }

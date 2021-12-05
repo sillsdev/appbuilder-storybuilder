@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<slideshow>
+  <title lang="en">Visit of the Magi</title>
+  <title lang="fr">Visite des mages</title>
+  <title lang="pt">Visita dos magos</title>
+  <title lang="es">Visita de los magos</title>
+  <title lang="cust">Visit of the Magi</title>
+  <slide>
+    <audio background="play">
+      <background-filename>../music-intro-SA.mp3</background-filename>
+    </audio>
+    <image lang="en">MAT2-title-eng.odg</image>
+    <image lang="fr">MAT2-title-fra.odg</image>
+    <image lang="pt">MAT2-title-por.odg</image>
+    <image lang="es">MAT2-title-spa.odg</image>
+    <image lang="cust">MAT2-title-cust.odg</image>
+    <image>MAT2-title.jpg</image>
+    <timing start="0" duration="7000"/>
+  </slide>
+  <slide>
+    <image>Mat-02-v01.jpg</image>
+    <narration start="MAT.2.1"/>
+    <motion start="0.395 0 0.605 0.468" end="0 0 1 0.774"/>
+  </slide>
+  <slide>
+    <image>Mat-02-v02.jpg</image>
+    <narration start="MAT.2.2"/>
+    <motion start="0 0 1 0.774" end="0.378 0 0.622 0.484"/>
+  </slide>
+  <slide>
+    <image>Mat-02-v03.jpg</image>
+    <narration start="MAT.2.3"/>
+    <motion start="0.163 0.008 0.663 0.516" end="0 0 1 0.774"/>
+  </slide>
+  <slide>
+    <image>Mat-02-v04-06.jpg</image>
+    <narration start="MAT.2.4"/>
+    <motion start="0 0 1 0.774" end="0.017 0.008 0.808 0.629"/>
+  </slide>
+  <slide>
+    <image>Mat-02-v07-08.jpg</image>
+    <narration start="MAT.2.7"/>
+    <motion start="0.105 0 0.791 0.621" end="0 0 1 0.774"/>
+  </slide>
+  <slide>
+    <image>Mat-02-v09-11.jpg</image>
+    <narration start="MAT.2.9"/>
+    <motion start="0 0 1 0.774" end="0.169 0.081 0.756 0.597"/>
+  </slide>
+  <slide>
+    <image>Mat-02-v12.jpg</image>
+    <narration start="MAT.2.12"/>
+    <motion start="0.238 0.016 0.703 0.548" end="0 0 1 0.774"/>
+  </slide>
+  <slide>
+    <image>Mat-02-v13.jpg</image>
+    <narration start="MAT.2.13"/>
+    <motion start="0 0 1 0.774" end="0.023 0.097 0.802 0.629"/>
+  </slide>
+  <slide>
+    <image>Mat-02-v14-15.jpg</image>
+    <narration start="MAT.2.14"/>
+    <motion start="0 0.121 0.733 0.573" end="0 0.105 1 0.774"/>
+  </slide>
+  <slide>
+    <image>Mat-02-v16.jpg</image>
+    <narration start="MAT.2.16"/>
+    <motion start="0 0 1 0.774" end="0.035 0.073 0.733 0.573"/>
+  </slide>
+  <slide>
+    <image>Mat-02-v17-18.jpg</image>
+    <narration start="MAT.2.17"/>
+    <motion start="0.035 0 0.884 0.685" end="0 0 1 0.774"/>
+  </slide>
+  <slide>
+    <image>Mat-02-v19-20.jpg</image>
+    <narration start="MAT.2.19"/>
+    <motion start="0 0 1 0.774" end="0.047 0.040 0.791 0.613"/>
+  </slide>
+  <slide>
+    <image>Mat-02-v21-23.jpg</image>
+    <narration start="MAT.2.21" end="MAT.2.23"/>
+    <motion start="0 0.113 0.791 0.613" end="0 0.073 1 0.774"/>
+  </slide>
+  <slide>
+    <image lang="en">../Sweet-credits-eng.odg</image>
+    <image lang="fr">../Sweet-credits-fra.odg</image>
+    <image lang="pt">../Sweet-credits-por.odg</image>
+    <image lang="es">../Sweet-credits-spa.odg</image>
+    <image lang="cust">../Sweet-credits-cust.odg</image>
+    <image>Sweet-credits.jpg</image>
+  </slide>
+</slideshow>
