@@ -19,4 +19,8 @@ Inputs Template Documentation: [Link](https://docs.google.com/document/d/1J4X6RW
 1. Download FFmpeg https://www.ffmpeg.org and GO https://golang.org/dl/
 2. Edit the base paths for repository and FFmpeg in main.go
 3. Put an image (.png, .jpg, etc) and audio (.mp3, .wav, etc) into the corresponding input folders and change the variable names in inputs.json to the names of your files
-4. Run code in CLI set to main directory of repo with "go run main.go"
+4. Run code in CLI set to main directory of repo with "go run main.go" or " go run ."
+
+# issue 
+1. After running the the command  "go run main.go" or " go run ." it will create a video in your output folder, 
+before running the command again we need to delete the created videos in the output folder every time we want to create a new video. 
