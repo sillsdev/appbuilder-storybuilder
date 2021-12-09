@@ -50,31 +50,31 @@ func check(err error) {
 }
 
 func combineVideos(paths ...string) {
-	listOfImages := []string{}
-	filterComplex := ""
+	input_images := []string{}
+	input_filters := ""
 	totalNumImages := 3
 	concatTransitions := ""
 
 	fmt.Println("Getting list of images and filters...")
 	for i := 1; i <= totalNumImages; i++ {
-		listOfImages = append(listOfImages, "-loop", "1", "-ss", paths[9+2*i-2]+"ms", "-t", paths[10+2*i-2]+"ms", "-i", basePath+"/input/"+paths[i+1])
+		input_images = append(input_images, "-loop", "1", "-ss", paths[9+2*i-2]+"ms", "-t", paths[10+2*i-2]+"ms", "-i", basePath+"/input/"+paths[i+1])
 		concatTransitions += fmt.Sprintf("[v%d]", i-1)
 		if i == 1 {
-			filterComplex += fmt.Sprintf("[0:v]fade=t=out:st=%s:d=1000ms[v0];", paths[10])
+			input_filters += fmt.Sprintf("[0:v]crop=trunc(iw/2)*2:trunc(ih/2)*2,fade=t=out:st=%s:d=1000ms[v0];", paths[10])
 		} else {
-			filterComplex += fmt.Sprintf("[%d:v]fade=t=in:st=0:d=1000ms,fade=t=out:st=%sms:d=1000ms[v%d];", i-1, paths[10+2*i-2], i-1)
+			input_filters += fmt.Sprintf("[%d:v]crop=trunc(iw/2)*2:trunc(ih/2)*2,fade=t=in:st=0:d=1000ms,fade=t=out:st=%sms:d=1000ms[v%d];", i-1, paths[10+2*i-2], i-1)
 		}
 	}
 
 	concatTransitions += fmt.Sprintf("concat=n=%d:v=1:a=0,format=yuv420p[v]", totalNumImages)
-	filterComplex += concatTransitions
+	input_filters += concatTransitions
 
-	listOfImages = append(listOfImages, "-i", basePath+"/input/narration-001.mp3", "-filter_complex", filterComplex, "-map", "[v]",
+	input_images = append(input_images, "-i", basePath+"/input/narration-001.mp3", "-filter_complex", input_filters, "-map", "[v]",
 		"-map", fmt.Sprintf("%d:a", totalNumImages),
 		"-shortest", basePath+"/output/mergedVideo.mp4")
 
 	fmt.Println("Creating video...")
-	cmd := exec.Command("ffmpeg", listOfImages...)
+	cmd := exec.Command("ffmpeg", input_images...)
 
 	output, err := cmd.CombinedOutput()
 	if err != nil {
