@@ -58,15 +58,37 @@ func checkCMDError(output []byte, err error) {
 }
 
 func combineVideos(Images []string, Transitions []string, TransitionDurations []string, Timings [][]string, Audios []string) {
-	cmd := exec.Command("ffmpeg",
-		"-f", "concat",
-		"-safe", "0",
-		"-i", basePath+"/output/text.txt",
-		"-y", basePath+"/output/mergedVideo.mp4",
-	)
+	input_images := []string{}
+	input_filters := ""
+	totalNumImages := len(Images)
+	concatTransitions := ""
 
-	output, e := cmd.CombinedOutput()
-	checkCMDError(output, e)
+	fmt.Println("Getting list of images and filters...")
+	for i := 1; i <= totalNumImages; i++ {
+		input_images = append(input_images, "-loop", "1", "-ss", Timings[i-1][0]+"ms", "-t", Timings[i-1][1]+"ms", "-i", basePath+"/input/"+Images[i-1])
+		concatTransitions += fmt.Sprintf("[v%d]", i-1)
+		if i == 1 {
+			input_filters += fmt.Sprintf("[0:v]crop=trunc(iw/2)*2:trunc(ih/2)*2,fade=t=out:st=%s:d=1000ms[v0];", paths[10])
+		} else {
+			input_filters += fmt.Sprintf("[%d:v]crop=trunc(iw/2)*2:trunc(ih/2)*2,fade=t=in:st=0:d=1000ms,fade=t=out:st=%sms:d=1000ms[v%d];", i-1, paths[10+2*i-2], i-1)
+		}
+	}
+
+	concatTransitions += fmt.Sprintf("concat=n=%d:v=1:a=0,format=yuv420p[v]", totalNumImages)
+	input_filters += concatTransitions
+
+	input_images = append(input_images, "-i", basePath+"/input/narration-001.mp3", "-filter_complex", input_filters, "-map", "[v]",
+		"-map", fmt.Sprintf("%d:a", totalNumImages),
+		"-shortest", basePath+"/output/mergedVideo.mp4")
+
+	fmt.Println("Creating video...")
+	cmd := exec.Command("ffmpeg", input_images...)
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		fmt.Println(fmt.Sprint(err) + ": " + string(output))
+		return
+	}
 }
 
 func addBackgroundMusic(backgroundAudio string, backgroundVolume string) {
