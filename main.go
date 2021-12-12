@@ -2,18 +2,15 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
-	"os"
 	"os/exec"
 	"strconv"
-	"strings"
 )
 
 // File Location of Repository **CHANGE THIS FILEPATH TO YOUR REPOSITORY FILEPATH**
-//var basePath = "/Users/gordon.loaner/OneDrive - Gordon College/Desktop/Gordon/Senior/Senior Project/SIL-Video" //sehee
+var basePath = "/Users/gordon.loaner/OneDrive - Gordon College/Desktop/Gordon/Senior/Senior Project/SIL-Video" //sehee
 //var basePath = "/Users/hyungyu/Documents/SIL-Video" //hyungyu
-var basePath = "C:/Users/damar/Documents/GitHub/SIL-Video" // david
+//var basePath = "C:/Users/damar/Documents/GitHub/SIL-Video" // david
 // var basePath = "/Users/roddy/Desktop/SeniorProject/SIL-Video/"
 
 func main() {
@@ -67,74 +64,12 @@ func checkCMDError(output []byte, err error){
 	}
 }
 
-func createTempVideos(Images []string, Audios []string, Transitions []string, TransitionDurations []string, Timings [][]string) {
-	cmd := exec.Command("")
-	for i := 0; i < len(Images); i++ {
-		fmt.Println("Creating video", i)
-		// The credits slide has no timings specified, so calculate a start from the previous slides numbers
-		if (Images[i] == Images[len(Images)-1]){
-			prevSlideStart := int64(0)
-			prevSlideDuration := int64(0)
-			if s, err := strconv.ParseInt(Timings[i-1][0], 10, 0); err == nil {
-				prevSlideStart = s;
-			} else if e, err := strconv.ParseInt(Timings[i-1][1], 10, 0); err == nil{
-				prevSlideDuration = e;
-			} else {
-				fmt.Println("Error converting slide timings to int")
-			}
-			creditsStart := prevSlideStart + prevSlideDuration
-			cmd = exec.Command("ffmpeg",
-				"-i", basePath+"/input/"+Images[i],
-				"-r", "30", // the framerate of the output video
-				"-ss", fmt.Sprint(creditsStart)+"ms",
-				"-i", basePath+"/input/narration-001.mp3", // input audio
-				"-pix_fmt", "yuv420p", // Formatting options
-				"-vf", "crop=trunc(iw/2)*2:trunc(ih/2)*2",
-				"-y", fmt.Sprintf("%s/output/output%d.mp4", basePath, i), // output
-			)
-		} else {
-			cmd = exec.Command("ffmpeg",
-				// "-i", fmt.Sprintf("%s/input/image-%d.jpg", basePath, i), // input image
-				"-i", basePath+"/input/"+Images[i],
-				"-r", "30", // the framerate of the output video
-				"-ss", Timings[i][0]+"ms",
-				"-t", Timings[i][1]+"ms",
-				"-i", basePath+"/input/narration-001.mp3", // input audio
-				"-pix_fmt", "yuv420p", // Formatting options
-				"-vf", "crop=trunc(iw/2)*2:trunc(ih/2)*2",
-				"-y",fmt.Sprintf("%s/output/output%d.mp4", basePath, i), // output
-			)
-	}	
-		// CombinedOutput runs the command and returns any errors
-		output, e := cmd.CombinedOutput()
-		checkCMDError(output, e)
-		fmt.Println("Command started")
-	}
-}
-
-func findVideos() {
-	textfile, err := os.Create(basePath + "/output/text.txt")
-	check(err)
-
-	defer textfile.Close()
-
-	files, err := ioutil.ReadDir(basePath + "/output")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	for _, file := range files {
-		if strings.Contains(file.Name(), ".mp4") {
-			textfile.WriteString("file ")
-			textfile.WriteString(file.Name())
-			textfile.WriteString("\n")
-		}
-	}
-
-	textfile.Sync()
-}
-
 func combineVideos() {
+//   input_images := []string{}
+// 	input_filters := ""
+// 	totalNumImages := 3
+// 	concatTransitions := ""
+  
 	cmd := exec.Command("ffmpeg",
 		"-f", "concat",
 		"-safe", "0",
@@ -154,7 +89,7 @@ func addBackgroundMusic(backgroundAudio string, backgroundVolume string) {
     } else {
 		fmt.Println("Error converting volume to float")
 	}
-	tempVol = tempVol / 100;
+	tempVol = tempVol / 100
 	cmd := exec.Command("ffmpeg",
 		"-i", basePath+"/output/mergedVideo.mp4",
 		"-i", "./input/"+backgroundAudio,
