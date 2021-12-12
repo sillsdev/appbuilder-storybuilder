@@ -92,32 +92,34 @@ func combineVideos(Images []string, Transitions []string, TransitionDurations []
 	// cmd := exec.Command("ffmpeg", input_images...)
 
 	fmt.Println("Getting list of images and filters...")
-	for i := 0; i < totalNumImages; i++ {
+	for i := 1; i < totalNumImages-1; i++ {
 		input_images = append(input_images, "-loop", "1", "-ss", Timings[i][0]+"ms", "-t", Timings[i][1]+"ms", "-i", basePath+"/input/"+Images[i])
 		concatTransitions += fmt.Sprintf("[v%d]", i)
-		if i == 0 {
-			input_filters += "[0:v]crop=trunc(iw/2)*2:trunc(ih/2)*2,fade=t=out:st=1000ms:d=1000ms[v0];"
+		if i == 1 {
+			input_filters += "[1:v]crop=trunc(iw/2)*2:trunc(ih/2)*2,fade=t=out:st=1000ms:d=1000ms[v1];"
 		} else {
 			input_filters += fmt.Sprintf("[%d:v]crop=trunc(iw/2)*2:trunc(ih/2)*2,fade=t=in:st=0:d=1000ms,fade=t=out:st=%sms:d=1000ms[v%d];", i, Timings[i][1], i)
 		}
 	}
 
-	concatTransitions += fmt.Sprintf("concat=n=%d:v=1:a=0,format=yuv420p[v]", totalNumImages)
+	concatTransitions += fmt.Sprintf("concat=n=%d:v=1:a=0,format=yuv420p[v]", totalNumImages-2)
 	input_filters += concatTransitions
 
-	input_images = append(input_images, "-i", basePath+"/input/narration-001.mp3", "-filter_complex", input_filters, "-map", "[v]",
-		"-map", fmt.Sprintf("%d:a", totalNumImages),
+	input_images = append(input_images, "-i", basePath+"/input/narration-001.mp3",
+		"-max_muxing_queue_size", "9999",
+		"-filter_complex", input_filters, "-map", "[v]",
+		"-map", fmt.Sprintf("%d:a", totalNumImages-2),
 		"-shortest", basePath+"/output/mergedVideo.mp4")
 
 	fmt.Println(input_images)
-	// fmt.Println("Creating video...")
-	// cmd := exec.Command("ffmpeg", input_images...)
+	fmt.Println("Creating video...")
+	cmd := exec.Command("ffmpeg", input_images...)
 
-	// output, err := cmd.CombinedOutput()
-	// if err != nil {
-	// 	fmt.Println(fmt.Sprint(err) + ": " + string(output))
-	// 	return
-	// }
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		fmt.Println(fmt.Sprint(err) + ": " + string(output))
+		return
+	}
 }
 
 func addBackgroundMusic(backgroundAudio string, backgroundVolume string) {
