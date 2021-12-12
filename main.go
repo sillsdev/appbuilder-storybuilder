@@ -15,39 +15,32 @@ var basePath = "/Users/gordon.loaner/OneDrive - Gordon College/Desktop/Gordon/Se
 
 func main() {
 	// First we parse in the various pieces from the template
-	Images := []string{};
-	Audios := []string{};
-	BackAudioPath := "";
-	BackAudioVolume := "";
-	Transitions := []string{};
-	TransitionDurations := []string{};
-	Timings := [][]string{};
+	Images := []string{}
+	Audios := []string{}
+	BackAudioPath := ""
+	BackAudioVolume := ""
+	Transitions := []string{}
+	TransitionDurations := []string{}
+	Timings := [][]string{}
 
 	fmt.Println("Parsing .slideshow file...")
-	var slideshow = readData();
+	var slideshow = readData()
 	for i, slide := range slideshow.Slide {
-		if (i == 0){
-			BackAudioPath = slide.Audio.Background_Filename.Path;
-			BackAudioVolume = slide.Audio.Background_Filename.Volume;
+		if i == 0 {
+			BackAudioPath = slide.Audio.Background_Filename.Path
+			BackAudioVolume = slide.Audio.Background_Filename.Volume
 		} else {
-			Audios = append(Audios, slide.Audio.Filename.Name);
+			Audios = append(Audios, slide.Audio.Filename.Name)
 		}
-		Images = append(Images, slide.Image.Name);
-		Transitions = append(Transitions, slide.Transition.Type);
-		TransitionDurations = append(TransitionDurations, slide.Transition.Duration);
-		temp := []string{slide.Timing.Start, slide.Timing.Duration};
-		Timings = append(Timings, temp);
-		fmt.Println(Timings[0][0]);
+		Images = append(Images, slide.Image.Name)
+		Transitions = append(Transitions, slide.Transition.Type)
+		TransitionDurations = append(TransitionDurations, slide.Transition.Duration)
+		temp := []string{slide.Timing.Start, slide.Timing.Duration}
+		Timings = append(Timings, temp)
+		fmt.Println(Timings[0][0])
 	}
-	fmt.Println("Finished parsing .slideshow...")
-	fmt.Println("Creating temporary videos...")
-	createTempVideos(Images, Audios, Transitions, TransitionDurations, Timings);
-	fmt.Println("Finished creating temporary videos...")
-	fmt.Println("Fetching temporary video paths...")
-	findVideos()
-	fmt.Println("Finished fetching temporary video paths...")
 	fmt.Println("Combining temporary videos into single video...")
-	combineVideos()
+	combineVideos(Images, Transitions, TransitionDurations, Timings, Audios)
 	fmt.Println("Finished combining temporary videos...")
 	addBackgroundMusic(BackAudioPath, BackAudioVolume)
 }
@@ -58,18 +51,13 @@ func check(err error) {
 		log.Fatalln(err)
 	}
 }
-func checkCMDError(output []byte, err error){
-	if (err != nil) {
+func checkCMDError(output []byte, err error) {
+	if err != nil {
 		log.Fatalln(fmt.Sprint(err) + ": " + string(output))
 	}
 }
 
-func combineVideos() {
-//   input_images := []string{}
-// 	input_filters := ""
-// 	totalNumImages := 3
-// 	concatTransitions := ""
-  
+func combineVideos(Images []string, Transitions []string, TransitionDurations []string, Timings [][]string, Audios []string) {
 	cmd := exec.Command("ffmpeg",
 		"-f", "concat",
 		"-safe", "0",
@@ -78,15 +66,15 @@ func combineVideos() {
 	)
 
 	output, e := cmd.CombinedOutput()
-	checkCMDError(output,e)
+	checkCMDError(output, e)
 }
 
 func addBackgroundMusic(backgroundAudio string, backgroundVolume string) {
 	// Convert the background volume to a number between 0 and 1
 	tempVol := 0.0
 	if s, err := strconv.ParseFloat(backgroundVolume, 64); err == nil {
-        tempVol = s;
-    } else {
+		tempVol = s
+	} else {
 		fmt.Println("Error converting volume to float")
 	}
 	tempVol = tempVol / 100
