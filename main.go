@@ -8,41 +8,48 @@ import (
 )
 
 // File Location of Repository **CHANGE THIS FILEPATH TO YOUR REPOSITORY FILEPATH**
-var basePath = "/Users/gordon.loaner/OneDrive - Gordon College/Desktop/Gordon/Senior/Senior Project/SIL-Video" //sehee
+//var basePath = "/Users/gordon.loaner/OneDrive - Gordon College/Desktop/Gordon/Senior/Senior Project/SIL-Video" //sehee
 //var basePath = "/Users/hyungyu/Documents/SIL-Video" //hyungyu
-//var basePath = "C:/Users/damar/Documents/GitHub/SIL-Video" // david
+var basePath = "C:/Users/damar/Documents/GitHub/SIL-Video" // david
 // var basePath = "/Users/roddy/Desktop/SeniorProject/SIL-Video/"
 
 func main() {
 	// First we parse in the various pieces from the template
 	Images := []string{}
 	Audios := []string{}
-	//BackAudioPath := ""
-	//BackAudioVolume := ""
+	BackAudioPath := ""
+	BackAudioVolume := ""
 	Transitions := []string{}
 	TransitionDurations := []string{}
 	Timings := [][]string{}
-
 	fmt.Println("Parsing .slideshow file...")
 	var slideshow = readData()
 	for i, slide := range slideshow.Slide {
 		if i == 0 {
-			//BackAudioPath = slide.Audio.Background_Filename.Path
-			//BackAudioVolume = slide.Audio.Background_Filename.Volume
+			BackAudioPath = slide.Audio.Background_Filename.Path
+			BackAudioVolume = slide.Audio.Background_Filename.Volume
 		} else {
 			Audios = append(Audios, slide.Audio.Filename.Name)
 		}
 		Images = append(Images, slide.Image.Name)
 		Transitions = append(Transitions, slide.Transition.Type)
-		TransitionDurations = append(TransitionDurations, slide.Transition.Duration)
+		if slide.Transition.Duration == "" {
+			TransitionDurations = append(TransitionDurations, "1000")
+		} else {
+			TransitionDurations = append(TransitionDurations, slide.Transition.Duration)
+		}
 		temp := []string{slide.Timing.Start, slide.Timing.Duration}
 		Timings = append(Timings, temp)
-		fmt.Println(Timings[0][0])
 	}
-	fmt.Println("Combining temporary videos into single video...")
+	fmt.Println("Parsing completed...")
+	fmt.Println("Scaling Images...")
+	scaleImages(Images, "1500", "900")
+	fmt.Println("Creating video...")
 	combineVideos(Images, Transitions, TransitionDurations, Timings, Audios)
-	fmt.Println("Finished combining temporary videos...")
-	//addBackgroundMusic(BackAudioPath, BackAudioVolume)
+	fmt.Println("Finished making video...")
+	fmt.Println("Adding intro music...")
+	addBackgroundMusic(BackAudioPath, BackAudioVolume)
+	fmt.Println("Video completed!")
 }
 
 func check(err error) {
@@ -57,45 +64,63 @@ func checkCMDError(output []byte, err error) {
 	}
 }
 
+func scaleImages(Images []string, height string, width string) {
+	for i := 0; i < len(Images); i++ {
+		cmd := exec.Command("ffmpeg", "-i", basePath+"/input/"+Images[i],
+			"-vf", fmt.Sprintf("scale=%s:%s", height, width)+",setsar=1:1",
+			"-y", basePath+"/input/"+Images[i])
+		output, err := cmd.CombinedOutput()
+		checkCMDError(output, err)
+	}
+}
+
+/** Function to create the video with all images + transitions
+*	Parameters:
+*		Images: ([]string) - Array of filenames for the images
+ */
 func combineVideos(Images []string, Transitions []string, TransitionDurations []string, Timings [][]string, Audios []string) {
-	fmt.Println(TransitionDurations)
 	input_images := []string{}
 	input_filters := ""
-	totalNumImages := len(Images) - 1
+	totalNumImages := len(Images)
 	concatTransitions := ""
 
 	fmt.Println("Getting list of images and filters...")
-	for i := 1; i < totalNumImages-1; i++ {
-		input_images = append(input_images, "-loop", "1", "-ss", Timings[i][0]+"ms", "-t", Timings[i][1]+"ms", "-i", basePath+"/input/"+Images[i])
-		concatTransitions += fmt.Sprintf("[v%d]", i-1)
-		if i == 1 {
-			input_filters += fmt.Sprintf("[0:v]crop=trunc(iw/2)*2:trunc(ih/2)*2,fade=t=out:st=%sms:d=%sms[v0];", Timings[i][1], TransitionDurations[i])
+	for i := 0; i < totalNumImages; i++ {
+		// Everything needs to be concatenated so always add the image to concatTransitions
+		concatTransitions += fmt.Sprintf("[v%d]", i)
+		// Everything needs to be cropped so add the crop filter to every image
+		input_filters += fmt.Sprintf("[%d:v]crop=trunc(iw/2)*2:trunc(ih/2)*2", i)
+		if i == totalNumImages-1 { // Credits image has no timings/transitions
+			input_images = append(input_images, "-i", basePath+"/input/"+Images[i])
 		} else {
-			half_duration, err := strconv.Atoi(TransitionDurations[i])
-			check(err)
+			input_images = append(input_images, "-loop", "1", "-ss", Timings[i][0]+"ms", "-t", Timings[i][1]+"ms", "-i", basePath+"/input/"+Images[i])
 
-			input_filters += fmt.Sprintf("[%d:v]crop=trunc(iw/2)*2:trunc(ih/2)*2,fade=t=in:st=0:d=%dms,fade=t=out:st=%sms:d=%dms[v%d];", i-1, half_duration/2, Timings[i][1], half_duration/2, i-1)
+			if i == 0 {
+				input_filters += fmt.Sprintf(",fade=t=out:st=%sms:d=%sms", Timings[i][1], TransitionDurations[i])
+			} else {
+				half_duration, err := strconv.Atoi(TransitionDurations[i])
+				check(err)
+				input_filters += fmt.Sprintf(",fade=t=in:st=0:d=%dms,fade=t=out:st=%sms:d=%dms", half_duration/2, Timings[i][1], half_duration/2)
+			}
 		}
+		input_filters += fmt.Sprintf("[v%d];", i)
+
 	}
 
-	concatTransitions += fmt.Sprintf("concat=n=%d:v=1:a=0,format=yuv420p[v]", totalNumImages-2)
+	concatTransitions += fmt.Sprintf("concat=n=%d:v=1:a=0,format=yuv420p[v]", totalNumImages)
 	input_filters += concatTransitions
 
 	input_images = append(input_images, "-i", basePath+"/input/narration-001.mp3",
 		"-max_muxing_queue_size", "9999",
 		"-filter_complex", input_filters, "-map", "[v]",
-		"-map", fmt.Sprintf("%d:a", totalNumImages-2),
-		"-shortest", basePath+"/output/mergedVideo.mp4")
+		"-map", fmt.Sprintf("%d:a", totalNumImages),
+		"-shortest", "-y", basePath+"/output/mergedVideo.mp4")
 
-	fmt.Println(input_images)
 	fmt.Println("Creating video...")
 	cmd := exec.Command("ffmpeg", input_images...)
 
 	output, err := cmd.CombinedOutput()
-	if err != nil {
-		fmt.Println(fmt.Sprint(err) + ": " + string(output))
-		return
-	}
+	checkCMDError(output, err)
 }
 
 func addBackgroundMusic(backgroundAudio string, backgroundVolume string) {
