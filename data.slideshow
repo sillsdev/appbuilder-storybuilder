@@ -6,7 +6,7 @@
       <background-filename volume="50">./music-intro-SA.mp3</background-filename>
     </audio>
     <image>MAT2-title.jpg</image>
-    <timing start="0" duration="3680"/>
+    <timing start="0" duration="7000"/>
     <transition duration="1000">crossfade</transition>
   </slide>
   <slide>
