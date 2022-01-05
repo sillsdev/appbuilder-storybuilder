@@ -10,30 +10,32 @@ import (
 // File Location of Repository **CHANGE THIS FILEPATH TO YOUR REPOSITORY FILEPATH**
 //var basePath = "/Users/gordon.loaner/OneDrive - Gordon College/Desktop/Gordon/Senior/Senior Project/SIL-Video" //sehee
 //var basePath = "/Users/hyungyu/Documents/SIL-Video" //hyungyu
-var basePath = "C:/Users/damar/Documents/GitHub/SIL-Video" // david
+var basePath = "C:/Users/Davideo/Documents/GitHub/SIL-Video" // david
 // var basePath = "/Users/roddy/Desktop/SeniorProject/SIL-Video/"
 
 func main() {
 	// First we parse in the various pieces from the template
+	// Each piece is parsed as a string from the .slideshow xml and placed in a string array
 	Images := []string{}
 	Audios := []string{}
-	BackAudioPath := ""
+	BackAudioPath := "" // These two pieces are specific to the backgroundAudio that plays on top of the narration audio
 	BackAudioVolume := ""
 	Transitions := []string{}
 	TransitionDurations := []string{}
+	// The timings are two part, a start and duration so they are placed in a 2D array
 	Timings := [][]string{}
 	fmt.Println("Parsing .slideshow file...")
 	var slideshow = readData()
 	for i, slide := range slideshow.Slide {
-		if i == 0 {
+		if i == 0 { // The very first slide has background audio data
 			BackAudioPath = slide.Audio.Background_Filename.Path
 			BackAudioVolume = slide.Audio.Background_Filename.Volume
-		} else {
+		} else { // Every other slide has normal audio data
 			Audios = append(Audios, slide.Audio.Filename.Name)
 		}
 		Images = append(Images, slide.Image.Name)
 		Transitions = append(Transitions, slide.Transition.Type)
-		if slide.Transition.Duration == "" {
+		if slide.Transition.Duration == "" { // If the slide doesn't have a transition, put a default
 			TransitionDurations = append(TransitionDurations, "1000")
 		} else {
 			TransitionDurations = append(TransitionDurations, slide.Transition.Duration)
@@ -43,7 +45,7 @@ func main() {
 	}
 	fmt.Println("Parsing completed...")
 	fmt.Println("Scaling Images...")
-	scaleImages(Images, "1500", "900")
+	scaleImages(Images, "1500", "900") // Scales to a default 1500x900 but this can easily be made customizable by a command line option
 	fmt.Println("Creating video...")
 	combineVideos(Images, Transitions, TransitionDurations, Timings, Audios)
 	fmt.Println("Finished making video...")
@@ -64,6 +66,14 @@ func checkCMDError(output []byte, err error) {
 	}
 }
 
+/** Function to scale all the images to a uniform height, width and aspect ratio to prevent errors in video creation
+*	Parameters:
+*			Images ([]string): An array of filepath strings to the images being scaled
+*			height (string): The height (in pixels) to scale the images to
+*			width (string): The width (in pixels) to scale the images to
+*	Return:
+*			None
+ */
 func scaleImages(Images []string, height string, width string) {
 	for i := 0; i < len(Images); i++ {
 		cmd := exec.Command("ffmpeg", "-i", basePath+"/input/"+Images[i],
@@ -76,7 +86,13 @@ func scaleImages(Images []string, height string, width string) {
 
 /** Function to create the video with all images + transitions
 *	Parameters:
-*		Images: ([]string) - Array of filenames for the images
+*		Images ([]string): An array of filepath strings to the images being used
+*		Transitions ([]string): An array of strings specifying the transitions to use for each image
+*		TransitionDurations ([]string): An array of strings specifying the duration for each transition
+*		Timings ([][]string): A 2D array of strings specifying the start and durations to use for pan/zoom effects
+*		Audios ([]string): An array of filepath strings specifying the audio to be played for each image
+*	Return:
+*			None
  */
 func combineVideos(Images []string, Transitions []string, TransitionDurations []string, Timings [][]string, Audios []string) {
 	input_images := []string{}
@@ -123,8 +139,18 @@ func combineVideos(Images []string, Transitions []string, TransitionDurations []
 	checkCMDError(output, err)
 }
 
+/** Function to add background music once a video is finished
+*	Parameters:
+*		backgroundAudio (string): The filepath to the audio being used
+*		backgroundVolume (string): The volume level to use for the background audio
+*	Return:
+*			None
+ */
 func addBackgroundMusic(backgroundAudio string, backgroundVolume string) {
-	// Convert the background volume to a number between 0 and 1
+	/*The volume value is originally a string and is a value between 0 and 100,
+	* but ffmpeg needs a value between 0 and 1, so we use strconv.ParseFloat() to turn the string into
+	* a float, divide by 100, then convert back to a string using fmt.Sprintf()
+	 */
 	tempVol := 0.0
 	if s, err := strconv.ParseFloat(backgroundVolume, 64); err == nil {
 		tempVol = s

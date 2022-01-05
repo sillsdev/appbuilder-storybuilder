@@ -16,11 +16,13 @@ Inputs Template Documentation: [Link](https://docs.google.com/document/d/1J4X6RW
 # Plans/Ideas for Project:
 
 # How-To Documentation
-1. Download FFmpeg https://www.ffmpeg.org and GO https://golang.org/dl/
-2. Edit the base paths for repository and FFmpeg in main.go
-3. Put an image (.png, .jpg, etc) and audio (.mp3, .wav, etc) into the corresponding input folders and change the variable names in inputs.json to the names of your files
-4. Run code in CLI set to main directory of repo with "go run main.go" or " go run ."
+1. Download FFmpeg https://www.ffmpeg.org by selecting the appropriate .zip for your OS (Here's a basic tutorial for [Windows](https://www.wikihow.com/Install-FFmpeg-on-Windows), [Mac](https://manual.audacityteam.org/man/installing_ffmpeg_for_mac.html), and [Linux](https://www.tecmint.com/install-ffmpeg-in-linux/)) 
+2. Download and install GO https://golang.org/dl/ (Should include instructions on their page)
+3. Edit the base paths for repository and FFmpeg in main.go (these are on line 10)
+4. Put any images (.png, .jpg, etc) and audios (.mp3, .wav, etc) into a folder labeled "input" and include a data.slideshow in the main directory with your main.go file (the .slideshow file documentation is linked above)
+5. Also create a folder labeled "output" for the finished videos to placed in
+6. Run code in CLI set to main directory of repo with "go run main.go read.go" or just "go run ."
 
 # issue 
-1. After running the the command  "go run main.go" or " go run ." it will create a video in your output folder, 
+1. |Fixed| After running the the command  "go run main.go" or " go run ." it will create a video in your output folder, 
 before running the command again we need to delete the created videos in the output folder every time we want to create a new video. 
