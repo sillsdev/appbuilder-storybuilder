@@ -8,17 +8,17 @@ import (
 )
 
 // File Location of Repository **CHANGE THIS FILEPATH TO YOUR REPOSITORY FILEPATH**
-//var basePath = "/Users/gordon.loaner/OneDrive - Gordon College/Desktop/Gordon/Senior/Senior Project/SIL-Video" //sehee
+var basePath = "C:/Users/sehee/OneDrive - Gordon College/Desktop/Gordon/Senior/Senior Project/SIL-Video" //sehee
 //var basePath = "/Users/hyungyu/Documents/SIL-Video" //hyungyu
-var basePath = "C:/Users/damar/Documents/GitHub/SIL-Video" // david
+//var basePath = "C:/Users/damar/Documents/GitHub/SIL-Video" // david
 // var basePath = "/Users/roddy/Desktop/SeniorProject/SIL-Video/"
 
 func main() {
 	// First we parse in the various pieces from the template
 	Images := []string{}
 	Audios := []string{}
-	BackAudioPath := ""
-	BackAudioVolume := ""
+	//BackAudioPath := ""
+	//BackAudioVolume := ""
 	Transitions := []string{}
 	TransitionDurations := []string{}
 	Timings := [][]string{}
@@ -26,8 +26,8 @@ func main() {
 	var slideshow = readData()
 	for i, slide := range slideshow.Slide {
 		if i == 0 {
-			BackAudioPath = slide.Audio.Background_Filename.Path
-			BackAudioVolume = slide.Audio.Background_Filename.Volume
+			//BackAudioPath = slide.Audio.Background_Filename.Path
+			//BackAudioVolume = slide.Audio.Background_Filename.Volume
 		} else {
 			Audios = append(Audios, slide.Audio.Filename.Name)
 		}
@@ -44,11 +44,21 @@ func main() {
 	fmt.Println("Parsing completed...")
 	fmt.Println("Scaling Images...")
 	scaleImages(Images, "1500", "900")
-	fmt.Println("Creating video...")
-	combineVideos(Images, Transitions, TransitionDurations, Timings, Audios)
+	fmt.Println("Creating temporary videos...")
+	make_temp_videos(Images, Transitions, TransitionDurations, Timings, Audios)
+
+	fmt.Println("Combining temporary videos with xfade")
+	combine_xfade(Images, Transitions, TransitionDurations, Timings)
+
+	//fmt.Println("Combining videos with traditional fade")
+	//combineVideos(Images, Transitions, TransitionDurations, Timings, Audios)
+
 	fmt.Println("Finished making video...")
-	fmt.Println("Adding intro music...")
-	addBackgroundMusic(BackAudioPath, BackAudioVolume)
+	fmt.Println("Adding audio...")
+	addAudio(Timings)
+
+	//fmt.Println("Adding intro music...")
+	//addBackgroundMusic(BackAudioPath, BackAudioVolume)
 	fmt.Println("Video completed!")
 }
 
@@ -72,6 +82,109 @@ func scaleImages(Images []string, height string, width string) {
 		output, err := cmd.CombinedOutput()
 		checkCMDError(output, err)
 	}
+}
+
+func make_temp_videos(Images []string, Transitions []string, TransitionDurations []string, Timings [][]string, Audios []string) {
+	totalNumImages := len(Images)
+
+	for i := 0; i < totalNumImages-1; i++ {
+		fmt.Printf("Making temp%d.mp4 video\n", i)
+		cmd := exec.Command("ffmpeg", "-loop", "1", "-i", basePath+"/input/"+Images[i],
+			"-t", Timings[i][1]+"ms",
+			"-shortest", "-pix_fmt", "yuv420p", "-y", fmt.Sprintf("%s/output/temp%d.mp4", basePath, i))
+
+		output, err := cmd.CombinedOutput()
+		checkCMDError(output, err)
+	}
+
+	fmt.Printf("Making temp%d.mp4 video\n", totalNumImages-1)
+	cmd := exec.Command("ffmpeg", "-loop", "1", "-t", "2000ms", "-i", basePath+"/input/"+Images[totalNumImages-1],
+		"-shortest", "-pix_fmt", "yuv420p",
+		"-y", fmt.Sprintf("%s/output/temp%d.mp4", basePath, totalNumImages-1))
+
+	output, err := cmd.CombinedOutput()
+	checkCMDError(output, err)
+}
+
+func combine_xfade(Images []string, Transitions []string, TransitionDurations []string, Timings [][]string) {
+	totalNumImages := len(Images)
+
+	duration, err := strconv.Atoi(Timings[0][1])
+	transition_duration, err := strconv.Atoi(TransitionDurations[0])
+	check(err)
+	prevOffset := duration - transition_duration
+
+	transition := Transitions[0]
+
+	if transition == "" {
+		transition = "fade"
+		transition_duration = 1000
+	}
+
+	fmt.Printf("Combining vieos temp%d.mp4 and temp%d.mp4\n", 0, 1)
+	cmd := exec.Command("ffmpeg",
+		"-i", fmt.Sprintf("%s/output/temp%d.mp4", basePath, 0),
+		"-i", fmt.Sprintf("%s/output/temp%d.mp4", basePath, 1),
+		"-filter_complex", fmt.Sprintf("[0][1]xfade=transition=%s:duration=%dms:offset=%dms,format=yuv420p", transition, transition_duration, prevOffset),
+		"-y", basePath+"/output/merged1.mp4",
+	)
+
+	output, err := cmd.CombinedOutput()
+	checkCMDError(output, err)
+
+	for i := 1; i < totalNumImages-1; i++ {
+		duration, err := strconv.Atoi(Timings[i][1])
+		transition_duration, err := strconv.Atoi(TransitionDurations[i])
+		check(err)
+		offset := duration + prevOffset - transition_duration
+		prevOffset = offset
+
+		transition := Transitions[i]
+
+		if transition == "" {
+			transition = "fade"
+			transition_duration = 1000
+		}
+
+		fmt.Printf("Combining videos merged%d.mp4 and temp%d.mp4 with %s transition. \n", i, i+1, transition)
+		cmd := exec.Command("ffmpeg",
+			"-i", fmt.Sprintf("%s/output/merged%d.mp4", basePath, i),
+			"-i", fmt.Sprintf("%s/output/temp%d.mp4", basePath, i+1),
+			"-filter_complex", fmt.Sprintf("[0][1]xfade=transition=%s:duration=%dms:offset=%dms,format=yuv420p", transition, transition_duration, offset),
+			"-y", fmt.Sprintf("%s/output/merged%d.mp4", basePath, i+1),
+		)
+
+		output, err := cmd.CombinedOutput()
+		checkCMDError(output, err)
+	}
+}
+
+func addAudio(Timings [][]string) {
+	cmd := exec.Command("ffmpeg", "-i", basePath+"/output/merged4.mp4", "-i", basePath+"/input/narration-001.mp3",
+		"-c:v", "copy", "-c:a", "aac", "-y", basePath+"/output/mergedVideo.mp4")
+
+	output, err := cmd.CombinedOutput()
+	checkCMDError(output, err)
+}
+
+func addBackgroundMusic(backgroundAudio string, backgroundVolume string) {
+	// Convert the background volume to a number between 0 and 1
+	tempVol := 0.0
+	if s, err := strconv.ParseFloat(backgroundVolume, 64); err == nil {
+		tempVol = s
+	} else {
+		fmt.Println("Error converting volume to float")
+	}
+	tempVol = tempVol / 100
+	cmd := exec.Command("ffmpeg",
+		"-i", basePath+"/output/mergedVideo.mp4",
+		"-i", basePath+"/input/"+backgroundAudio,
+		"-filter_complex", "[1:0]volume="+fmt.Sprintf("%f", tempVol)+"[a1];[0:a][a1]amix=inputs=2:duration=first",
+		"-map", "0:v:0",
+		"-y", basePath+"/output/finalvideo.mp4",
+	)
+	output, e := cmd.CombinedOutput()
+	checkCMDError(output, e)
 }
 
 /** Function to create the video with all images + transitions
@@ -117,28 +230,9 @@ func combineVideos(Images []string, Transitions []string, TransitionDurations []
 		"-shortest", "-y", basePath+"/output/mergedVideo.mp4")
 
 	fmt.Println("Creating video...")
+	fmt.Println(input_images)
 	cmd := exec.Command("ffmpeg", input_images...)
 
 	output, err := cmd.CombinedOutput()
 	checkCMDError(output, err)
-}
-
-func addBackgroundMusic(backgroundAudio string, backgroundVolume string) {
-	// Convert the background volume to a number between 0 and 1
-	tempVol := 0.0
-	if s, err := strconv.ParseFloat(backgroundVolume, 64); err == nil {
-		tempVol = s
-	} else {
-		fmt.Println("Error converting volume to float")
-	}
-	tempVol = tempVol / 100
-	cmd := exec.Command("ffmpeg",
-		"-i", basePath+"/output/mergedVideo.mp4",
-		"-i", "./input/"+backgroundAudio,
-		"-filter_complex", "[1:0]volume="+fmt.Sprintf("%f", tempVol)+"[a1];[0:a][a1]amix=inputs=2:duration=first",
-		"-map", "0:v:0",
-		"-y", basePath+"/output/finalvideo.mp4",
-	)
-	output, e := cmd.CombinedOutput()
-	checkCMDError(output, e)
 }
