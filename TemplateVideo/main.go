@@ -5,15 +5,17 @@ import (
 	"log"
 	"os/exec"
 	"strconv"
+	"time"
 )
 
 // File Location of Repository **CHANGE THIS FILEPATH TO YOUR REPOSITORY FILEPATH**
 //var basePath = "/Users/gordon.loaner/OneDrive - Gordon College/Desktop/Gordon/Senior/Senior Project/SIL-Video" //sehee
 //var basePath = "/Users/hyungyu/Documents/SIL-Video" //hyungyu
-var basePath = "C:/Users/damar/Documents/GitHub/SIL-Video" // david
+//var basePath = "C:/Users/damar/Documents/GitHub/SIL-Video" // david
 // var basePath = "/Users/roddy/Desktop/SeniorProject/SIL-Video/"
 
 func main() {
+	start := time.Now()
 	// First we parse in the various pieces from the template
 	Images := []string{}
 	Audios := []string{}
@@ -23,7 +25,7 @@ func main() {
 	TransitionDurations := []string{}
 	Timings := [][]string{}
 	fmt.Println("Parsing .slideshow file...")
-	var slideshow = readData()
+	var slideshow = readData("./eng Visit of the Magi -Mat 2.1-23.slideshow")
 	for i, slide := range slideshow.Slide {
 		if i == 0 {
 			BackAudioPath = slide.Audio.Background_Filename.Path
@@ -49,7 +51,9 @@ func main() {
 	fmt.Println("Finished making video...")
 	fmt.Println("Adding intro music...")
 	addBackgroundMusic(BackAudioPath, BackAudioVolume)
+	duration := time.Since(start)
 	fmt.Println("Video completed!")
+	fmt.Println(fmt.Sprintf("Time Taken: %f seconds", duration.Seconds()))
 }
 
 func check(err error) {
@@ -66,9 +70,9 @@ func checkCMDError(output []byte, err error) {
 
 func scaleImages(Images []string, height string, width string) {
 	for i := 0; i < len(Images); i++ {
-		cmd := exec.Command("ffmpeg", "-i", basePath+"/input/"+Images[i],
+		cmd := exec.Command("ffmpeg", "-i", "./"+Images[i],
 			"-vf", fmt.Sprintf("scale=%s:%s", height, width)+",setsar=1:1",
-			"-y", basePath+"/input/"+Images[i])
+			"-y", "./"+Images[i])
 		output, err := cmd.CombinedOutput()
 		checkCMDError(output, err)
 	}
@@ -91,9 +95,9 @@ func combineVideos(Images []string, Transitions []string, TransitionDurations []
 		// Everything needs to be cropped so add the crop filter to every image
 		input_filters += fmt.Sprintf("[%d:v]crop=trunc(iw/2)*2:trunc(ih/2)*2", i)
 		if i == totalNumImages-1 { // Credits image has no timings/transitions
-			input_images = append(input_images, "-i", basePath+"/input/"+Images[i])
+			input_images = append(input_images, "-i", "./"+Images[i])
 		} else {
-			input_images = append(input_images, "-loop", "1", "-ss", Timings[i][0]+"ms", "-t", Timings[i][1]+"ms", "-i", basePath+"/input/"+Images[i])
+			input_images = append(input_images, "-loop", "1", "-ss", Timings[i][0]+"ms", "-t", Timings[i][1]+"ms", "-i", "./"+Images[i])
 
 			if i == 0 {
 				input_filters += fmt.Sprintf(",fade=t=out:st=%sms:d=%sms", Timings[i][1], TransitionDurations[i])
@@ -110,11 +114,11 @@ func combineVideos(Images []string, Transitions []string, TransitionDurations []
 	concatTransitions += fmt.Sprintf("concat=n=%d:v=1:a=0,format=yuv420p[v]", totalNumImages)
 	input_filters += concatTransitions
 
-	input_images = append(input_images, "-i", basePath+"/input/narration-001.mp3",
+	input_images = append(input_images, "-i", "./narration-001.mp3",
 		"-max_muxing_queue_size", "9999",
 		"-filter_complex", input_filters, "-map", "[v]",
 		"-map", fmt.Sprintf("%d:a", totalNumImages),
-		"-shortest", "-y", basePath+"/output/mergedVideo.mp4")
+		"-shortest", "-y", "../output/mergedVideo.mp4")
 
 	fmt.Println("Creating video...")
 	cmd := exec.Command("ffmpeg", input_images...)
@@ -124,20 +128,24 @@ func combineVideos(Images []string, Transitions []string, TransitionDurations []
 }
 
 func addBackgroundMusic(backgroundAudio string, backgroundVolume string) {
-	// Convert the background volume to a number between 0 and 1
 	tempVol := 0.0
-	if s, err := strconv.ParseFloat(backgroundVolume, 64); err == nil {
-		tempVol = s
+	// Convert the background volume to a number between 0 and 1, if it exists
+	if backgroundVolume != "" {
+		if s, err := strconv.ParseFloat(backgroundVolume, 64); err == nil {
+			tempVol = s
+		} else {
+			fmt.Println("Error converting volume to float")
+		}
+		tempVol = tempVol / 100
 	} else {
-		fmt.Println("Error converting volume to float")
+		tempVol = .5
 	}
-	tempVol = tempVol / 100
 	cmd := exec.Command("ffmpeg",
-		"-i", basePath+"/output/mergedVideo.mp4",
-		"-i", "./input/"+backgroundAudio,
+		"-i", "../output/mergedVideo.mp4",
+		"-i", backgroundAudio,
 		"-filter_complex", "[1:0]volume="+fmt.Sprintf("%f", tempVol)+"[a1];[0:a][a1]amix=inputs=2:duration=first",
 		"-map", "0:v:0",
-		"-y", basePath+"/output/finalvideo.mp4",
+		"-y", "../output/finalvideo.mp4",
 	)
 	output, e := cmd.CombinedOutput()
 	checkCMDError(output, e)
