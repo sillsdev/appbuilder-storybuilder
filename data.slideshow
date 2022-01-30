@@ -7,7 +7,7 @@
     </audio>
     <image>MAT2-title.jpg</image>
     <timing start="0" duration="7000"/>
-    <transition duration="1000">crossfade</transition>
+    <transition duration="1000">fade</transition>
   </slide>
   <slide>
     <audio>
@@ -16,7 +16,7 @@
     <image>Mat-02-v01.jpg</image>
     <motion start="0.395 0 0.605 0.468" end="0 0 1 0.774"/>
     <timing start="3680" duration="10040"/>
-    <transition duration="1000">crossfade</transition>
+    <transition duration="1000">fade</transition>
   </slide>
   <slide>
     <audio>
@@ -25,7 +25,7 @@
     <image>Mat-02-v02.jpg</image>
     <motion start="0 0 1 0.774" end="0.378 0 0.622 0.484"/>
     <timing start="13720" duration="8080"/>
-    <transition duration="1000">crossfade</transition>
+    <transition duration="1000">fade</transition>
   </slide>
   <slide>
     <audio>

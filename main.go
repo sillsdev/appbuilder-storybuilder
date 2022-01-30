@@ -116,8 +116,9 @@ func combine_xfade(Images []string, Transitions []string, TransitionDurations []
 
 	transition := Transitions[0]
 
-	if transition == "crossfade" {
+	if transition == "" {
 		transition = "fade"
+		transition_duration = 1000
 	}
 
 	fmt.Printf("Combining vieos temp%d.mp4 and temp%d.mp4\n", 0, 1)
@@ -140,49 +141,21 @@ func combine_xfade(Images []string, Transitions []string, TransitionDurations []
 
 		transition := Transitions[i]
 
-		if transition == "crossfade" {
+		if transition == "" {
 			transition = "fade"
-			fmt.Printf("Combining videos merged%d.mp4 and temp%d.mp4 with %s transition. \n", i, i+1, transition)
-			cmd := exec.Command("ffmpeg",
-				"-i", fmt.Sprintf("%s/output/merged%d.mp4", basePath, i),
-				"-i", fmt.Sprintf("%s/output/temp%d.mp4", basePath, i+1),
-				"-filter_complex", fmt.Sprintf("[0][1]xfade=transition=%s:duration=%dms:offset=%dms,format=yuv420p", transition, transition_duration, offset),
-				"-y", fmt.Sprintf("%s/output/merged%d.mp4", basePath, i+1),
-			)
-
-			output, err := cmd.CombinedOutput()
-			checkCMDError(output, err)
-		} else if transition == "" {
-			fmt.Printf("Combining videos merged%d.mp4 and temp%d.mp4 with no transition. \n", i, i+1)
-
-			//ffmpeg -i input1.mp4 -c copy -bsf:v h264_mp4toannexb -f mpegts intermediate1.ts
-			// ffmpeg -i input2.mp4 -c copy -bsf:v h264_mp4toannexb -f mpegts intermediate2.ts
-			// ffmpeg -i "concat:intermediate1.ts|intermediate2.ts" -c copy -bsf:a aac_adtstoasc output.mp4
-
-			cmd := exec.Command("ffmpeg",
-				"-i", fmt.Sprintf("%s/output/merged%d.mp4", basePath, i),
-				"-c", "copy", "-bsf:v", "h264_mp4toannexb", "-f", "mpegts", "-y", "intermediate1.ts",
-			)
-
-			output, err := cmd.CombinedOutput()
-			checkCMDError(output, err)
-
-			cmd = exec.Command("ffmpeg",
-				"-i", fmt.Sprintf("%s/output/temp%d.mp4", basePath, i+1),
-				"-c", "copy", "-bsf:v", "h264_mp4toannexb", "-f", "mpegts", "-y", "intermediate2.ts",
-			)
-
-			output, err = cmd.CombinedOutput()
-			checkCMDError(output, err)
-
-			cmd = exec.Command("ffmpeg",
-				"-i", "concat:intermediate1.ts|intermediate2.ts",
-				"-c", "copy", "-bsf:a", "aac_adtstoasc", "-y", fmt.Sprintf("%s/output/merged%d.mp4", basePath, i+1),
-			)
-
-			output, err = cmd.CombinedOutput()
-			checkCMDError(output, err)
+			transition_duration = 1000
 		}
+
+		fmt.Printf("Combining videos merged%d.mp4 and temp%d.mp4 with %s transition. \n", i, i+1, transition)
+		cmd := exec.Command("ffmpeg",
+			"-i", fmt.Sprintf("%s/output/merged%d.mp4", basePath, i),
+			"-i", fmt.Sprintf("%s/output/temp%d.mp4", basePath, i+1),
+			"-filter_complex", fmt.Sprintf("[0][1]xfade=transition=%s:duration=%dms:offset=%dms,format=yuv420p", transition, transition_duration, offset),
+			"-y", fmt.Sprintf("%s/output/merged%d.mp4", basePath, i+1),
+		)
+
+		output, err := cmd.CombinedOutput()
+		checkCMDError(output, err)
 	}
 }
 
