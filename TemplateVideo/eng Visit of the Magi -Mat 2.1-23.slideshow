@@ -25,6 +25,7 @@
     <narration start="MAT.2.1"/>
     <motion start="0.395 0 0.605 0.468" end="0 0 1 0.774"/>
     <timing start="3680" duration="10040"/>
+    <transition duration="1000">wipeleft</transition>
   </slide>
   <slide>
     <audio>
@@ -34,6 +35,7 @@
     <narration start="MAT.2.2"/>
     <motion start="0 0 1 0.774" end="0.378 0 0.622 0.484"/>
     <timing start="13720" duration="8080"/>
+     <transition duration="1000">wiperight</transition>
   </slide>
   <slide>
     <audio>
@@ -43,6 +45,7 @@
     <narration start="MAT.2.3"/>
     <motion start="0.163 0.008 0.663 0.516" end="0 0 1 0.774"/>
     <timing start="21800" duration="5800"/>
+     <transition duration="1000">slideleft</transition>
   </slide>
   <slide>
     <audio>
