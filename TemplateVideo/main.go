@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"os/exec"
@@ -9,6 +10,12 @@ import (
 )
 
 func main() {
+	var templateName string
+	flag.StringVar(&templateName, "t", "./eng Visit of the Magi -Mat 2.1-23.slideshow", "Specify template to use.")
+	flag.Parse()
+	if templateName == "" {
+		log.Fatalln("Error, invalid template specified")
+	}
 	start := time.Now()
 	// First we parse in the various pieces from the template
 	Images := []string{}
@@ -19,7 +26,7 @@ func main() {
 	TransitionDurations := []string{}
 	Timings := [][]string{}
 	fmt.Println("Parsing .slideshow file...")
-	var slideshow = readData("./eng Visit of the Magi -Mat 2.1-23.slideshow")
+	var slideshow = readData(templateName)
 	for i, slide := range slideshow.Slide {
 		if i == 0 {
 			BackAudioPath = slide.Audio.Background_Filename.Path
