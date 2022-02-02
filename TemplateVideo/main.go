@@ -1,15 +1,23 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"os/exec"
 	"strconv"
+	"time"
 	//"time"
 )
 
 func main() {
-	//start := time.Now()
+	var templateName string
+	flag.StringVar(&templateName, "t", "./eng Visit of the Magi -Mat 2.1-23.slideshow", "Specify template to use.")
+	flag.Parse()
+	if templateName == "" {
+		log.Fatalln("Error, invalid template specified")
+	}
+	start := time.Now()
 	// First we parse in the various pieces from the template
 	Images := []string{}
 	Audios := []string{}
@@ -19,7 +27,7 @@ func main() {
 	TransitionDurations := []string{}
 	Timings := [][]string{}
 	fmt.Println("Parsing .slideshow file...")
-	var slideshow = readData("./eng Visit of the Magi -Mat 2.1-23.slideshow")
+	var slideshow = readData(templateName)
 	for i, slide := range slideshow.Slide {
 		if i == 0 {
 			Audios = append(Audios, slide.Audio.Background_Filename.Path)
@@ -51,7 +59,7 @@ func main() {
 
 	//if using xfade
 	//make_temp_videos(Images, Transitions, TransitionDurations, Timings, Audios)
-	//make_temp_videos_with_audio(Images, Transitions, TransitionDurations, Timings, Audios)
+	make_temp_videos_with_audio(Images, Transitions, TransitionDurations, Timings, Audios)
 	combine_xfade_with_audio(Images, Transitions, TransitionDurations, Timings)
 	//combine_xfade(Images, Transitions, TransitionDurations, Timings)
 	//addAudio(Images)
@@ -61,9 +69,9 @@ func main() {
 
 	//fmt.Println("Adding intro music...")
 	//addBackgroundMusic(BackAudioPath, BackAudioVolume)
-	//duration := time.Since(start)
-	//fmt.Println("Video completed!")
-	//fmt.Println(fmt.Sprintf("Time Taken: %f seconds", duration.Seconds()))
+	duration := time.Since(start)
+	fmt.Println("Video completed!")
+	fmt.Println(fmt.Sprintf("Time Taken: %f seconds", duration.Seconds()))
 }
 
 func check(err error) {
