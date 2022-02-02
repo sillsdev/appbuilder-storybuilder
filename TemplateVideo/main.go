@@ -5,16 +5,16 @@ import (
 	"log"
 	"os/exec"
 	"strconv"
-	"time"
+	//"time"
 )
 
 func main() {
-	start := time.Now()
+	//start := time.Now()
 	// First we parse in the various pieces from the template
 	Images := []string{}
 	Audios := []string{}
-	BackAudioPath := ""
-	BackAudioVolume := ""
+	//BackAudioPath := ""
+	//BackAudioVolume := ""
 	Transitions := []string{}
 	TransitionDurations := []string{}
 	Timings := [][]string{}
@@ -22,8 +22,9 @@ func main() {
 	var slideshow = readData("./eng Visit of the Magi -Mat 2.1-23.slideshow")
 	for i, slide := range slideshow.Slide {
 		if i == 0 {
-			BackAudioPath = slide.Audio.Background_Filename.Path
-			BackAudioVolume = slide.Audio.Background_Filename.Volume
+			Audios = append(Audios, slide.Audio.Background_Filename.Path)
+			//BackAudioPath = slide.Audio.Background_Filename.Path
+			//BackAudioVolume = slide.Audio.Background_Filename.Volume
 		} else {
 			Audios = append(Audios, slide.Audio.Filename.Name)
 		}
@@ -49,18 +50,20 @@ func main() {
 	fmt.Println("Creating video...")
 
 	//if using xfade
-	make_temp_videos(Images, Transitions, TransitionDurations, Timings, Audios)
-	combine_xfade(Images, Transitions, TransitionDurations, Timings)
-	addAudio(Images)
+	//make_temp_videos(Images, Transitions, TransitionDurations, Timings, Audios)
+	make_temp_videos_with_audio(Images, Transitions, TransitionDurations, Timings, Audios)
+	combine_xfade_with_audio(Images, Transitions, TransitionDurations, Timings)
+	//combine_xfade(Images, Transitions, TransitionDurations, Timings)
+	//addAudio(Images)
 
 	//combineVideos(Images, Transitions, TransitionDurations, Timings, Audios)
 	fmt.Println("Finished making video...")
 
-	fmt.Println("Adding intro music...")
-	addBackgroundMusic(BackAudioPath, BackAudioVolume)
-	duration := time.Since(start)
-	fmt.Println("Video completed!")
-	fmt.Println(fmt.Sprintf("Time Taken: %f seconds", duration.Seconds()))
+	//fmt.Println("Adding intro music...")
+	//addBackgroundMusic(BackAudioPath, BackAudioVolume)
+	//duration := time.Since(start)
+	//fmt.Println("Video completed!")
+	//fmt.Println(fmt.Sprintf("Time Taken: %f seconds", duration.Seconds()))
 }
 
 func check(err error) {
@@ -187,6 +190,94 @@ func make_temp_videos(Images []string, Transitions []string, TransitionDurations
 
 	output, err := cmd.CombinedOutput()
 	checkCMDError(output, err)
+}
+
+func make_temp_videos_with_audio(Images []string, Transitions []string, TransitionDurations []string, Timings [][]string, Audios []string) {
+	totalNumImages := len(Images)
+
+	for i := 0; i < totalNumImages-1; i++ {
+		fmt.Printf("Making temp%d.mp4 video\n", i)
+		cmd := exec.Command("ffmpeg", "-loop", "1", "-i", "./"+Images[i],
+			"-ss", Timings[i][0]+"ms", "-t", Timings[i][1]+"ms", "-i", Audios[i],
+			"-shortest", "-pix_fmt", "yuv420p", "-y", fmt.Sprintf("../output/temp%d.mp4", i))
+
+		output, err := cmd.CombinedOutput()
+		checkCMDError(output, err)
+	}
+
+	fmt.Printf("Making temp%d.mp4 video\n", totalNumImages-1)
+	cmd := exec.Command("ffmpeg", "-loop", "1", "-t", "2000ms", "-i", Images[totalNumImages-1],
+		"-shortest", "-pix_fmt", "yuv420p",
+		"-y", fmt.Sprintf("../output/temp%d.mp4", totalNumImages-1))
+
+	output, err := cmd.CombinedOutput()
+	checkCMDError(output, err)
+}
+
+func combine_xfade_with_audio(Images []string, Transitions []string, TransitionDurations []string, Timings [][]string) {
+	totalNumImages := len(Images)
+
+	duration, err := strconv.Atoi(Timings[0][1])
+	transition_duration, err := strconv.Atoi(TransitionDurations[0])
+	transition_duration_half := transition_duration / 2
+	check(err)
+
+	transition := Transitions[0]
+	prevOffset := duration - transition_duration_half
+
+	fmt.Printf("Combining videos temp%d.mp4 and temp%d.mp4\n", 0, 1)
+	cmd := exec.Command("ffmpeg",
+		"-i", fmt.Sprintf("../output/temp%d.mp4", 0),
+		"-i", fmt.Sprintf("../output/temp%d.mp4", 1),
+		"-filter_complex", fmt.Sprintf("xfade=transition=%s:duration=%dms:offset=%dms;acrossfade=duration=%dms", transition, transition_duration, prevOffset, transition_duration),
+		"-pix_fmt", "yuv420p", "-y", "../output/merged1.mp4",
+	)
+
+	output, err := cmd.CombinedOutput()
+	checkCMDError(output, err)
+
+	for i := 1; i < totalNumImages-2; i++ {
+		duration, err := strconv.Atoi(Timings[i][1])
+		transition_duration, err := strconv.Atoi(TransitionDurations[i])
+		transition_duration_half := transition_duration / 2
+		transition := Transitions[i]
+
+		check(err)
+		offset := duration + prevOffset - transition_duration_half
+		prevOffset = offset
+
+		fmt.Printf("Combining videos merged%d.mp4 and temp%d.mp4 with %s transition. \n", i, i+1, transition)
+		cmd := exec.Command("ffmpeg",
+			"-i", fmt.Sprintf("../output/merged%d.mp4", i),
+			"-i", fmt.Sprintf("../output/temp%d.mp4", i+1),
+			"-filter_complex", fmt.Sprintf("xfade=transition=%s:duration=%dms:offset=%dms;acrossfade=duration=%dms", transition, transition_duration, offset, transition_duration),
+			"-pix_fmt", "yuv420p", "-y", fmt.Sprintf("../output/merged%d.mp4", i+1),
+		)
+
+		output, err := cmd.CombinedOutput()
+		checkCMDError(output, err)
+	}
+
+	duration, err = strconv.Atoi(Timings[totalNumImages-2][1])
+	transition_duration, err = strconv.Atoi(TransitionDurations[totalNumImages-2])
+	transition_duration_half = transition_duration / 2
+	transition = Transitions[totalNumImages-2]
+
+	check(err)
+	offset := duration + prevOffset - transition_duration_half
+	prevOffset = offset
+
+	fmt.Printf("Combining videos merged%d.mp4 and temp%d.mp4 with %s transition. \n", totalNumImages-2, totalNumImages-1, transition)
+	cmd = exec.Command("ffmpeg",
+		"-i", fmt.Sprintf("../output/merged%d.mp4", totalNumImages-2),
+		"-i", fmt.Sprintf("../output/temp%d.mp4", totalNumImages-1),
+		"-filter_complex", fmt.Sprintf("xfade=transition=%s:duration=%dms:offset=%dms", transition, transition_duration, offset),
+		"-pix_fmt", "yuv420p", "-y", fmt.Sprintf("../output/merged%d.mp4", totalNumImages-1),
+	)
+
+	output, err = cmd.CombinedOutput()
+	checkCMDError(output, err)
+
 }
 
 func combine_xfade(Images []string, Transitions []string, TransitionDurations []string, Timings [][]string) {
