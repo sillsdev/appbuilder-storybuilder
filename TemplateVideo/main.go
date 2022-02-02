@@ -51,7 +51,7 @@ func main() {
 
 	//if using xfade
 	//make_temp_videos(Images, Transitions, TransitionDurations, Timings, Audios)
-	make_temp_videos_with_audio(Images, Transitions, TransitionDurations, Timings, Audios)
+	//make_temp_videos_with_audio(Images, Transitions, TransitionDurations, Timings, Audios)
 	combine_xfade_with_audio(Images, Transitions, TransitionDurations, Timings)
 	//combine_xfade(Images, Transitions, TransitionDurations, Timings)
 	//addAudio(Images)
@@ -195,9 +195,11 @@ func make_temp_videos(Images []string, Transitions []string, TransitionDurations
 func make_temp_videos_with_audio(Images []string, Transitions []string, TransitionDurations []string, Timings [][]string, Audios []string) {
 	totalNumImages := len(Images)
 
+	fmt.Println(Timings)
+
 	for i := 0; i < totalNumImages-1; i++ {
 		fmt.Printf("Making temp%d.mp4 video\n", i)
-		cmd := exec.Command("ffmpeg", "-loop", "1", "-i", "./"+Images[i],
+		cmd := exec.Command("ffmpeg", "-loop", "1", "-ss", Timings[i][0]+"ms", "-t", Timings[i][1]+"ms", "-i", "./"+Images[i],
 			"-ss", Timings[i][0]+"ms", "-t", Timings[i][1]+"ms", "-i", Audios[i],
 			"-shortest", "-pix_fmt", "yuv420p", "-y", fmt.Sprintf("../output/temp%d.mp4", i))
 
@@ -216,8 +218,10 @@ func make_temp_videos_with_audio(Images []string, Transitions []string, Transiti
 
 func combine_xfade_with_audio(Images []string, Transitions []string, TransitionDurations []string, Timings [][]string) {
 	totalNumImages := len(Images)
+	totalDuration := 0
 
 	duration, err := strconv.Atoi(Timings[0][1])
+	totalDuration += duration
 	transition_duration, err := strconv.Atoi(TransitionDurations[0])
 	transition_duration_half := transition_duration / 2
 	check(err)
@@ -229,7 +233,7 @@ func combine_xfade_with_audio(Images []string, Transitions []string, TransitionD
 	cmd := exec.Command("ffmpeg",
 		"-i", fmt.Sprintf("../output/temp%d.mp4", 0),
 		"-i", fmt.Sprintf("../output/temp%d.mp4", 1),
-		"-filter_complex", fmt.Sprintf("xfade=transition=%s:duration=%dms:offset=%dms;acrossfade=duration=%dms", transition, transition_duration, prevOffset, transition_duration),
+		"-filter_complex", fmt.Sprintf("xfade=transition=%s:duration=%dms:offset=%dms;acrossfade=d=1.000:o=0:c1=tri:c2=tri", transition, transition_duration, prevOffset),
 		"-pix_fmt", "yuv420p", "-y", "../output/merged1.mp4",
 	)
 
@@ -238,19 +242,20 @@ func combine_xfade_with_audio(Images []string, Transitions []string, TransitionD
 
 	for i := 1; i < totalNumImages-2; i++ {
 		duration, err := strconv.Atoi(Timings[i][1])
+		totalDuration += duration
 		transition_duration, err := strconv.Atoi(TransitionDurations[i])
 		transition_duration_half := transition_duration / 2
 		transition := Transitions[i]
 
 		check(err)
-		offset := duration + prevOffset - transition_duration_half
+		offset := totalDuration - transition_duration_half
 		prevOffset = offset
 
 		fmt.Printf("Combining videos merged%d.mp4 and temp%d.mp4 with %s transition. \n", i, i+1, transition)
 		cmd := exec.Command("ffmpeg",
 			"-i", fmt.Sprintf("../output/merged%d.mp4", i),
 			"-i", fmt.Sprintf("../output/temp%d.mp4", i+1),
-			"-filter_complex", fmt.Sprintf("xfade=transition=%s:duration=%dms:offset=%dms;acrossfade=duration=%dms", transition, transition_duration, offset, transition_duration),
+			"-filter_complex", fmt.Sprintf("xfade=transition=%s:duration=%dms:offset=%dms;acrossfade=d=1.000:o=0:c1=tri:c2=tri", transition, transition_duration, offset),
 			"-pix_fmt", "yuv420p", "-y", fmt.Sprintf("../output/merged%d.mp4", i+1),
 		)
 
