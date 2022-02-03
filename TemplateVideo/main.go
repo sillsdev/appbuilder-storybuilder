@@ -16,6 +16,7 @@ func main() {
 	if templateName == "" {
 		log.Fatalln("Error, invalid template specified")
 	}
+
 	start := time.Now()
 	// First we parse in the various pieces from the template
 	Images := []string{}
@@ -50,15 +51,30 @@ func main() {
 		temp := []string{slide.Timing.Start, slide.Timing.Duration}
 		Timings = append(Timings, temp)
 	}
+	fmt.Println("Choosing Xfade or Fade Filter: ")
+	fmt.Println("Type F for Old Fade and N for New Fade:  ")
+	var fadeType string
+	fmt.Scanln(&fadeType)
+
+	flag.Parse()
+	fmt.Println("fade:", *oldFadePtr)
+	fmt.Println("Xfade:", *newFadePtr)
+
 	fmt.Println("Parsing completed...")
 	fmt.Println("Scaling Images...")
 	scaleImages(Images, "1500", "900")
 	fmt.Println("Creating video...")
 
 	//if using xfade
+	if fadeType == "New Fade" || fadeType == "Old Fade" {
+
 	make_temp_videos(Images, Transitions, TransitionDurations, Timings, Audios)
 	combine_xfade(Images, Transitions, TransitionDurations, Timings)
 	addAudio(Images)
+
+		} else {
+	combineVideos(Images, Transitions, TransitionDurations, Timings, Audios)
+		}
 
 	//combineVideos(Images, Transitions, TransitionDurations, Timings, Audios)
 	fmt.Println("Finished making video...")
@@ -91,6 +107,19 @@ func scaleImages(Images []string, height string, width string) {
 		checkCMDError(output, err)
 	}
 }
+
+func checkFFmpeg() {
+    $command = escapeshellarg($command);
+    $exists = exec("man ".$command,$out);
+    return sizeof($out);
+}
+
+if (commandExists("ffmpeg")>0) {
+   // FFMPeg Exists on server
+} else {
+   // No FFMPeg
+}
+
 
 /** Function to create the video with all images + transitions
 *	Parameters:
