@@ -6,8 +6,8 @@ import (
 	"log"
 	"os/exec"
 	"strconv"
+	"strings"
 	"time"
-	//"time"
 )
 
 func main() {
@@ -209,25 +209,90 @@ func make_temp_videos(Images []string, Transitions []string, TransitionDurations
 func make_temp_videos_with_audio(Images []string, Transitions []string, TransitionDurations []string, Timings [][]string, Audios []string) {
 	totalNumImages := len(Images)
 
-	fmt.Println(Timings)
+	cmd := exec.Command("")
 
-	for i := 0; i < totalNumImages-1; i++ {
-		fmt.Printf("Making temp%d.mp4 video\n", i)
-		cmd := exec.Command("ffmpeg", "-loop", "1", "-ss", Timings[i][0]+"ms", "-t", Timings[i][1]+"ms", "-i", "./"+Images[i],
-			"-ss", Timings[i][0]+"ms", "-t", Timings[i][1]+"ms", "-i", Audios[i],
-			"-shortest", "-pix_fmt", "yuv420p", "-y", fmt.Sprintf("../output/temp%d.mp4", i))
+	for i := 0; i < totalNumImages; i++ {
+		fmt.Printf("Making temp%d-%d.mp4 video\n", i, totalNumImages)
+		if Timings[i][0] == "" {
+			cmd = exec.Command("ffmpeg", "-loop", "1", "-ss", "0ms", "-t", "3000ms", "-i", Images[i],
+				"-f", "lavfi", "-i", "anullsrc", "-t", "3000ms",
+				"-shortest", "-pix_fmt", "yuv420p",
+				"-y", fmt.Sprintf("../output/temp%d-%d.mp4", i, totalNumImages))
+		} else {
+			cmd = exec.Command("ffmpeg", "-loop", "1", "-ss", "0ms", "-t", Timings[i][1]+"ms", "-i", "./"+Images[i],
+				"-ss", Timings[i][0]+"ms", "-t", Timings[i][1]+"ms", "-i", Audios[i],
+				"-shortest", "-pix_fmt", "yuv420p", "-y", fmt.Sprintf("../output/temp%d-%d.mp4", i, totalNumImages))
+		}
 
 		output, err := cmd.CombinedOutput()
 		checkCMDError(output, err)
 	}
+}
 
-	fmt.Printf("Making temp%d.mp4 video\n", totalNumImages-1)
-	cmd := exec.Command("ffmpeg", "-loop", "1", "-t", "2000ms", "-i", Images[totalNumImages-1],
-		"-shortest", "-pix_fmt", "yuv420p",
-		"-y", fmt.Sprintf("../output/temp%d.mp4", totalNumImages-1))
+func combine_xfade_with_audio_faster(Images []string, Transitions []string, TransitionDurations []string, Timings [][]string) {
+	totalNumImages := len(Images)
 
-	output, err := cmd.CombinedOutput()
-	checkCMDError(output, err)
+	for totalNumImages != 1 {
+		for i := 0; i < totalNumImages; i += 2 {
+			transition_duration, err := strconv.Atoi(TransitionDurations[i])
+			transition_duration_half := float32(transition_duration) * 0.75
+			transition := Transitions[i]
+
+			cmd := exec.Command("ffprobe", "-i",
+				fmt.Sprintf("../output/temp%d-%d.mp4", i, totalNumImages),
+				"-v", "quiet",
+				"-show_entries", "format=duration",
+				"-hide_banner", "-of", "default=noprint_wrappers=1:nokey=1")
+
+			output, err := cmd.CombinedOutput()
+			checkCMDError(output, err)
+
+			actual_duration, error := strconv.ParseFloat(strings.TrimSpace(string(output)), 32)
+			check(error)
+
+			length_of_video := 0
+
+			for j := i * (len(Images) / totalNumImages); j < (i+1)*(len(Images)/totalNumImages); j++ {
+				fmt.Println(totalNumImages, j)
+				duration, err := strconv.Atoi(Timings[j][1])
+				check(err)
+				length_of_video += duration
+			}
+
+			offset := 0
+
+			if int(transition_duration_half)*(len(Images)-totalNumImages) == 0 {
+
+				offset = length_of_video - transition_duration
+			} else {
+				offset = length_of_video - transition_duration*(len(Images)/totalNumImages)
+			}
+
+			fmt.Println("offset: ", offset, "calculated length: ", length_of_video, "actual duration: ", actual_duration*1000)
+
+			fmt.Printf("Combining videos temp%d-%d.mp4 and temp%d-%d.mp4 with %s transition to temp%d-%d.mp4. \n", i, totalNumImages, i+1, totalNumImages, transition, i/2, totalNumImages/2)
+
+			if i == totalNumImages-2 && totalNumImages == len(Images) {
+				cmd = exec.Command("ffmpeg",
+					"-i", fmt.Sprintf("../output/temp%d-%d.mp4", i, totalNumImages),
+					"-i", fmt.Sprintf("../output/temp%d-%d.mp4", i+1, totalNumImages),
+					"-filter_complex", fmt.Sprintf("xfade=transition=%s:duration=%dms:offset=%dms", transition, transition_duration, offset),
+					"-pix_fmt", "yuv420p", "-y", fmt.Sprintf("../output/temp%d-%d.mp4", i/2, totalNumImages/2),
+				)
+			} else {
+				cmd = exec.Command("ffmpeg",
+					"-i", fmt.Sprintf("../output/temp%d-%d.mp4", i, totalNumImages),
+					"-i", fmt.Sprintf("../output/temp%d-%d.mp4", i+1, totalNumImages),
+					"-filter_complex", fmt.Sprintf("xfade=transition=%s:duration=%dms:offset=%dms;acrossfade=d=%d:o=0:c1=tri:c2=tri", transition, transition_duration, offset, transition_duration/1000),
+					"-pix_fmt", "yuv420p", "-y", fmt.Sprintf("../output/temp%d-%d.mp4", i/2, totalNumImages/2),
+				)
+			}
+
+			output, err = cmd.CombinedOutput()
+			checkCMDError(output, err)
+		}
+		totalNumImages /= 2
+	}
 }
 
 func combine_xfade_with_audio(Images []string, Transitions []string, TransitionDurations []string, Timings [][]string) {
@@ -237,66 +302,64 @@ func combine_xfade_with_audio(Images []string, Transitions []string, TransitionD
 	duration, err := strconv.Atoi(Timings[0][1])
 	totalDuration += duration
 	transition_duration, err := strconv.Atoi(TransitionDurations[0])
-	transition_duration_half := transition_duration / 2
 	check(err)
 
 	transition := Transitions[0]
-	prevOffset := duration - transition_duration_half
+	offset := duration/1000 - transition_duration/1000
 
-	fmt.Printf("Combining videos temp%d.mp4 and temp%d.mp4\n", 0, 1)
+	fmt.Printf("Combining videos temp%d-%d.mp4 and temp%d-%d.mp4\n", 0, totalNumImages, 1, totalNumImages)
 	cmd := exec.Command("ffmpeg",
-		"-i", fmt.Sprintf("../output/temp%d.mp4", 0),
-		"-i", fmt.Sprintf("../output/temp%d.mp4", 1),
-		"-filter_complex", fmt.Sprintf("xfade=transition=%s:duration=%dms:offset=%dms;acrossfade=d=1.000:o=0:c1=tri:c2=tri", transition, transition_duration, prevOffset),
+		"-i", fmt.Sprintf("../output/temp%d-%d.mp4", 0, totalNumImages),
+		"-i", fmt.Sprintf("../output/temp%d-%d.mp4", 1, totalNumImages),
+		"-filter_complex", fmt.Sprintf("xfade=transition=%s:duration=%dms:offset=%d[video];acrossfade=d=%d:o=0:c1=tri:c2=tri[audio]", transition, transition_duration, offset, transition_duration/1000),
+		"-vsync", "0", "-map", "[video]",
+		"-map", "[audio]",
 		"-pix_fmt", "yuv420p", "-y", "../output/merged1.mp4",
 	)
 
 	output, err := cmd.CombinedOutput()
 	checkCMDError(output, err)
 
-	for i := 1; i < totalNumImages-2; i++ {
+	for i := 1; i < totalNumImages-1; i++ {
 		duration, err := strconv.Atoi(Timings[i][1])
 		totalDuration += duration
 		transition_duration, err := strconv.Atoi(TransitionDurations[i])
-		transition_duration_half := transition_duration / 2
 		transition := Transitions[i]
 
-		check(err)
-		offset := totalDuration - transition_duration_half
-		prevOffset = offset
-
-		fmt.Printf("Combining videos merged%d.mp4 and temp%d.mp4 with %s transition. \n", i, i+1, transition)
-		cmd := exec.Command("ffmpeg",
-			"-i", fmt.Sprintf("../output/merged%d.mp4", i),
-			"-i", fmt.Sprintf("../output/temp%d.mp4", i+1),
-			"-filter_complex", fmt.Sprintf("xfade=transition=%s:duration=%dms:offset=%dms;acrossfade=d=1.000:o=0:c1=tri:c2=tri", transition, transition_duration, offset),
-			"-pix_fmt", "yuv420p", "-y", fmt.Sprintf("../output/merged%d.mp4", i+1),
-		)
+		cmd := exec.Command("ffprobe", "-i",
+			fmt.Sprintf("../output/merged%d.mp4", i),
+			"-v", "quiet",
+			"-show_entries", "format=duration",
+			"-hide_banner", "-of", "default=noprint_wrappers=1:nokey=1")
 
 		output, err := cmd.CombinedOutput()
 		checkCMDError(output, err)
+
+		actual_duration, err := strconv.ParseFloat(strings.TrimSpace(string(output)), 32)
+		check(err)
+
+		offset := Round(actual_duration, 0.5) - float64(transition_duration/1000)
+		offset = offset
+
+		fmt.Println(actual_duration*1000, offset)
+
+		fmt.Printf("Combining videos merged%d.mp4 and temp%d-%d.mp4 with %s transition. \n", i, i+1, totalNumImages, transition)
+		cmd = exec.Command("ffmpeg",
+			"-i", fmt.Sprintf("../output/merged%d.mp4", i),
+			"-i", fmt.Sprintf("../output/temp%d-%d.mp4", i+1, totalNumImages),
+			"-filter_complex", fmt.Sprintf("xfade=transition=%s:duration=%dms:offset=%f[video];acrossfade=d=%d:o=0:c1=tri:c2=tri[audio]", transition, transition_duration, offset, transition_duration/1000),
+			"-vsync", "0", "-map", "[video]",
+			"-map", "[audio]",
+			"-pix_fmt", "yuv420p", "-y", fmt.Sprintf("../output/merged%d.mp4", i+1),
+		)
+
+		output, err = cmd.CombinedOutput()
+		checkCMDError(output, err)
 	}
+}
 
-	duration, err = strconv.Atoi(Timings[totalNumImages-2][1])
-	transition_duration, err = strconv.Atoi(TransitionDurations[totalNumImages-2])
-	transition_duration_half = transition_duration / 2
-	transition = Transitions[totalNumImages-2]
-
-	check(err)
-	offset := duration + prevOffset - transition_duration_half
-	prevOffset = offset
-
-	fmt.Printf("Combining videos merged%d.mp4 and temp%d.mp4 with %s transition. \n", totalNumImages-2, totalNumImages-1, transition)
-	cmd = exec.Command("ffmpeg",
-		"-i", fmt.Sprintf("../output/merged%d.mp4", totalNumImages-2),
-		"-i", fmt.Sprintf("../output/temp%d.mp4", totalNumImages-1),
-		"-filter_complex", fmt.Sprintf("xfade=transition=%s:duration=%dms:offset=%dms", transition, transition_duration, offset),
-		"-pix_fmt", "yuv420p", "-y", fmt.Sprintf("../output/merged%d.mp4", totalNumImages-1),
-	)
-
-	output, err = cmd.CombinedOutput()
-	checkCMDError(output, err)
-
+func Round(x, unit float64) float64 {
+	return float64(int64(x/unit+0.5)) * unit
 }
 
 func combine_xfade(Images []string, Transitions []string, TransitionDurations []string, Timings [][]string) {
