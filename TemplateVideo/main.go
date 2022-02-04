@@ -62,7 +62,8 @@ func main() {
 		Timings = append(Timings, temp)
 	}
 	lengthFlt := convertStringToFloat(VideoLength)
-	fmt.Println(lengthFlt[0], "ms")
+	//fmt.Println(lengthFlt[0], "ms")
+	//createZoomCommand(Motions[1], lengthFlt[0])
 	fmt.Println("Parsing completed...")
 	fmt.Println("Scaling Images...")
 	scaleImages(Images, "1500", "900")
@@ -77,7 +78,7 @@ func main() {
 		//combine_xfade(Images, Transitions, TransitionDurations, Timings)
 		//addAudio(Images)
 	} else {
-		//combineVideos(Images, Transitions, TransitionDurations, Timings, Audios, Motions, lengthFlt[0])
+		combineVideos(Images, Transitions, TransitionDurations, Timings, Audios, Motions, lengthFlt[0])
 	}
 
 	fmt.Println("Finished making video...")
@@ -86,7 +87,7 @@ func main() {
 	//addBackgroundMusic(BackAudioPath, BackAudioVolume)
 	duration := time.Since(start)
 	fmt.Println("Video completed!")
-	fmt.Println(fmt.Sprintf("Time Taken: %f seconds", duration.Seconds()))
+	fmt.Printf("Time Taken: %f seconds", duration.Seconds())
 }
 
 /* Function to split the motion data into 4 pieces and convert them all to floats
@@ -159,44 +160,9 @@ func combineVideos(Images []string, Transitions []string, TransitionDurations []
 				// generate params for ffmpeg zoompan filter
 
 				// in story buider, this is int variable(not float64).
-				num_frames := VideoLength / 30.0 // HARD CODED JUST FOR NOW (540sec / 24FPS)
-
-				size_init := Motions[i-1][0][3]
-				size_change := Motions[i-1][1][3] - size_init
-				size_incr := size_change / num_frames
-
-				// var zoom_init float64 = 1.0 / Motions[i-1][0][3]
-				// var zoom_change float64 = 1.0/Motions[i-1][1][3] - zoom_init
-				// var zoom_incr = zoom_change / num_frames
-
-				var x_init float64 = Motions[i-1][0][0]
-				var x_end float64 = Motions[i-1][1][0]
-				var x_change float64 = x_end - x_init
-				var x_incr float64 = x_change / num_frames
-
-				var y_init float64 = Motions[i-1][0][1]
-				var y_end float64 = Motions[i-1][1][1]
-				var y_change float64 = y_end - y_init
-				var y_incr float64 = y_change / num_frames
-
-				var zoom_cmd string = ""
-				var x_cmd string = ""
-				var y_cmd string = ""
-				zoom_cmd += fmt.Sprintf("1/((%.1f)*%0.1f*(%.1f)*on)", size_init-size_incr, checkSign(size_incr), math.Abs(size_incr))
-				x_cmd += fmt.Sprintf("%0.1f*iw*%0.1f*%0.1f*iw*on", x_init-x_incr, checkSign(x_incr), math.Abs(x_incr))
-				y_cmd += fmt.Sprintf("%0.1f*ih*%0.1f*%0.1f*ih*on", y_init-y_incr, checkSign(y_incr), math.Abs(y_incr))
-
-				// fmt.Println(Motions)
-				// fmt.Println(size_init)
-				// fmt.Println(size_change)
-				// fmt.Println(size_incr)
-				// fmt.Println(zoom_init)
-				// fmt.Println(zoom_change)
-				// fmt.Println(zoom_incr)
-				// fmt.Println(zoom_cmd)
-				// fmt.Println(x_cmd)
-				// fmt.Println(y_cmd)
+				input_filters += createZoomCommand(Motions[i], VideoLength)
 				input_filters += fmt.Sprintf(",fade=t=in:st=0:d=%dms,fade=t=out:st=%sms:d=%dms", half_duration/2, Timings[i][1], half_duration/2)
+
 			}
 		}
 		input_filters += fmt.Sprintf("[v%d];", i)
@@ -219,16 +185,14 @@ func combineVideos(Images []string, Transitions []string, TransitionDurations []
 	checkCMDError(output, err)
 }
 
-func checkSign(num float64) float64 {
+func checkSign(num float64) string {
 	result := math.Signbit(num)
 
 	if result {
-		num = -1
+		return "-"
 	} else {
-		num = 1
+		return "+"
 	}
-
-	return num
 }
 
 func addAudio(Images []string) {
@@ -262,6 +226,45 @@ func addBackgroundMusic(backgroundAudio string, backgroundVolume string) {
 	)
 	output, e := cmd.CombinedOutput()
 	checkCMDError(output, e)
+}
+
+func createZoomCommand(Motions [][]float64, VideoLength float64) string {
+	num_frames := VideoLength / 25.0 // HARD CODED JUST FOR NOW (540sec / 24FPS)
+
+	size_init := Motions[0][3]
+	size_change := Motions[1][3] - size_init
+	size_incr := size_change / num_frames
+
+	// var zoom_init float64 = 1.0 / Motions[i-1][0][3]
+	// var zoom_change float64 = 1.0/Motions[i-1][1][3] - zoom_init
+	// var zoom_incr = zoom_change / num_frames
+
+	var x_init float64 = Motions[0][0]
+	var x_end float64 = Motions[1][0]
+	var x_change float64 = x_end - x_init
+	var x_incr float64 = x_change / num_frames
+
+	var y_init float64 = Motions[0][1]
+	var y_end float64 = Motions[1][1]
+	var y_change float64 = y_end - y_init
+	var y_incr float64 = y_change / num_frames
+
+	var zoom_cmd string = ""
+	var x_cmd string = ""
+	var y_cmd string = ""
+	zoom_cmd += fmt.Sprintf("1/((%.3f)%s(%.3f)*on)", size_init-size_incr, checkSign(size_incr), math.Abs(size_incr))
+	x_cmd += fmt.Sprintf("%0.3f*iw%s%0.3f*iw*on", x_init-x_incr, checkSign(x_incr), math.Abs(x_incr))
+	y_cmd += fmt.Sprintf("%0.3f*ih%s%0.3f*ih*on", y_init-y_incr, checkSign(y_incr), math.Abs(y_incr))
+	final_cmd := fmt.Sprintf(",scale=-2:8*ih,zoompan=z='%s':x='%s':y='%s':d=%f:fps=25,scale=1500:900,setsar=1:1", zoom_cmd, x_cmd, y_cmd, num_frames)
+	// fmt.Println(Motions)
+	// fmt.Println(size_init)
+	// fmt.Println(size_change)
+	// fmt.Println(size_incr)
+	// fmt.Println(zoom_init)
+	// fmt.Println(zoom_change)
+	// fmt.Println(zoom_incr)
+	fmt.Println(final_cmd)
+	return final_cmd
 }
 
 func make_temp_videos(Images []string, Transitions []string, TransitionDurations []string, Timings [][]string, Audios []string) {
