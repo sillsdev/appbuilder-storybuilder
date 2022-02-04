@@ -12,7 +12,9 @@ import (
 
 func main() {
 	var templateName string
+	var fadeType string
 	flag.StringVar(&templateName, "t", "./eng Visit of the Magi -Mat 2.1-23.slideshow", "Specify template to use.")
+	flag.StringVar(&fadeType, "f", "", "Specify transition type (x) for xfade, leave blank for old fade")
 	flag.Parse()
 	if templateName == "" {
 		log.Fatalln("Error, invalid template specified")
@@ -59,12 +61,16 @@ func main() {
 
 	//if using xfade
 	//make_temp_videos(Images, Transitions, TransitionDurations, Timings, Audios)
-	make_temp_videos_with_audio(Images, Transitions, TransitionDurations, Timings, Audios)
-	combine_xfade_with_audio(Images, Transitions, TransitionDurations, Timings)
-	//combine_xfade(Images, Transitions, TransitionDurations, Timings)
-	//addAudio(Images)
+	if fadeType == "xfade" {
+		make_temp_videos_with_audio(Images, Transitions, TransitionDurations, Timings, Audios)
+		combine_xfade_with_audio(Images, Transitions, TransitionDurations, Timings)
 
-	//combineVideos(Images, Transitions, TransitionDurations, Timings, Audios)
+		//combine_xfade(Images, Transitions, TransitionDurations, Timings)
+		//addAudio(Images)
+	} else {
+		//combineVideos(Images, Transitions, TransitionDurations, Timings, Audios)
+	}
+
 	fmt.Println("Finished making video...")
 
 	//fmt.Println("Adding intro music...")
