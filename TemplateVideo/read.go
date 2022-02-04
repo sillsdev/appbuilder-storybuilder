@@ -43,6 +43,7 @@ type Motion struct {
 
 type Timing struct {
 	Start    string `xml:"start,attr"`
+	End      string `xml:"end,attr"`
 	Duration string `xml:"duration,attr"`
 }
 
