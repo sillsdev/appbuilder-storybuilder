@@ -17,6 +17,9 @@ func main() {
 		log.Fatalln("Error, invalid template specified")
 	}
 
+	// exec.Cmd
+	// run := exec.Command("ffmpeg", "-verson", "sed -e", "-e", +make_temp_videos, combine_xfade)
+
 	start := time.Now()
 	// First we parse in the various pieces from the template
 	Images := []string{}
@@ -56,9 +59,9 @@ func main() {
 	var fadeType string
 	fmt.Scanln(&fadeType)
 
-	flag.Parse()
-	fmt.Println("fade:", *oldFadePtr)
-	fmt.Println("Xfade:", *newFadePtr)
+	// flag.Parse()
+	// fmt.Println("fade:", *oldFadePtr)
+	// fmt.Println("Xfade:", *newFadePtr)
 
 	fmt.Println("Parsing completed...")
 	fmt.Println("Scaling Images...")
@@ -68,13 +71,13 @@ func main() {
 	//if using xfade
 	if fadeType == "New Fade" || fadeType == "Old Fade" {
 
-	make_temp_videos(Images, Transitions, TransitionDurations, Timings, Audios)
-	combine_xfade(Images, Transitions, TransitionDurations, Timings)
-	addAudio(Images)
+		make_temp_videos(Images, Transitions, TransitionDurations, Timings, Audios)
+		combine_xfade(Images, Transitions, TransitionDurations, Timings)
+		addAudio(Images)
 
-		} else {
-	combineVideos(Images, Transitions, TransitionDurations, Timings, Audios)
-		}
+	} else {
+		combineVideos(Images, Transitions, TransitionDurations, Timings, Audios)
+	}
 
 	//combineVideos(Images, Transitions, TransitionDurations, Timings, Audios)
 	fmt.Println("Finished making video...")
@@ -108,18 +111,18 @@ func scaleImages(Images []string, height string, width string) {
 	}
 }
 
-func checkFFmpeg() {
-    $command = escapeshellarg($command);
-    $exists = exec("man ".$command,$out);
-    return sizeof($out);
-}
+// func checkFFmpeg(make_temp_videos, combine_xfade) {
+//     cmd := exec.Command("ffmpeg", "-verson", "sed -e", "-e", + make_temp_videos)
+// 	output, err := cmd.CombinedOutput()
+// }
 
-if (commandExists("ffmpeg")>0) {
-   // FFMPeg Exists on server
-} else {
-   // No FFMPeg
-}
+// if (checkFFmpeg("ffmpeg")>0) {
+//    // FFMPeg is higher
+// } else {
+//    // No FFMPeg
+// }
 
+// ffmpeg -version | grep 'ffmpeg version' | sed -e 's/ffmpeg version //' -e 's/[^-0-9.].*//'
 
 /** Function to create the video with all images + transitions
 *	Parameters:
