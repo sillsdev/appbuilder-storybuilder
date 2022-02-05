@@ -159,7 +159,6 @@ func combineVideos(Images []string, Transitions []string, TransitionDurations []
 				check(err)
 				// generate params for ffmpeg zoompan filter
 
-				// in story buider, this is int variable(not float64).
 				input_filters += createZoomCommand(Motions[i], VideoLength)
 				input_filters += fmt.Sprintf(",fade=t=in:st=0:d=%dms,fade=t=out:st=%sms:d=%dms", half_duration/2, Timings[i][1], half_duration/2)
 
@@ -229,14 +228,14 @@ func addBackgroundMusic(backgroundAudio string, backgroundVolume string) {
 }
 
 func createZoomCommand(Motions [][]float64, VideoLength float64) string {
-	num_frames := VideoLength / 25.0 // HARD CODED JUST FOR NOW (540sec / 24FPS)
+	num_frames := VideoLength / (1000 / 25.0)
 
 	size_init := Motions[0][3]
 	size_change := Motions[1][3] - size_init
 	size_incr := size_change / num_frames
 
-	// var zoom_init float64 = 1.0 / Motions[i-1][0][3]
-	// var zoom_change float64 = 1.0/Motions[i-1][1][3] - zoom_init
+	// var zoom_init float64 = 1.0 / Motions[0][3]
+	// var zoom_change float64 = 1.0/Motions[1][3] - zoom_init
 	// var zoom_incr = zoom_change / num_frames
 
 	var x_init float64 = Motions[0][0]
@@ -252,17 +251,14 @@ func createZoomCommand(Motions [][]float64, VideoLength float64) string {
 	var zoom_cmd string = ""
 	var x_cmd string = ""
 	var y_cmd string = ""
+
 	zoom_cmd += fmt.Sprintf("1/((%.3f)%s(%.3f)*on)", size_init-size_incr, checkSign(size_incr), math.Abs(size_incr))
 	x_cmd += fmt.Sprintf("%0.3f*iw%s%0.3f*iw*on", x_init-x_incr, checkSign(x_incr), math.Abs(x_incr))
 	y_cmd += fmt.Sprintf("%0.3f*ih%s%0.3f*ih*on", y_init-y_incr, checkSign(y_incr), math.Abs(y_incr))
-	final_cmd := fmt.Sprintf(",scale=-2:8*ih,zoompan=z='%s':x='%s':y='%s':d=%f:fps=25,scale=1500:900,setsar=1:1", zoom_cmd, x_cmd, y_cmd, num_frames)
-	// fmt.Println(Motions)
-	// fmt.Println(size_init)
-	// fmt.Println(size_change)
-	// fmt.Println(size_incr)
-	// fmt.Println(zoom_init)
-	// fmt.Println(zoom_change)
-	// fmt.Println(zoom_incr)
+	// final_cmd := fmt.Sprintf(",scale=-2:8*ih,zoompan=z='%s':x='%s':y='%s':d=%f:fps=25,scale=1500:900,setsar=1:1", zoom_cmd, x_cmd, y_cmd, num_frames)
+
+	// Test zoompan example from documentation (Zoom in up to 1.5x and pan always at center of picture)
+	final_cmd := ",zoompan=z='min(zoom+0.0015,1.5)':d=700:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)',scale=1500:900,setsar=1:1"
 	fmt.Println(final_cmd)
 	return final_cmd
 }
