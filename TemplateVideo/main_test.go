@@ -5,10 +5,10 @@ import (
 	"testing"
 )
 
-var slideshow = readData(templateName)
+//var templateName string
+//var slideshow = readData("/Users/roddy/Desktop/SeniorProject/SIL-Video/")
 
 func TestParse(t *testing.T) {
-
 	input := " Parsing works corretcly"
 	expectedOutput := " Parsing works correctly"
 
@@ -16,12 +16,16 @@ func TestParse(t *testing.T) {
 	// any help would ve appreciated
 
 	if err != nil {
-		t.Error("expected no error, but got %v", err)
+		t.Error("expected no error, but got %", err)
 	}
-	if sring(data != expectedOutput {
-		t.Error("expected output to be %s, but got %v", expectedOutput, data)
+	if string(data) != expectedOutput {
+		t.Error("expected output to be string, but got variable", expectedOutput, data)
 	}
 }
+
+// func TestCheck(t *testing.T) {
+
+// }
 
 // func TestReadFile(t *testing.T) {
 // 	data, err := ioutil.ReadFile("data.slideshow")
@@ -31,4 +35,4 @@ func TestParse(t *testing.T) {
 // 	if string(readData) != nil {
 
 // 	}
-// }
+//// }//
