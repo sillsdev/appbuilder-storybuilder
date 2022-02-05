@@ -30,7 +30,6 @@ func main() {
 	TransitionDurations := []string{}
 	Timings := [][]string{}
 	Motions := [][][]float64{}
-	VideoLength := ""
 	fmt.Println("Parsing .slideshow file...")
 	var slideshow = readData(templateName)
 	for i, slide := range slideshow.Slide {
@@ -42,10 +41,6 @@ func main() {
 			Audios = append(Audios, slide.Audio.Filename.Name)
 		}
 		Images = append(Images, slide.Image.Name)
-
-		if slide.Timing.End != "" {
-			VideoLength = slide.Timing.End
-		}
 		if slide.Transition.Type == "" {
 			Transitions = append(Transitions, "fade")
 		} else {
@@ -61,9 +56,6 @@ func main() {
 		temp := []string{slide.Timing.Start, slide.Timing.Duration}
 		Timings = append(Timings, temp)
 	}
-	lengthFlt := convertStringToFloat(VideoLength)
-	//fmt.Println(lengthFlt[0], "ms")
-	//createZoomCommand(Motions[1], lengthFlt[0])
 	fmt.Println("Parsing completed...")
 	fmt.Println("Scaling Images...")
 	scaleImages(Images, "1500", "900")
@@ -78,7 +70,7 @@ func main() {
 		//combine_xfade(Images, Transitions, TransitionDurations, Timings)
 		//addAudio(Images)
 	} else {
-		combineVideos(Images, Transitions, TransitionDurations, Timings, Audios, Motions, lengthFlt[0])
+		combineVideos(Images, Transitions, TransitionDurations, Timings, Audios, Motions)
 	}
 
 	fmt.Println("Finished making video...")
@@ -135,7 +127,7 @@ func scaleImages(Images []string, height string, width string) {
 *	Parameters:
 *		Images: ([]string) - Array of filenames for the images
  */
-func combineVideos(Images []string, Transitions []string, TransitionDurations []string, Timings [][]string, Audios []string, Motions [][][]float64, VideoLength float64) {
+func combineVideos(Images []string, Transitions []string, TransitionDurations []string, Timings [][]string, Audios []string, Motions [][][]float64) {
 	input_images := []string{}
 	input_filters := ""
 	totalNumImages := len(Images)
@@ -159,7 +151,7 @@ func combineVideos(Images []string, Transitions []string, TransitionDurations []
 				check(err)
 				// generate params for ffmpeg zoompan filter
 
-				input_filters += createZoomCommand(Motions[i], VideoLength)
+				input_filters += createZoomCommand(Motions[i], convertStringToFloat(Timings[i][1]))
 				input_filters += fmt.Sprintf(",fade=t=in:st=0:d=%dms,fade=t=out:st=%sms:d=%dms", half_duration/2, Timings[i][1], half_duration/2)
 
 			}
@@ -227,12 +219,12 @@ func addBackgroundMusic(backgroundAudio string, backgroundVolume string) {
 	checkCMDError(output, e)
 }
 
-func createZoomCommand(Motions [][]float64, VideoLength float64) string {
-	num_frames := VideoLength / (1000 / 25.0)
+func createZoomCommand(Motions [][]float64, Duration []float64) string {
+	num_frames := int(Duration[0] / (1000.0 / 25.0))
 
 	size_init := Motions[0][3]
 	size_change := Motions[1][3] - size_init
-	size_incr := size_change / num_frames
+	size_incr := size_change / float64(num_frames)
 
 	// var zoom_init float64 = 1.0 / Motions[0][3]
 	// var zoom_change float64 = 1.0/Motions[1][3] - zoom_init
@@ -241,24 +233,24 @@ func createZoomCommand(Motions [][]float64, VideoLength float64) string {
 	var x_init float64 = Motions[0][0]
 	var x_end float64 = Motions[1][0]
 	var x_change float64 = x_end - x_init
-	var x_incr float64 = x_change / num_frames
+	var x_incr float64 = x_change / float64(num_frames)
 
 	var y_init float64 = Motions[0][1]
 	var y_end float64 = Motions[1][1]
 	var y_change float64 = y_end - y_init
-	var y_incr float64 = y_change / num_frames
+	var y_incr float64 = y_change / float64(num_frames)
 
 	var zoom_cmd string = ""
 	var x_cmd string = ""
 	var y_cmd string = ""
 
-	zoom_cmd += fmt.Sprintf("1/((%.3f)%s(%.3f)*on)", size_init-size_incr, checkSign(size_incr), math.Abs(size_incr))
-	x_cmd += fmt.Sprintf("%0.3f*iw%s%0.3f*iw*on", x_init-x_incr, checkSign(x_incr), math.Abs(x_incr))
-	y_cmd += fmt.Sprintf("%0.3f*ih%s%0.3f*ih*on", y_init-y_incr, checkSign(y_incr), math.Abs(y_incr))
-	// final_cmd := fmt.Sprintf(",scale=-2:8*ih,zoompan=z='%s':x='%s':y='%s':d=%f:fps=25,scale=1500:900,setsar=1:1", zoom_cmd, x_cmd, y_cmd, num_frames)
+	zoom_cmd += fmt.Sprintf("1/((%.2f)%s(%.2f)*on)", size_init-size_incr, checkSign(size_incr), math.Abs(size_incr))
+	x_cmd += fmt.Sprintf("%0.2f*iw%s%0.2f*iw*on", x_init-x_incr, checkSign(x_incr), math.Abs(x_incr))
+	y_cmd += fmt.Sprintf("%0.2f*ih%s%0.2f*ih*on", y_init-y_incr, checkSign(y_incr), math.Abs(y_incr))
+	final_cmd := fmt.Sprintf(",scale=-2:8*ih,zoompan=z='%s':x='%s':y='%s':d=%d:fps=25,scale=1500:900,setsar=1:1", zoom_cmd, x_cmd, y_cmd, num_frames)
 
 	// Test zoompan example from documentation (Zoom in up to 1.5x and pan always at center of picture)
-	final_cmd := ",zoompan=z='min(zoom+0.0015,1.5)':d=700:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)',scale=1500:900,setsar=1:1"
+	// final_cmd := ",zoompan=z='min(zoom+0.0015,1.5)':d=700:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)',scale=1500:900,setsar=1:1"
 	fmt.Println(final_cmd)
 	return final_cmd
 }
