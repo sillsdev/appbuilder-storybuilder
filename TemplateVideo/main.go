@@ -30,7 +30,6 @@ func main() {
 	TransitionDurations := []string{}
 	Timings := [][]string{}
 	Motions := [][][]float64{}
-	VideoLength := ""
 	fmt.Println("Parsing .slideshow file...")
 	var slideshow = readData(templateName)
 	for i, slide := range slideshow.Slide {
@@ -42,10 +41,6 @@ func main() {
 			Audios = append(Audios, slide.Audio.Filename.Name)
 		}
 		Images = append(Images, slide.Image.Name)
-
-		if slide.Timing.End != "" {
-			VideoLength = slide.Timing.End
-		}
 		if slide.Transition.Type == "" {
 			Transitions = append(Transitions, "fade")
 		} else {
@@ -61,9 +56,6 @@ func main() {
 		temp := []string{slide.Timing.Start, slide.Timing.Duration}
 		Timings = append(Timings, temp)
 	}
-	lengthFlt := convertStringToFloat(VideoLength)
-	//fmt.Println(lengthFlt[0], "ms")
-	//createZoomCommand(Motions[1], lengthFlt[0])
 	fmt.Println("Parsing completed...")
 	fmt.Println("Scaling Images...")
 	scaleImages(Images, "1500", "900")
@@ -78,7 +70,7 @@ func main() {
 		//combine_xfade(Images, Transitions, TransitionDurations, Timings)
 		//addAudio(Images)
 	} else {
-		combineVideos(Images, Transitions, TransitionDurations, Timings, Audios, Motions, lengthFlt[0])
+		combineVideos(Images, Transitions, TransitionDurations, Timings, Audios, Motions)
 	}
 
 	fmt.Println("Finished making video...")
@@ -135,7 +127,7 @@ func scaleImages(Images []string, height string, width string) {
 *	Parameters:
 *		Images: ([]string) - Array of filenames for the images
  */
-func combineVideos(Images []string, Transitions []string, TransitionDurations []string, Timings [][]string, Audios []string, Motions [][][]float64, VideoLength float64) {
+func combineVideos(Images []string, Transitions []string, TransitionDurations []string, Timings [][]string, Audios []string, Motions [][][]float64) {
 	input_images := []string{}
 	input_filters := ""
 	totalNumImages := len(Images)
@@ -160,7 +152,7 @@ func combineVideos(Images []string, Transitions []string, TransitionDurations []
 				// generate params for ffmpeg zoompan filter
 
 				// in story buider, this is int variable(not float64).
-				input_filters += createZoomCommand(Motions[i], VideoLength)
+				input_filters += createZoomCommand(Motions[i], convertStringToFloat(Timings[i][1]))
 				input_filters += fmt.Sprintf(",fade=t=in:st=0:d=%dms,fade=t=out:st=%sms:d=%dms", half_duration/2, Timings[i][1], half_duration/2)
 
 			}
@@ -228,8 +220,8 @@ func addBackgroundMusic(backgroundAudio string, backgroundVolume string) {
 	checkCMDError(output, e)
 }
 
-func createZoomCommand(Motions [][]float64, VideoLength float64) string {
-	num_frames := VideoLength / 25.0 // HARD CODED JUST FOR NOW (540sec / 24FPS)
+func createZoomCommand(Motions [][]float64, Duration []float64) string {
+	num_frames := (Duration[0] / 1000.0) / (1000.0 / 25.0) // HARD CODED JUST FOR NOW (540sec / 24FPS)
 
 	size_init := Motions[0][3]
 	size_change := Motions[1][3] - size_init
