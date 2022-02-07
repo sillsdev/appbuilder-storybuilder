@@ -68,8 +68,16 @@ func main() {
 	scaleImages(Images, "1500", "900")
 	fmt.Println("Creating video...")
 
+	////// check to see
+	// read about regular expression in Go.
+	// find ffmpeg
+	// ffmpeg -version | sed -n "s/ffmpeg version \([-0-9.]*\).*/\1/p;"
+	/// read about the old ffmpeg version when was added
+	// firgure out how to do the comparison of the two strings,  (function)
+	//
+
 	//if using xfade
-	if fadeType == "New Fade" || fadeType == "Old Fade" {
+	if fadeType == "New Fade" {
 
 		make_temp_videos(Images, Transitions, TransitionDurations, Timings, Audios)
 		combine_xfade(Images, Transitions, TransitionDurations, Timings)
@@ -107,6 +115,16 @@ func scaleImages(Images []string, height string, width string) {
 			"-vf", fmt.Sprintf("scale=%s:%s", height, width)+",setsar=1:1",
 			"-y", "./"+Images[i])
 		output, err := cmd.CombinedOutput()
+		checkCMDError(output, err)
+	}
+}
+
+func checkFFmpegVersion() {
+	for i := 0; i < len(Images); i++ {
+		cmd := exec.Command("ffmpeg", "-version", "./"+Images[i],
+			"-vf", fmt.Sprintf("scale=%s:%s", height, width)+",setsar=1:1",
+			"-y", "./"+Images[i])
+		output, err := cmd.version()
 		checkCMDError(output, err)
 	}
 }
