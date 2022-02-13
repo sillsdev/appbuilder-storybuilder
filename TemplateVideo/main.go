@@ -109,6 +109,9 @@ func scaleImages(Images []string, height string, width string) {
 	}
 }
 
+/** Function to Check ffmpeg version and choose xfade vs traditional fade accordingly
+*
+ */
 func checkFFmpegVersion() string {
 	cmd := "ffmpeg -version | grep 'ffmpeg version' | sed -e 's/ffmpeg version //' -e 's/[^-0-9.].*//'"
 	out, err := exec.Command("bash", "-c", cmd).Output()
@@ -125,10 +128,6 @@ func checkFFmpegVersion() string {
 	intArr[0] = 4
 	intArr[1] = 3
 	intArr[2] = 0
-
-	// old version = 4.3.0
-	// new
-
 	for i := 0; i < len(intArr); i++ {
 		var temp = string(char[i])
 		num, err := strconv.Atoi(temp)
