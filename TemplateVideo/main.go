@@ -58,13 +58,13 @@ func main() {
 	}
 	fmt.Println("Parsing completed...")
 	fmt.Println("Scaling Images...")
-	scaleImages(Images, "1500", "900")
+	scaleImages(Images, "1280", "720") // Right now default to 720p
 	fmt.Println("Creating video...")
 
 	//if using xfade
 	//make_temp_videos(Images, Transitions, TransitionDurations, Timings, Audios)
 	if fadeType == "xfade" {
-		make_temp_videos_with_audio(Images, Transitions, TransitionDurations, Timings, Audios)
+		make_temp_videos_with_audio(Images, Transitions, TransitionDurations, Timings, Audios, Motions)
 		combine_xfade_with_audio(Images, Transitions, TransitionDurations, Timings)
 
 		//combine_xfade(Images, Transitions, TransitionDurations, Timings)
@@ -226,10 +226,6 @@ func createZoomCommand(Motions [][]float64, Duration []float64) string {
 	size_change := Motions[1][3] - size_init
 	size_incr := size_change / float64(num_frames)
 
-	// var zoom_init float64 = 1.0 / Motions[0][3]
-	// var zoom_change float64 = 1.0/Motions[1][3] - zoom_init
-	// var zoom_incr = zoom_change / num_frames
-
 	var x_init float64 = Motions[0][0]
 	var x_end float64 = Motions[1][0]
 	var x_change float64 = x_end - x_init
@@ -240,17 +236,13 @@ func createZoomCommand(Motions [][]float64, Duration []float64) string {
 	var y_change float64 = y_end - y_init
 	var y_incr float64 = y_change / float64(num_frames)
 
-	var zoom_cmd string = ""
-	var x_cmd string = ""
-	var y_cmd string = ""
-
-	zoom_cmd += fmt.Sprintf("1/((%.2f)%s(%.2f)*on)", size_init-size_incr, checkSign(size_incr), math.Abs(size_incr))
-	x_cmd += fmt.Sprintf("%0.2f*iw%s%0.2f*iw*on", x_init-x_incr, checkSign(x_incr), math.Abs(x_incr))
-	y_cmd += fmt.Sprintf("%0.2f*ih%s%0.2f*ih*on", y_init-y_incr, checkSign(y_incr), math.Abs(y_incr))
-	final_cmd := fmt.Sprintf(",scale=-2:8*ih,zoompan=z='%s':x='%s':y='%s':d=%d:fps=25,scale=1500:900,setsar=1:1", zoom_cmd, x_cmd, y_cmd, num_frames)
+	zoom_cmd := fmt.Sprintf("1/((%.3f)%s(%.3f)*on)", size_init-size_incr, checkSign(size_incr), math.Abs(size_incr))
+	x_cmd := fmt.Sprintf("%0.3f*iw%s%0.3f*iw*on", x_init-x_incr, checkSign(x_incr), math.Abs(x_incr))
+	y_cmd := fmt.Sprintf("%0.3f*ih%s%0.3f*ih*on", y_init-y_incr, checkSign(y_incr), math.Abs(y_incr))
+	final_cmd := fmt.Sprintf("zoompan=z='%s':x='%s':y='%s':d=%d:fps=25,scale=1280:720,setsar=1:1", zoom_cmd, x_cmd, y_cmd, num_frames)
 
 	// Test zoompan example from documentation (Zoom in up to 1.5x and pan always at center of picture)
-	// final_cmd := ",zoompan=z='min(zoom+0.0015,1.5)':d=700:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)',scale=1500:900,setsar=1:1"
+	//final_cmd = "zoompan=z='min(zoom+0.0015,1.5)':d=700:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)',scale=1500:900,setsar=1:1"
 	fmt.Println(final_cmd)
 	return final_cmd
 }
@@ -277,9 +269,8 @@ func make_temp_videos(Images []string, Transitions []string, TransitionDurations
 	checkCMDError(output, err)
 }
 
-func make_temp_videos_with_audio(Images []string, Transitions []string, TransitionDurations []string, Timings [][]string, Audios []string) {
+func make_temp_videos_with_audio(Images []string, Transitions []string, TransitionDurations []string, Timings [][]string, Audios []string, Motions [][][]float64) {
 	totalNumImages := len(Images)
-
 	cmd := exec.Command("")
 
 	for i := 0; i < totalNumImages; i++ {
@@ -290,11 +281,18 @@ func make_temp_videos_with_audio(Images []string, Transitions []string, Transiti
 				"-shortest", "-pix_fmt", "yuv420p",
 				"-y", fmt.Sprintf("../output/temp%d-%d.mp4", i, totalNumImages))
 		} else {
-			cmd = exec.Command("ffmpeg", "-loop", "1", "-ss", "0ms", "-t", Timings[i][1]+"ms", "-i", "./"+Images[i],
-				"-ss", Timings[i][0]+"ms", "-t", Timings[i][1]+"ms", "-i", Audios[i],
-				"-shortest", "-pix_fmt", "yuv420p", "-y", fmt.Sprintf("../output/temp%d-%d.mp4", i, totalNumImages))
+			if i == 0 {
+				cmd = exec.Command("ffmpeg", "-loop", "1", "-ss", "0ms", "-t", Timings[i][1]+"ms", "-i", "./"+Images[i],
+					"-ss", Timings[i][0]+"ms", "-t", Timings[i][1]+"ms", "-i", Audios[i],
+					"-shortest", "-pix_fmt", "yuv420p", "-y", fmt.Sprintf("../output/temp%d-%d.mp4", i, totalNumImages))
+			} else {
+				zoom_cmd := createZoomCommand(Motions[i], convertStringToFloat(Timings[i][1]))
+				cmd = exec.Command("ffmpeg", "-loop", "1", "-ss", "0ms", "-t", Timings[i][1]+"ms", "-i", "./"+Images[i],
+					"-ss", Timings[i][0]+"ms", "-t", Timings[i][1]+"ms", "-i", Audios[i], "-filter_complex", zoom_cmd,
+					"-shortest", "-pix_fmt", "yuv420p", "-y", fmt.Sprintf("../output/temp%d-%d.mp4", i, totalNumImages))
+			}
 		}
-
+		fmt.Println(cmd)
 		output, err := cmd.CombinedOutput()
 		checkCMDError(output, err)
 	}
