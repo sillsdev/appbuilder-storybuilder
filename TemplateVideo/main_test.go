@@ -69,9 +69,17 @@ func TestParse(t *testing.T) {
 	}
 }
 
-// func TestCheck(t *testing.T) {
-
-// }
+// expected output should be a png
+func TestScaleImage(t *testing.T) {
+	inputFile := input_images(Images[i])
+	input := height
+	input2 := width
+	expectedOutput := fmt.Sprintf("test_%d.jpg",i)
+	if inputFile != expectedOutput {
+		t.Errorf("expected image here")
+	}
+}
+}
 
 // func TestReadFile(t *testing.T) {
 // 	data, err := ioutil.ReadFile("data.slideshow")
