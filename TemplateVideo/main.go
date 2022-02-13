@@ -6,6 +6,7 @@ import (
 	"log"
 	"os/exec"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -16,7 +17,6 @@ func main() {
 	if templateName == "" {
 		log.Fatalln("Error, invalid template specified")
 	}
-
 	// exec.Cmd
 	// run := exec.Command("ffmpeg", "-verson", "sed -e", "-e", +make_temp_videos, combine_xfade)
 
@@ -56,12 +56,8 @@ func main() {
 	}
 	fmt.Println("Choosing Xfade or Fade Filter: ")
 	fmt.Println("Type F for Old Fade and N for New Fade:  ")
-	var fadeType string
+	var fadeType string = checkFFmpegVersion()
 	fmt.Scanln(&fadeType)
-
-	// flag.Parse()
-	// fmt.Println("fade:", *oldFadePtr)
-	// fmt.Println("Xfade:", *newFadePtr)
 
 	fmt.Println("Parsing completed...")
 	fmt.Println("Scaling Images...")
@@ -76,16 +72,10 @@ func main() {
 	// firgure out how to do the comparison of the two strings,  (function)
 	//
 
-	//if using xfade
-	if fadeType == "New Fade" {
-
-		make_temp_videos(Images, Transitions, TransitionDurations, Timings, Audios)
-		combine_xfade(Images, Transitions, TransitionDurations, Timings)
-		addAudio(Images)
-
-	} else {
-		combineVideos(Images, Transitions, TransitionDurations, Timings, Audios)
-	}
+	make_temp_videos(Images, Transitions, TransitionDurations, Timings, Audios)
+	combine_xfade(Images, Transitions, TransitionDurations, Timings)
+	addAudio(Images)
+	combineVideos(Images, Transitions, TransitionDurations, Timings, Audios)
 
 	//combineVideos(Images, Transitions, TransitionDurations, Timings, Audios)
 	fmt.Println("Finished making video...")
@@ -119,28 +109,44 @@ func scaleImages(Images []string, height string, width string) {
 	}
 }
 
-func checkFFmpegVersion() {
-	for i := 0; i < len(Images); i++ {
-		cmd := exec.Command("ffmpeg", "-version", "./"+Images[i],
-			"-vf", fmt.Sprintf("scale=%s:%s", height, width)+",setsar=1:1",
-			"-y", "./"+Images[i])
-		output, err := cmd.version()
-		checkCMDError(output, err)
+func checkFFmpegVersion() string {
+	cmd := "ffmpeg -version | grep 'ffmpeg version' | sed -e 's/ffmpeg version //' -e 's/[^-0-9.].*//'"
+	out, err := exec.Command("bash", "-c", cmd).Output()
+	if err != nil {
+		log.Fatal(err)
 	}
+	fmt.Printf("Version is %s\n", out)
+	var result = ""
+	stringOut := strings.Replace(string(out), ".", "", -1)
+
+	char := []rune(stringOut)
+
+	var intArr [3]int
+	intArr[0] = 4
+	intArr[1] = 3
+	intArr[2] = 0
+
+	// old version = 4.3.0
+	// new
+
+	for i := 0; i < len(intArr); i++ {
+		var temp = string(char[i])
+		num, err := strconv.Atoi(temp)
+
+		if err != nil {
+			return err.Error()
+		}
+
+		if intArr[i] > num {
+			result = "F" //means use old fade
+			fmt.Println(result)
+			return result
+		}
+		result = "N" // use new fade
+	}
+	fmt.Println(result)
+	return result
 }
-
-// func checkFFmpeg(make_temp_videos, combine_xfade) {
-//     cmd := exec.Command("ffmpeg", "-verson", "sed -e", "-e", + make_temp_videos)
-// 	output, err := cmd.CombinedOutput()
-// }
-
-// if (checkFFmpeg("ffmpeg")>0) {
-//    // FFMPeg is higher
-// } else {
-//    // No FFMPeg
-// }
-
-// ffmpeg -version | grep 'ffmpeg version' | sed -e 's/ffmpeg version //' -e 's/[^-0-9.].*//'
 
 /** Function to create the video with all images + transitions
 *	Parameters:
