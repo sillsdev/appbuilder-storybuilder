@@ -471,6 +471,8 @@ func merge(a []int, b []int, Images []string, Transitions []string, TransitionDu
 	i := 0
 	j := 0
 
+	fmt.Println(a, b, depth)
+
 	if len(a) == 1 && len(b) == 1 {
 
 		totalNumImages := len(Images)
@@ -483,9 +485,11 @@ func merge(a []int, b []int, Images []string, Transitions []string, TransitionDu
 		duration, err := strconv.Atoi(Timings[a[0]][1])
 		offset := (float64(duration) - float64(transition_duration)) / 1000
 
-		fmt.Println(transition, transition_duration_float, offset)
+		//fmt.Println(transition, transition_duration_float, offset)
 
-		fmt.Printf("Combining videos temp%d-%d.mp4 and temp%d-%d.mp4 with %s transition to merged%d-%d. \n", a[0], totalNumImages, b[0], totalNumImages, transition, a[0], a[len(a)-1])
+		fmt.Printf("Combining videos temp%d-%d.mp4 and temp%d-%d.mp4 with %s transition to merged%d-%d. \n", a[0], totalNumImages, b[0], totalNumImages, transition, a[0], depth)
+		fmt.Println(duration, offset)
+
 		cmd := exec.Command("ffmpeg",
 			"-i", fmt.Sprintf("../output/temp%d-%d.mp4", a[0], totalNumImages),
 			"-i", fmt.Sprintf("../output/temp%d-%d.mp4", b[0], totalNumImages),
@@ -493,34 +497,58 @@ func merge(a []int, b []int, Images []string, Transitions []string, TransitionDu
 			fmt.Sprintf("[0:v]settb=AVTB,fps=30/1[v0];[1:v]settb=AVTB,fps=30/1[v1];[v0][v1]xfade=transition=%s:duration=%f:offset=%f,format=yuv420p[outv];[0:a][1:a]acrossfade=duration=0.25:o=0[outa]", transition, transition_duration_float, offset),
 			"-map", "[outv]",
 			"-map", "[outa]",
-			"-y", fmt.Sprintf("../output/merged%d.mp4", a[0]),
+			"-y", fmt.Sprintf("../output/merged%d-%d.mp4", a[0], depth),
 		)
 
 		output, err := cmd.CombinedOutput()
 		checkCMDError(output, err)
 	} else {
-		fmt.Println(a, b)
-
 		index := len(a) - 1
+		newDepth := depth / 2
+		//
+		if newDepth == 1 {
+			newDepth = 0
+		}
+
+		if depth == 0 {
+			depth = 0
+		} else {
+			depth++
+		}
+
+		if depth == newDepth {
+			newDepth = a[index]
+		}
+
 		transition := Transitions[a[index]]
 
 		transition_duration, err := strconv.Atoi(TransitionDurations[a[index]])
 		check(err)
+
 		transition_duration_float := float64(transition_duration) / 1000
 
-		duration, err := strconv.Atoi(Timings[a[index]][1])
-		offset := (float64(duration) - float64(transition_duration)) / 1000
+		duration := 0
 
-		fmt.Printf("Combining videos merged%d.mp4 and merged%d.mp4 with fade transition to merged%d-%d. \n", a[0], b[0], a[0], index)
+		for i := 0; i < len(a); i++ {
+			duration_temp, err := strconv.Atoi(Timings[a[i]][1])
+			check(err)
+
+			duration += duration_temp
+		}
+
+		offset := (float64(duration) - float64(transition_duration*len(a))) / 1000
+
+		fmt.Printf("Combining videos merged%d-%d.mp4 and merged%d-%d.mp4 with %s transition to merged%d-%d. \n", a[0], depth, b[0], depth, transition, a[0], newDepth)
+		fmt.Println(duration, offset)
 
 		cmd := exec.Command("ffmpeg",
-			"-i", fmt.Sprintf("../output/merged%d.mp4", a[0]),
-			"-i", fmt.Sprintf("../output/merged%d.mp4", b[0]),
+			"-i", fmt.Sprintf("../output/merged%d-%d.mp4", a[0], depth),
+			"-i", fmt.Sprintf("../output/merged%d-%d.mp4", b[0], depth),
 			"-filter_complex",
 			fmt.Sprintf("[0:v]settb=AVTB,fps=30/1[v0];[1:v]settb=AVTB,fps=30/1[v1];[v0][v1]xfade=transition=%s:duration=%f:offset=%f,format=yuv420p[outv];[0:a][1:a]acrossfade=duration=0.25:o=0[outa]", transition, transition_duration_float, offset),
 			"-map", "[outv]",
 			"-map", "[outa]",
-			"-y", fmt.Sprintf("../output/merged%d.mp4", a[0]),
+			"-y", fmt.Sprintf("../output/merged%d-%d.mp4", a[0], newDepth),
 		)
 
 		output, err := cmd.CombinedOutput()
