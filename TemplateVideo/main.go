@@ -62,8 +62,9 @@ func main() {
 	//if using xfade
 	if fadeType == "xfade" {
 		allImages := make_temp_videos_with_audio(Images, Transitions, TransitionDurations, Timings, Audios)
+		//for testing
+		//allImages := []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
 		mergeVideos(allImages, Images, Transitions, TransitionDurations, Timings, 0)
-		//combine_xfade_with_audio(Images, Transitions, TransitionDurations, Timings)
 	} else {
 		make_temp_videos(Images, Transitions, TransitionDurations, Timings, Audios)
 		combineVideos(Images, Transitions, TransitionDurations, Timings, Audios)
@@ -72,7 +73,6 @@ func main() {
 	}
 
 	fmt.Println("Finished making video...")
-
 	duration := time.Since(start)
 	fmt.Println("Video completed!")
 	fmt.Println(fmt.Sprintf("Time Taken: %f seconds", duration.Seconds()))
@@ -390,7 +390,6 @@ func mergeVideos(items []int, Images []string, Transitions []string, TransitionD
 
 func merge(a []int, b []int, Images []string, Transitions []string, TransitionDurations []string, Timings [][]string, depth int) []int {
 
-	//for testing
 	final := []int{}
 	i := 0
 	j := 0
@@ -447,7 +446,6 @@ func merge(a []int, b []int, Images []string, Transitions []string, TransitionDu
 		offset := (float64(duration) - float64(transition_duration)) / 1000
 
 		fmt.Printf("Combining videos temp%d-%d.mp4 and merged%d-%d.mp4 with %s transition to merged%d-%d. \n", a[0], totalNumImages, b[0], newDepth, transition, a[0], depth)
-		fmt.Println(duration, offset)
 
 		cmd := exec.Command("ffmpeg",
 			"-i", fmt.Sprintf("../output/temp%d-%d.mp4", a[0], totalNumImages),
@@ -499,7 +497,6 @@ func merge(a []int, b []int, Images []string, Transitions []string, TransitionDu
 		offset := (float64(duration) - float64(transition_duration*len(a))) / 1000
 
 		fmt.Printf("Combining videos merged%d-%d.mp4 and merged%d-%d.mp4 with %s transition to merged%d-%d. \n", a[0], depth, b[0], depth, transition, a[0], newDepth)
-		fmt.Println(duration, offset)
 
 		cmd := exec.Command("ffmpeg",
 			"-i", fmt.Sprintf("../output/merged%d-%d.mp4", a[0], depth),
@@ -515,7 +512,6 @@ func merge(a []int, b []int, Images []string, Transitions []string, TransitionDu
 		checkCMDError(output, err)
 	}
 
-	//for testing
 	for i < len(a) && j < len(b) {
 
 		final = append(final, a[i])
