@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os/exec"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -112,15 +113,30 @@ func scaleImages(Images []string, height string, width string) {
 /** Function to Check ffmpeg version and choose xfade vs traditional fade accordingly
 *
  */
+
+//  cmd := exec.Command("ffmpeg", "-version")
+//  output, err := cmd.Output()
+//  checkCMDError(output,err)
+//  re := regexp.MustCompile(`version (?P<num>\d+\.\d+(\.\d+)?)`)
+//  match := re.FindSubmatch(output)
+//  version := string(match[1])
+
 func checkFFmpegVersion() string {
-	cmd := "ffmpeg -version | grep 'ffmpeg version' | sed -e 's/ffmpeg version //' -e 's/[^-0-9.].*//'"
-	out, err := exec.Command("bash", "-c", cmd).Output()
+	//cmd := "ffmpeg -version | grep 'ffmpeg version' | sed -e 's/ffmpeg version //' -e 's/[^-0-9.].*//'"
+	//out, err := exec.Command("bash", "-c", cmd).Output()
+	cmd := exec.Command("ffmpeg", "-version")
+	output, err := cmd.Output()
+	checkCMDError(output, err)
+	re := regexp.MustCompile(`version (?P<num>\d+\.\d+(\.\d+)?)`)
+	match := re.FindSubmatch(output)
+	version := string(match[1])
+
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("Version is %s\n", out)
+	fmt.Printf("Version is %s\n", output)
 	var result = ""
-	stringOut := strings.Replace(string(out), ".", "", -1)
+	stringOut := strings.Replace(string(output), ".", "", -1)
 
 	char := []rune(stringOut)
 
