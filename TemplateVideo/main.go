@@ -13,15 +13,16 @@ import (
 	"time"
 )
 
+var templateName string
+
 func main() {
-	filepath.WalkDir(".", findTemplate)
-	var templateName string
 	var fadeType string
-	flag.StringVar(&templateName, "t", "./eng Visit of the Magi -Mat 2.1-23.slideshow", "Specify template to use.")
+	flag.StringVar(&templateName, "t", "", "Specify template to use.")
 	flag.StringVar(&fadeType, "f", "", "Specify transition type (x) for xfade, leave blank for old fade")
 	flag.Parse()
 	if templateName == "" {
-		log.Fatalln("Error, invalid template specified")
+		fmt.Println("No template provided, searching local folder...")
+		filepath.WalkDir(".", findTemplate)
 	}
 	start := time.Now()
 	// First we parse in the various pieces from the template
@@ -112,7 +113,8 @@ func findTemplate(s string, d fs.DirEntry, err error) error {
 		return err
 	}
 	if slideRegEx.MatchString(d.Name()) {
-		fmt.Println(s)
+		fmt.Println("Found template: " + s + "\nUsing found template...")
+		templateName = s
 	}
 	return nil
 }
