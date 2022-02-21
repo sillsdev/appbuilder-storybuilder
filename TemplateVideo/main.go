@@ -131,8 +131,8 @@ func checkFFmpegVersion() string {
 	match := re.FindSubmatch(output)
 	version := string(match[1])
 
-	if err != nil {
-		log.Fatal(err)
+	if version != "" {
+		log.Fatal(version)
 	}
 	fmt.Printf("Version is %s\n", output)
 	var result = ""
@@ -146,10 +146,10 @@ func checkFFmpegVersion() string {
 	intArr[2] = 0
 	for i := 0; i < len(intArr); i++ {
 		var temp = string(char[i])
-		num, err := strconv.Atoi(temp)
+		num, version := strconv.Atoi(temp)
 
-		if err != nil {
-			return err.Error()
+		if version != nil {
+			return version.Error()
 		}
 
 		if intArr[i] > num {
