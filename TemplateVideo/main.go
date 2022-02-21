@@ -6,6 +6,7 @@ import (
 	"log"
 	"os/exec"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -30,14 +31,17 @@ func main() {
 	Timings := [][]string{}
 	fmt.Println("Parsing .slideshow file...")
 	var slideshow = readData(templateName)
-	for i, slide := range slideshow.Slide {
-		fmt.Println(i)
+	for _, slide := range slideshow.Slide {
 		if slide.Audio.Background_Filename.Path != "" {
 			Audios = append(Audios, slide.Audio.Background_Filename.Path)
 			BackAudioPath = slide.Audio.Background_Filename.Path
 			BackAudioVolume = slide.Audio.Background_Filename.Volume
 		} else {
-			Audios = append(Audios, slide.Audio.Filename.Name)
+			if slide.Audio.Filename.Name == "" {
+				Audios = append(Audios, "")
+			} else {
+				Audios = append(Audios, slide.Audio.Filename.Name)
+			}
 		}
 		Images = append(Images, slide.Image.Name)
 
@@ -62,9 +66,9 @@ func main() {
 
 	//if using xfade
 	if fadeType == "xfade" {
-		allImages := make_temp_videos_with_audio(Images, Transitions, TransitionDurations, Timings, Audios)
+		//allImages := make_temp_videos_with_audio(Images, Transitions, TransitionDurations, Timings, Audios)
 		//for testing
-		//allImages := []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
+		allImages := []int{0, 1, 2, 3, 4, 5, 6}
 		mergeVideos(allImages, Images, Transitions, TransitionDurations, Timings, 0)
 	} else {
 		combineVideos(Images, Transitions, TransitionDurations, Timings, Audios)
@@ -205,18 +209,14 @@ func make_temp_videos_with_audio(Images []string, Transitions []string, Transiti
 			//   that another thread has completed.
 			defer wg.Done()
 
-			fmt.Printf("Making temp%d-%d.mp4 video\n", i, totalNumImages)
-			if Timings[i][0] == "" {
-				fmt.Println("Empty")
+			if Timings[i][0] == "" || Audios[i] == "" {
+				fmt.Printf("Making temp%d-%d.mp4 video with empty audio\n", i, totalNumImages)
 				cmd = exec.Command("ffmpeg", "-loop", "1", "-ss", "0ms", "-t", "3000ms", "-i", Images[i],
-					"-f", "lavfi", "-i", "anullsrc", "-t", "3000ms",
+					"-f", "lavfi", "-i", "aevalsrc=0", "-t", "3000ms",
 					"-shortest", "-pix_fmt", "yuv420p",
 					"-y", fmt.Sprintf("../output/temp%d-%d.mp4", i, totalNumImages))
-				//ffmpeg -i video -f lavfi -i anullsrc=cl=1 -shortest -c:v libx264 -c:a aac output.mov
 			} else {
-				// ffmpeg -loop 1 -ss 0ms -t 29700ms -i ./Mat-02-v21-23.jpg -ss 196220ms -t 29700ms -i ./narration-001.mp3 -shortest -pix_fmt yuv420p -y ../output/temp0-2.mp4
-				//C:\Users\sehee\scoop\shims\ffmpeg.exe -loop 1 -ss 0ms -t 29700ms -i ./Mat-02-v21-23.jpg -ss 196220ms -t 29700ms -i  -shortest -pix_fmt yuv420p -y ../output/temp0-2.mp4
-				fmt.Println("NOT EMPTY", Audios[i])
+				fmt.Printf("Making temp%d-%d.mp4 video\n", i, totalNumImages)
 				cmd = exec.Command("ffmpeg", "-loop", "1", "-ss", "0ms", "-t", Timings[i][1]+"ms", "-i", "./"+Images[i],
 					"-ss", Timings[i][0]+"ms", "-t", Timings[i][1]+"ms", "-i", Audios[i],
 					"-shortest", "-pix_fmt", "yuv420p", "-y", fmt.Sprintf("../output/temp%d-%d.mp4", i, totalNumImages))
@@ -248,13 +248,11 @@ func mergeVideos(items []int, Images []string, Transitions []string, TransitionD
 }
 
 func merge(a []int, b []int, Images []string, Transitions []string, TransitionDurations []string, Timings [][]string, depth int) []int {
-
 	final := []int{}
 	i := 0
 	j := 0
 
 	if len(a) == 1 && len(b) == 1 {
-		fmt.Println("if 1 and 1")
 		//combine the individual temporary videos into merged files
 		totalNumImages := len(Images)
 		transition := Transitions[a[0]]
@@ -266,24 +264,47 @@ func merge(a []int, b []int, Images []string, Transitions []string, TransitionDu
 		duration, err := strconv.Atoi(Timings[a[0]][1])
 		offset := (float64(duration) - float64(transition_duration)) / 1000
 
-		fmt.Printf("Combining videos temp%d-%d.mp4 and temp%d-%d.mp4 with %s transition to merged%d-%d. \n", a[0], totalNumImages, b[0], totalNumImages, transition, a[0], depth)
-
-		cmd := exec.Command("ffmpeg",
+		//check if video has full or partial audio
+		cmd := exec.Command("ffprobe",
 			"-i", fmt.Sprintf("../output/temp%d-%d.mp4", a[0], totalNumImages),
-			"-i", fmt.Sprintf("../output/temp%d-%d.mp4", b[0], totalNumImages),
-			"-filter_complex",
-			fmt.Sprintf("[0:v]settb=AVTB,fps=30/1[v0];[1:v]settb=AVTB,fps=30/1[v1];[v0][v1]xfade=transition=%s:duration=%f:offset=%f,format=yuv420p[outv];[0:a][1:a]acrossfade=duration=%dms:o=0:curve1=nofade:curve2=nofade[outa]", transition, transition_duration_float, offset, transition_duration),
-			"-map", "[outv]",
-			"-map", "[outa]",
-			"-y", fmt.Sprintf("../output/merged%d-%d.mp4", a[0], depth),
-		)
-
-		//println(cmd)
+			"-v", "error", "-of", "flat=s_",
+			"-select_streams", "1", "-show_entries", "stream=duration", "-of", "default=noprint_wrappers=1:nokey=1")
 
 		output, err := cmd.CombinedOutput()
 		checkCMDError(output, err)
+
+		audio_duration_offset, err := strconv.ParseFloat(strings.TrimSpace(string(output)), 64)
+
+		fmt.Printf("Combining videos temp%d-%d.mp4 and temp%d-%d.mp4 with %s transition to merged%d-%d. \n", a[0], totalNumImages, b[0], totalNumImages, transition, a[0], depth)
+
+		if float64(duration/1000)-audio_duration_offset > 0.1 {
+			fmt.Println("has partial audio", offset)
+			//has partially empty audio, so set the offset to match the audio
+			cmd = exec.Command("ffmpeg",
+				"-i", fmt.Sprintf("../output/temp%d-%d.mp4", a[0], totalNumImages),
+				"-i", fmt.Sprintf("../output/temp%d-%d.mp4", b[0], totalNumImages),
+				"-filter_complex",
+				fmt.Sprintf("[0:v]settb=AVTB,fps=30/1[v0];[1:v]settb=AVTB,fps=30/1[v1];[v0][v1]xfade=transition=%s:duration=%f:offset=%f,format=yuv420p[outv];[0:a][1:a]apad=whole_dur=%f[outa]", transition, transition_duration_float, offset, offset),
+				"-map", "[outv]",
+				"-map", "[outa]",
+				"-y", fmt.Sprintf("../output/merged%d-%d.mp4", a[0], depth),
+			)
+			fmt.Println(cmd)
+		} else {
+			cmd = exec.Command("ffmpeg",
+				"-i", fmt.Sprintf("../output/temp%d-%d.mp4", a[0], totalNumImages),
+				"-i", fmt.Sprintf("../output/temp%d-%d.mp4", b[0], totalNumImages),
+				"-filter_complex",
+				fmt.Sprintf("[0:v]settb=AVTB,fps=30/1[v0];[1:v]settb=AVTB,fps=30/1[v1];[v0][v1]xfade=transition=%s:duration=%f:offset=%f,format=yuv420p[outv];[0:a][1:a]acrossfade=duration=%dms:o=0:curve1=nofade:curve2=nofade[outa]", transition, transition_duration_float, offset, transition_duration),
+				"-map", "[outv]",
+				"-map", "[outa]",
+				"-y", fmt.Sprintf("../output/merged%d-%d.mp4", a[0], depth),
+			)
+		}
+
+		output, err = cmd.CombinedOutput()
+		checkCMDError(output, err)
 	} else if len(a) == 1 && len(b) == 2 {
-		fmt.Println("if 1 and 2")
 		//if odd number of things to merge, then it merges a temporary video with merged file
 		totalNumImages := len(Images)
 		index := len(a) - 1
@@ -315,11 +336,9 @@ func merge(a []int, b []int, Images []string, Transitions []string, TransitionDu
 			"-map", "[outa]",
 			"-y", fmt.Sprintf("../output/merged%d-%d.mp4", a[0], depth),
 		)
-		//println(cmd)
 		output, err := cmd.CombinedOutput()
 		checkCMDError(output, err)
 	} else {
-		fmt.Println("else")
 		//merging two merged files
 		index := len(a) - 1
 		newDepth := depth / 2
@@ -334,7 +353,7 @@ func merge(a []int, b []int, Images []string, Transitions []string, TransitionDu
 		depth++
 
 		if depth == newDepth {
-			newDepth = a[index]
+			newDepth = depth - 1
 		}
 
 		transition := Transitions[a[index]]
@@ -366,16 +385,13 @@ func merge(a []int, b []int, Images []string, Transitions []string, TransitionDu
 			"-map", "[outa]",
 			"-y", fmt.Sprintf("../output/merged%d-%d.mp4", a[0], newDepth),
 		)
-		//println(cmd)
 		output, err := cmd.CombinedOutput()
 		checkCMDError(output, err)
 	}
 
 	for i < len(a) && j < len(b) {
-
 		final = append(final, a[i])
 		i++
-
 	}
 
 	for ; j < len(b); j++ {
