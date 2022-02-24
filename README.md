@@ -10,8 +10,9 @@ End-To-End Proposal [Link](https://docs.google.com/document/d/1h8e6FNbOrI4lRuMVR
 
 
 MVP Document: [Link](https://docs.google.com/document/d/1ZZWAUzAl-bXXmUvLlqPjvj4Cw5By6yFNDDiA70PlY2E/edit?usp=sharing)<br>
-Proof of Work Repo (Python): https://github.com/sillsdev/storybuilder/tree/v2<br>
-Inputs Template Documentation: [Link](https://docs.google.com/document/d/1J4X6RWUgXnI0aeaLEv4ePBXeZJQJSMgZ-WLQNx7Hcj8/edit?usp=sharing)
+Proof of Work Repo (Python): [Link](https://github.com/sillsdev/storybuilder/tree/v2)<br>
+Inputs Template Documentation: [Link](https://docs.google.com/document/d/1J4X6RWUgXnI0aeaLEv4ePBXeZJQJSMgZ-WLQNx7Hcj8/edit?usp=sharing)<br>
+Design Document: [Link](https://docs.google.com/document/d/1vjogjaWZ0ww7rJtKz3J4iuVbbFrZF3KASdHBW-zPYfE/edit#)
 
 # Plans/Ideas for Project:
 
