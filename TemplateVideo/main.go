@@ -3,21 +3,26 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io/fs"
 	"log"
 	"os/exec"
+	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
 )
 
+var templateName string
+
 func main() {
-	var templateName string
 	var fadeType string
-	flag.StringVar(&templateName, "t", "./eng Visit of the Magi -Mat 2.1-23.slideshow", "Specify template to use.")
+	flag.StringVar(&templateName, "t", "", "Specify template to use.")
 	flag.StringVar(&fadeType, "f", "", "Specify transition type (x) for xfade, leave blank for old fade")
 	flag.Parse()
 	if templateName == "" {
-		log.Fatalln("Error, invalid template specified")
+		fmt.Println("No template provided, searching local folder...")
+		filepath.WalkDir(".", findTemplate)
 	}
 	start := time.Now()
 	// First we parse in the various pieces from the template
@@ -56,7 +61,7 @@ func main() {
 	}
 	fmt.Println("Parsing completed...")
 	fmt.Println("Scaling Images...")
-	scaleImages(Images, "1500", "900")
+	//	scaleImages(Images, "1500", "900")
 	fmt.Println("Creating video...")
 
 	//if using xfade
@@ -100,6 +105,18 @@ func scaleImages(Images []string, height string, width string) {
 		output, err := cmd.CombinedOutput()
 		checkCMDError(output, err)
 	}
+}
+
+func findTemplate(s string, d fs.DirEntry, err error) error {
+	slideRegEx := regexp.MustCompile(`.+(.slideshow)$`)
+	if err != nil {
+		return err
+	}
+	if slideRegEx.MatchString(d.Name()) {
+		fmt.Println("Found template: " + s + "\nUsing found template...")
+		templateName = s
+	}
+	return nil
 }
 
 /** Function to create the video with all images + transitions
