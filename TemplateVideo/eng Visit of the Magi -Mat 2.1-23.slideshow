@@ -27,7 +27,7 @@
     <timing start="3680" duration="10040"/>
     <transition duration="1000">wipeleft</transition>
   </slide>
-  <slide>
+  <!--<slide>
     <audio>
       <filename>narration-001.mp3</filename>
     </audio>
@@ -145,4 +145,5 @@
     <image lang="cust">../Sweet-credits-cust.odg</image>
     <image>Sweet-credits.jpg</image>
   </slide>
+  -->
 </slideshow>
