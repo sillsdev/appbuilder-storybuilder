@@ -180,6 +180,8 @@ func combineVideos(Images []string, Transitions []string, TransitionDurations []
 	checkCMDError(output, err)
 }
 
+/* Function to add audio to the video separately from the images (OUTDATED)
+ */
 func addAudio(Images []string) {
 	totalNumImages := len(Images)
 	cmd := exec.Command("ffmpeg", "-i", fmt.Sprintf("../output/merged%d.mp4", totalNumImages-2), "-i", "./narration-001.mp3",
@@ -190,6 +192,10 @@ func addAudio(Images []string) {
 }
 
 /* Function to add background music to the intro of the video at the end of the production process
+ *
+ * Parameters:
+ *			backgroundAudio (string): filepath to the audio file to be used
+ *			backgroundVolume (string): string value between 0 and 1 of the volume to use
  */
 func addBackgroundMusic(backgroundAudio string, backgroundVolume string) {
 	tempVol := 0.0
@@ -241,7 +247,13 @@ func make_temp_videos_with_audio(Images []string, Transitions []string, Transiti
 }
 
 /* Function to combine temporary videos with XFade transitions,
-*  this time by combining videos in a binary tree fashion to decrease the exponential time increase
+ * this time by combining videos in a binary tree fashion to decrease the exponential time increase
+ *
+ * Parameters:
+ *		Images: ([]string) - Array of filenames for the images
+ *		Transitions: ([]string) - Array of XFade transition names to use
+ *		TransitionDurations: ([]string) - Array of durations for each transition
+ *		Timings: ([][]string) - 2-D array of timing data for the audio for each image
  */
 func combine_xfade_with_audio_faster(Images []string, Transitions []string, TransitionDurations []string, Timings [][]string) {
 	totalNumImages := len(Images)
@@ -310,6 +322,12 @@ func combine_xfade_with_audio_faster(Images []string, Transitions []string, Tran
 }
 
 /* Function to combine the temporary videos with XFade transitions in between, this time preserving audio
+ *
+ * Parameters:
+ *		Images: ([]string) - Array of filenames for the images
+ *		Transitions: ([]string) - Array of XFade transition names to use
+ *		TransitionDurations: ([]string) - Array of durations for each transition
+ *		Timings: ([][]string) - 2-D array of timing data for the audio for each image
  */
 func combine_xfade_with_audio(Images []string, Transitions []string, TransitionDurations []string, Timings [][]string) {
 	totalNumImages := len(Images)
