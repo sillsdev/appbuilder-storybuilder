@@ -6,6 +6,7 @@ import (
 	"log"
 	"os/exec"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -277,33 +278,24 @@ func merge(a []int, b []int, Images []string, Transitions []string, TransitionDu
 		offset := (float64(duration) - float64(transition_duration)) / 1000
 
 		//check if video has full or partial audio
-		// cmd := exec.Command("ffprobe",
-		// 	"-i", fmt.Sprintf("../output/temp%d-%d.mp4", a[0], totalNumImages),
-		// 	"-v", "error", "-of", "flat=s_",
-		// 	"-select_streams", "1", "-show_entries", "stream=duration", "-of", "default=noprint_wrappers=1:nokey=1")
+		cmd := exec.Command("ffprobe",
+			"-i", fmt.Sprintf("../output/temp%d-%d.mp4", a[0], totalNumImages),
+			"-v", "error", "-of", "flat=s_",
+			"-select_streams", "1", "-show_entries", "stream=duration", "-of", "default=noprint_wrappers=1:nokey=1")
 
-		// output, err := cmd.CombinedOutput()
-		// checkCMDError(output, err)
+		output, err := cmd.CombinedOutput()
+		checkCMDError(output, err)
 
-		//audio_duration_offset, err := strconv.ParseFloat(strings.TrimSpace(string(output)), 64)
+		audio_duration_offset, err := strconv.ParseFloat(strings.TrimSpace(string(output)), 64)
+
+		if offset-audio_duration_offset > 1 {
+			//the calculated offset is more than 1 seconds longer than the true duration of the video
+			offset = offset - float64(transition_duration/1000)
+		}
 
 		fmt.Printf("Combining videos temp%d-%d.mp4 and temp%d-%d.mp4 with %s transition to merged%d-%d. \n", a[0], totalNumImages, b[0], totalNumImages, transition, a[0], depth)
 
-		// if float64(duration/1000)-audio_duration_offset > 0.1 {
-		// 	fmt.Println("has partial audio", offset)
-		// 	//has partially empty audio, so set the offset to match the audio
-		// 	cmd = exec.Command("ffmpeg",
-		// 		"-i", fmt.Sprintf("../output/temp%d-%d.mp4", a[0], totalNumImages),
-		// 		"-i", fmt.Sprintf("../output/temp%d-%d.mp4", b[0], totalNumImages),
-		// 		"-filter_complex",
-		// 		fmt.Sprintf("[0:v]settb=AVTB,fps=30/1[v0];[1:v]settb=AVTB,fps=30/1[v1];[v0][v1]xfade=transition=%s:duration=%f:offset=%f,format=yuv420p[outv];[0:a][1:a]apad=whole_dur=%f[outa]", transition, transition_duration_float, offset, offset),
-		// 		"-map", "[outv]",
-		// 		"-map", "[outa]",
-		// 		"-y", fmt.Sprintf("../output/merged%d-%d.mp4", a[0], depth),
-		// 	)
-		// 	fmt.Println(cmd)
-		// } else {
-		cmd := exec.Command("ffmpeg",
+		cmd = exec.Command("ffmpeg",
 			"-i", fmt.Sprintf("../output/temp%d-%d.mp4", a[0], totalNumImages),
 			"-i", fmt.Sprintf("../output/temp%d-%d.mp4", b[0], totalNumImages),
 			"-filter_complex",
@@ -312,9 +304,8 @@ func merge(a []int, b []int, Images []string, Transitions []string, TransitionDu
 			"-map", "[outa]",
 			"-y", fmt.Sprintf("../output/merged%d-%d.mp4", a[0], depth),
 		)
-		// }
 
-		output, err := cmd.CombinedOutput()
+		output, err = cmd.CombinedOutput()
 		checkCMDError(output, err)
 	} else if len(a) == 1 && len(b) == 2 {
 		//if odd number of things to merge, then it merges a temporary video with merged file
