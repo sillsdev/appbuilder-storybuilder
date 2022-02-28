@@ -16,7 +16,7 @@ Design Document: [Link](https://docs.google.com/document/d/1vjogjaWZ0ww7rJtKz3J4
 
 # Plans/Ideas for Project:
 
-# How-To Documentation
+# How-To-Install Documentation
 1. Download FFmpeg https://www.ffmpeg.org by selecting the appropriate .zip for your OS (Here's a basic tutorial for [Windows](https://www.wikihow.com/Install-FFmpeg-on-Windows), [Mac](https://manual.audacityteam.org/man/installing_ffmpeg_for_mac.html), and [Linux](https://www.tecmint.com/install-ffmpeg-in-linux/)) 
 2. Download and install GO https://golang.org/dl/ (Should include instructions on their page)
 3. Download executable of code for your system (WIP, need to compile/create packages for various systems, currently you need to download the source code to run)
