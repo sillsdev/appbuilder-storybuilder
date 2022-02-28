@@ -24,14 +24,16 @@ Design Document: [Link](https://docs.google.com/document/d/1vjogjaWZ0ww7rJtKz3J4
 5. Run code in a CLI set to main directory of repo with "./executable_name [OPTION_FLAGS]" (WIP, currently use "go run main.go read.go" or just "go run ." in the directory with the source code)
 6. There are also several flags you can include at runtime to alter the output or inputs:
 
-    -v : Verbosity, used to modify how much output is reported on the commandline for debugging purposes (less verbose by default)
+    -h : (binary flag) (H)elp: Display options list with instructions on how to run 
     
-    -s : Save files, used to specify if user wants to preserve the temporary files used in the video production (videos are deleted by default)
+    -v : (binary flag) (V)erbosity: If present, modifies command line output to display more information about video production process
     
-    -t : Template, used to input a specific template file to use, otherwise the program searches current directory for any .slideshow files and uses the first it finds
+    -s : (binary flag) (S)ave files: If present, saves temporary files created as part of the video creation process for debugging purposes
     
-    -o : Output location, used to specify where to store the finished video, will use current directory by default
+    -t : (includes string) (T)emplate: Used to input a specific template file to use, otherwise the program searches current directory for any .slideshow files and uses the first it finds
     
-    -l : Lower quality, used to generate a lower quality video for smaller file size for easier distribution (default videos will be 1280x720)
+    -o : (includes string) (O)utput location: Used to specify where to store the finished video, program uses current directory by default
+    
+    -l : (binary flag) (L)ower quality: Used to generate a lower quality video for smaller file size for easier distribution (default videos will are 1280x720, lower quality is 640x480)
 
 
