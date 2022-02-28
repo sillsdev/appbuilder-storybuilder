@@ -3,22 +3,27 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io/fs"
 	"log"
 	"os/exec"
+	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 )
 
+var templateName string
+
 func main() {
-	var templateName string
 	var fadeType string
-	flag.StringVar(&templateName, "t", "./eng Visit of the Magi -Mat 2.1-23.slideshow", "Specify template to use.")
+	flag.StringVar(&templateName, "t", "", "Specify template to use.")
 	flag.StringVar(&fadeType, "f", "", "Specify transition type (x) for xfade, leave blank for old fade")
 	flag.Parse()
 	if templateName == "" {
-		log.Fatalln("Error, invalid template specified")
+		fmt.Println("No template provided, searching local folder...")
+		filepath.WalkDir(".", findTemplate)
 	}
 	start := time.Now()
 	// First we parse in the various pieces from the template
@@ -61,7 +66,7 @@ func main() {
 	}
 	fmt.Println("Parsing completed...")
 	fmt.Println("Scaling Images...")
-	scaleImages(Images, "1500", "900")
+	//	scaleImages(Images, "1500", "900")
 	fmt.Println("Creating video...")
 
 	//if using xfade
@@ -83,18 +88,24 @@ func main() {
 	fmt.Println(fmt.Sprintf("Time Taken: %f seconds", duration.Seconds()))
 }
 
+// Function to check errors from non-CMD output
 func check(err error) {
 	if err != nil {
 		fmt.Println("Error", err)
 		log.Fatalln(err)
 	}
 }
+
+// Function to check CMD error output when running commands
 func checkCMDError(output []byte, err error) {
 	if err != nil {
 		log.Fatalln(fmt.Sprint(err) + ": " + string(output))
 	}
 }
 
+/* Function to scale all the input images to a uniform height/width
+*  to prevent issues in the video creation process
+ */
 func scaleImages(Images []string, height string, width string) {
 	var wg sync.WaitGroup
 	// Tell the 'wg' WaitGroup how many threads/goroutines
@@ -115,9 +126,27 @@ func scaleImages(Images []string, height string, width string) {
 	wg.Wait()
 }
 
+/* Function to find the .slideshow template if none provided
+ */
+func findTemplate(s string, d fs.DirEntry, err error) error {
+	slideRegEx := regexp.MustCompile(`.+(.slideshow)$`)
+	if err != nil {
+		return err
+	}
+	if slideRegEx.MatchString(d.Name()) {
+		fmt.Println("Found template: " + s + "\nUsing found template...")
+		templateName = s
+	}
+	return nil
+}
+
 /** Function to create the video with all images + transitions
 *	Parameters:
 *		Images: ([]string) - Array of filenames for the images
+*		Transitions: ([]string) - Array of XFade transition names to use
+*		TransitionDurations: ([]string) - Array of durations for each transition
+*		Timings: ([][]string) - 2-D array of timing data for the audio for each image
+*		Audios: ([]string) - Array of filenames for the audios to be used
  */
 func combineVideos(Images []string, Transitions []string, TransitionDurations []string, Timings [][]string, Audios []string) {
 	input_images := []string{}
@@ -252,7 +281,7 @@ func mergeVideos(items []int, Images []string, Transitions []string, TransitionD
 		defer wg.Done()
 		first = mergeVideos(items[:len(items)/2], Images, Transitions, TransitionDurations, Timings, depth+1)
 	}()
-
+  
 	second := mergeVideos(items[len(items)/2:], Images, Transitions, TransitionDurations, Timings, depth+1)
 
 	wg.Wait()

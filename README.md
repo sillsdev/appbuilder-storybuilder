@@ -10,17 +10,24 @@ End-To-End Proposal [Link](https://docs.google.com/document/d/1h8e6FNbOrI4lRuMVR
 
 
 MVP Document: [Link](https://docs.google.com/document/d/1ZZWAUzAl-bXXmUvLlqPjvj4Cw5By6yFNDDiA70PlY2E/edit?usp=sharing)<br>
-Proof of Work Repo (Python): https://github.com/sillsdev/storybuilder/tree/v2<br>
-Inputs Template Documentation: [Link](https://docs.google.com/document/d/1J4X6RWUgXnI0aeaLEv4ePBXeZJQJSMgZ-WLQNx7Hcj8/edit?usp=sharing)
+Proof of Work Repo (Python): [Link](https://github.com/sillsdev/storybuilder/tree/v2)<br>
+Inputs Template Documentation: [Link](https://docs.google.com/document/d/1J4X6RWUgXnI0aeaLEv4ePBXeZJQJSMgZ-WLQNx7Hcj8/edit?usp=sharing)<br>
+Design Document: [Link](https://docs.google.com/document/d/1vjogjaWZ0ww7rJtKz3J4iuVbbFrZF3KASdHBW-zPYfE/edit#)
 
 # Plans/Ideas for Project:
 
 # How-To Documentation
-1. Download FFmpeg https://www.ffmpeg.org and GO https://golang.org/dl/
-2. Edit the base paths for repository and FFmpeg in main.go
-3. Put an image (.png, .jpg, etc) and audio (.mp3, .wav, etc) into the corresponding input folders and change the variable names in inputs.json to the names of your files
-4. Run code in CLI set to main directory of repo with "go run main.go" or " go run ."
+1. Download FFmpeg https://www.ffmpeg.org by selecting the appropriate .zip for your OS (Here's a basic tutorial for [Windows](https://www.wikihow.com/Install-FFmpeg-on-Windows), [Mac](https://manual.audacityteam.org/man/installing_ffmpeg_for_mac.html), and [Linux](https://www.tecmint.com/install-ffmpeg-in-linux/)) 
+2. Download and install GO https://golang.org/dl/ (Should include instructions on their page)
+3. Edit the base paths for repository and FFmpeg in main.go (these are on line 10)
+4. Put any images (.png, .jpg, etc) and audios (.mp3, .wav, etc) into a the same folder as the executable, and also include a .slideshow xml file with parameters for the video (.slideshow documentation is listed above)
+5. Run code in a CLI set to main directory of repo with "go run main.go read.go" or just "go run ."
+6. There are also several flags you can include at runtime to alter the output or inputs:
 
-# issue 
-1. After running the the command  "go run main.go" or " go run ." it will create a video in your output folder, 
-before running the command again we need to delete the created videos in the output folder every time we want to create a new video. 
+    -v : Verbosity, used to modify how much output is reported on the commandline for debugging purposes (less verbose by default)
+    -s : Save files, used to specify if user wants to preserve the temporary files used in the video production (videos are deleted by default)
+    -t : Template, used to input a specific template file to use, otherwise the program searches current directory for any .slideshow files and uses the first it finds
+    -o : Output location, used to specify where to store the finished video, will use current directory by default
+    -l : Lower quality, used to generate a lower quality video for smaller file size for easier distribution (default videos will be 1280x720)
+
+
