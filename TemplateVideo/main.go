@@ -7,7 +7,6 @@ import (
 	"os/exec"
 	"regexp"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -122,8 +121,8 @@ func scaleImages(Images []string, height string, width string) {
 //  version := string(match[1])
 
 func checkFFmpegVersion() string {
-	//cmd := "ffmpeg -version | grep 'ffmpeg version' | sed -e 's/ffmpeg version //' -e 's/[^-0-9.].*//'"
-	//out, err := exec.Command("bash", "-c", cmd).Output()
+	// cmd := "ffmpeg -version | grep 'ffmpeg version' | sed -e 's/ffmpeg version //' -e 's/[^-0-9.].*//'"
+	// out, err := exec.Command("bash", "-c", cmd).Output()
 	cmd := exec.Command("ffmpeg", "-version")
 	output, err := cmd.Output()
 	checkCMDError(output, err)
@@ -131,14 +130,24 @@ func checkFFmpegVersion() string {
 	match := re.FindSubmatch(output)
 	version := string(match[1])
 
-	if version != "" {
-		log.Fatal(version)
+	// v1, err := version.OldVersion("4.3.0")
+	// v2, err := version.OldVersion()
+	if err != nil {
+		log.Fatal(err)
 	}
-	fmt.Printf("Version is %s\n", output)
+	fmt.Printf("Version is %s\n", match)
 	var result = ""
-	stringOut := strings.Replace(string(output), ".", "", -1)
+	//stringOut := strings.Replace(string(output), ".", "", -1)
+	//version := string(match[1])
 
-	char := []rune(stringOut)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// fmt.Printf("Version is %s\n", out)
+	// var result = ""
+	// stringOut := strings.Replace(string(out), ".", "", -1)
+
+	char := []rune(version)
 
 	var intArr [3]int
 	intArr[0] = 4
