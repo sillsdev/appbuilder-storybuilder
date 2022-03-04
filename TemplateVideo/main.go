@@ -17,8 +17,6 @@ func main() {
 	if templateName == "" {
 		log.Fatalln("Error, invalid template specified")
 	}
-	// exec.Cmd
-	// run := exec.Command("ffmpeg", "-verson", "sed -e", "-e", +make_temp_videos, combine_xfade)
 
 	start := time.Now()
 	// First we parse in the various pieces from the template
@@ -64,14 +62,6 @@ func main() {
 	scaleImages(Images, "1500", "900")
 	fmt.Println("Creating video...")
 
-	////// check to see
-	// read about regular expression in Go.
-	// find ffmpeg
-	// ffmpeg -version | sed -n "s/ffmpeg version \([-0-9.]*\).*/\1/p;"
-	/// read about the old ffmpeg version when was added
-	// firgure out how to do the comparison of the two strings,  (function)
-	//
-
 	make_temp_videos(Images, Transitions, TransitionDurations, Timings, Audios)
 	combine_xfade(Images, Transitions, TransitionDurations, Timings)
 	addAudio(Images)
@@ -113,40 +103,18 @@ func scaleImages(Images []string, height string, width string) {
 *
  */
 
-//  cmd := exec.Command("ffmpeg", "-version")
-//  output, err := cmd.Output()
-//  checkCMDError(output,err)
-//  re := regexp.MustCompile(`version (?P<num>\d+\.\d+(\.\d+)?)`)
-//  match := re.FindSubmatch(output)
-//  version := string(match[1])
-
 func checkFFmpegVersion() string {
-	// cmd := "ffmpeg -version | grep 'ffmpeg version' | sed -e 's/ffmpeg version //' -e 's/[^-0-9.].*//'"
-	// out, err := exec.Command("bash", "-c", cmd).Output()
 	cmd := exec.Command("ffmpeg", "-version")
 	output, err := cmd.Output()
 	checkCMDError(output, err)
 	re := regexp.MustCompile(`version (?P<num>\d+\.\d+(\.\d+)?)`)
 	match := re.FindSubmatch(output)
 	version := string(match[1])
-
-	// v1, err := version.OldVersion("4.3.0")
-	// v2, err := version.OldVersion()
 	if err != nil {
 		log.Fatal(err)
 	}
 	fmt.Printf("Version is %s\n", match)
 	var result = ""
-	//stringOut := strings.Replace(string(output), ".", "", -1)
-	//version := string(match[1])
-
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// fmt.Printf("Version is %s\n", out)
-	// var result = ""
-	// stringOut := strings.Replace(string(out), ".", "", -1)
-
 	char := []rune(version)
 
 	var intArr [3]int
