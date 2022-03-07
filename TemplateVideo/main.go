@@ -53,19 +53,21 @@ func main() {
 		Timings = append(Timings, temp)
 	}
 	fmt.Println("Choosing Xfade or Fade Filter: ")
-	fmt.Println("Type F for Old Fade and N for New Fade:  ")
+	//fmt.Println("Type F for Old Fade and N for New Fade:  ")
 	var fadeType string = checkFFmpegVersion()
-	fmt.Scanln(&fadeType)
+	fmt.Println(fadeType)
 
 	fmt.Println("Parsing completed...")
 	fmt.Println("Scaling Images...")
 	scaleImages(Images, "1500", "900")
 	fmt.Println("Creating video...")
-
-	make_temp_videos(Images, Transitions, TransitionDurations, Timings, Audios)
-	combine_xfade(Images, Transitions, TransitionDurations, Timings)
-	addAudio(Images)
-	combineVideos(Images, Transitions, TransitionDurations, Timings, Audios)
+	if fadeType == "X" {
+		//make_temp_videos(Images, Transitions, TransitionDurations, Timings, Audios)
+		//combine_xfade(Images, Transitions, TransitionDurations, Timings)
+		//addAudio(Images)
+	} else {
+		//combineVideos(Images, Transitions, TransitionDurations, Timings, Audios)
+	}
 
 	//combineVideos(Images, Transitions, TransitionDurations, Timings, Audios)
 	fmt.Println("Finished making video...")
@@ -74,7 +76,7 @@ func main() {
 	addBackgroundMusic(BackAudioPath, BackAudioVolume)
 	duration := time.Since(start)
 	fmt.Println("Video completed!")
-	fmt.Println(fmt.Sprintf("Time Taken: %f seconds", duration.Seconds()))
+	fmt.Printf(fmt.Sprintf("Time Taken: %f seconds", duration.Seconds()))
 }
 
 func check(err error) {
