@@ -57,19 +57,12 @@ func main() {
 
 	fmt.Println("Parsing completed...")
 	fmt.Println("Scaling Images...")
-	//scaleImages(Images, "1500", "900")
 	fmt.Println("Creating video...")
 	if fadeType == "X" {
 		fmt.Println("ffmpeg version is > 4.3.0, using xfade transition method...")
-		//make_temp_videos(Images, Transitions, TransitionDurations, Timings, Audios)
-		//combine_xfade(Images, Transitions, TransitionDurations, Timings)
-		//addAudio(Images)
 	} else {
 		fmt.Println("ffmpeg version is < 4.3.0, using old fade transition method...")
-		//combineVideos(Images, Transitions, TransitionDurations, Timings, Audios)
 	}
-
-	//combineVideos(Images, Transitions, TransitionDurations, Timings, Audios)
 	fmt.Println("Finished making video...")
 
 	fmt.Println("Adding intro music...")
@@ -109,7 +102,7 @@ func checkFFmpegVersion() string {
 	cmd := exec.Command("ffmpeg", "-version")
 	output, err := cmd.Output()
 	checkCMDError(output, err)
-	re := regexp.MustCompile(`version (?P<num>\d+\.\d+(\.\d+)?)`) // Regular expression to fetch the version number
+	re := regexp.MustCompile(`version (?P<num>\d+\.\d+(\.\d+)?)`) // Regular expression to fetch the version number, aslo made last number optional
 	match := re.FindSubmatch(output)                              // Returns an array with the matching string, if found
 	if match == nil {
 		log.Fatal(match)
