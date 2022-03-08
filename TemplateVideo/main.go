@@ -52,20 +52,20 @@ func main() {
 		temp := []string{slide.Timing.Start, slide.Timing.Duration}
 		Timings = append(Timings, temp)
 	}
-	fmt.Println("Choosing Xfade or Fade Filter: ")
-	//fmt.Println("Type F for Old Fade and N for New Fade:  ")
+	fmt.Println("Checking ffmpeg version...")
 	var fadeType string = checkFFmpegVersion()
-	fmt.Println(fadeType)
 
 	fmt.Println("Parsing completed...")
 	fmt.Println("Scaling Images...")
-	scaleImages(Images, "1500", "900")
+	//scaleImages(Images, "1500", "900")
 	fmt.Println("Creating video...")
 	if fadeType == "X" {
+		fmt.Println("ffmpeg version is > 4.3.0, using xfade transition method...")
 		//make_temp_videos(Images, Transitions, TransitionDurations, Timings, Audios)
 		//combine_xfade(Images, Transitions, TransitionDurations, Timings)
 		//addAudio(Images)
 	} else {
+		fmt.Println("ffmpeg version is < 4.3.0, using old fade transition method...")
 		//combineVideos(Images, Transitions, TransitionDurations, Timings, Audios)
 	}
 
@@ -109,22 +109,25 @@ func checkFFmpegVersion() string {
 	cmd := exec.Command("ffmpeg", "-version")
 	output, err := cmd.Output()
 	checkCMDError(output, err)
-	re := regexp.MustCompile(`version (?P<num>\d+\.\d+(\.\d+)?)`)
-	match := re.FindSubmatch(output)
-	version := string(match[1])
+	re := regexp.MustCompile(`version (?P<num>\d+\.\d+(\.\d+)?)`) // Regular expression to fetch the version number
+	match := re.FindSubmatch(output)                              // Returns an array with the matching string, if found
+	if match == nil {
+		log.Fatal(match)
+	}
+	version := string(match[1]) // Get the string that holds the version number
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("Version is %s\n", match)
+	fmt.Printf("Version is %s\n", version)
 	var result = ""
 	char := []rune(version)
 
-	var intArr [3]int
-	intArr[0] = 4
-	intArr[1] = 3
-	intArr[2] = 0
+	intArr := []int{4, 3, 0}
 	for i := 0; i < len(intArr); i++ {
 		var temp = string(char[i])
+		if temp == "." {
+			break
+		}
 		num, version := strconv.Atoi(temp)
 
 		if version != nil {
@@ -133,12 +136,10 @@ func checkFFmpegVersion() string {
 
 		if intArr[i] > num {
 			result = "F" //means use old fade
-			fmt.Println(result)
 			return result
 		}
-		result = "N" // use new fade
+		result = "X" // use new fade
 	}
-	fmt.Println(result)
 	return result
 }
 
