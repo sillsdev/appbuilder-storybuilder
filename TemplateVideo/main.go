@@ -79,12 +79,12 @@ func main() {
 		//allImages := []int{0, 1, 2, 3, 4, 5, 6}
 
 		mergeVideos(allImages, Images, Transitions, TransitionDurations, Timings, 0)
+		copyFinal()
 	} else {
 		combineVideos(Images, Transitions, TransitionDurations, Timings, Audios)
 		fmt.Println("Adding intro music...")
 		addBackgroundMusic(BackAudioPath, BackAudioVolume)
 	}
-
 	fmt.Println("Finished making video...")
 
 	if !*saveTemps { // If user did not specify the -s flag at runtime, delete the temporary videos
@@ -110,6 +110,13 @@ func checkCMDError(output []byte, err error) {
 	if err != nil {
 		log.Fatalln(fmt.Sprint(err) + ": " + string(output))
 	}
+}
+
+// Function to copy over the final video out of the main directory
+func copyFinal() {
+	cmd := exec.Command("ffmpeg", "-i", "./temp/merged0-0.mp4", "-y", "./final.mp4")
+	output, err := cmd.CombinedOutput()
+	checkCMDError(output, err)
 }
 
 /* Function to scale all the input images to a uniform height/width
