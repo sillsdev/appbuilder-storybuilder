@@ -17,9 +17,9 @@ import (
 var templateName string
 
 func main() {
-	err := os.Mkdir("./temp", 0755)
-	check(err)
+	os.Mkdir("./temp", 0755)
 	var fadeType string
+	var saveTemps = flag.Bool("s", false, "Include if user wishes to save temporary files created during production")
 	flag.StringVar(&templateName, "t", "", "Specify template to use.")
 	flag.StringVar(&fadeType, "f", "", "Specify transition type (x) for xfade, leave blank for old fade")
 	flag.Parse()
@@ -83,11 +83,13 @@ func main() {
 
 	//fmt.Println("Adding intro music...")
 	//addBackgroundMusic(BackAudioPath, BackAudioVolume)
-	err = os.RemoveAll("./temp")
-	check(err)
+	if !*saveTemps { // If user did not specify the -s flag at runtime, delete the temporary videos
+		err := os.RemoveAll("./temp")
+		check(err)
+	}
 	duration := time.Since(start)
 	fmt.Println("Video completed!")
-	fmt.Println(fmt.Sprintf("Time Taken: %f seconds", duration.Seconds()))
+	fmt.Printf(fmt.Sprintf("Time Taken: %f seconds\n", duration.Seconds()))
 }
 
 // Function to check errors from non-CMD output
@@ -321,6 +323,7 @@ func combine_xfade_with_audio(Images []string, Transitions []string, TransitionD
 	totalDuration := 0
 
 	duration, err := strconv.Atoi(Timings[0][1])
+	check(err)
 	totalDuration += duration
 	transition_duration, err := strconv.Atoi(TransitionDurations[0])
 	check(err)
@@ -346,8 +349,10 @@ func combine_xfade_with_audio(Images []string, Transitions []string, TransitionD
 	for i := 1; i < totalNumImages-1; i++ {
 		// Now we go through the remaining videos and combine each one with the merged one
 		duration, err := strconv.Atoi(Timings[i][1])
+		check(err)
 		totalDuration += duration
 		transition_duration, err := strconv.Atoi(TransitionDurations[i])
+		check(err)
 		transition := Transitions[i]
 
 		cmd := exec.Command("ffprobe", "-i", // Verify the merged video is there
@@ -363,19 +368,29 @@ func combine_xfade_with_audio(Images []string, Transitions []string, TransitionD
 		check(err)
 
 		offset := Round(actual_duration, 0.5) - float64(transition_duration/1000)
-		offset = offset
 
 		fmt.Println(actual_duration*1000, offset)
 
 		fmt.Printf("Combining videos merged%d.mp4 and temp%d-%d.mp4 with %s transition. \n", i, i+1, totalNumImages, transition)
-		cmd = exec.Command("ffmpeg",
-			"-i", fmt.Sprintf("./temp/merged%d.mp4", i),
-			"-i", fmt.Sprintf("./temp/temp%d-%d.mp4", i+1, totalNumImages),
-			"-filter_complex", fmt.Sprintf("xfade=transition=%s:duration=%dms:offset=%f[video];acrossfade=d=%d:o=0:c1=tri:c2=tri[audio]", transition, transition_duration, offset, transition_duration/1000),
-			"-vsync", "0", "-map", "[video]",
-			"-map", "[audio]",
-			"-pix_fmt", "yuv420p", "-y", fmt.Sprintf("./temp/merged%d.mp4", i+1),
-		)
+		if i == totalNumImages-2 { // If the last video store it in the main folder, (WIP, or wherever specified)
+			cmd = exec.Command("ffmpeg",
+				"-i", fmt.Sprintf("./temp/merged%d.mp4", i),
+				"-i", fmt.Sprintf("./temp/temp%d-%d.mp4", i+1, totalNumImages),
+				"-filter_complex", fmt.Sprintf("xfade=transition=%s:duration=%dms:offset=%f[video];acrossfade=d=%d:o=0:c1=tri:c2=tri[audio]", transition, transition_duration, offset, transition_duration/1000),
+				"-vsync", "0", "-map", "[video]",
+				"-map", "[audio]",
+				"-pix_fmt", "yuv420p", "-y", "./final.mp4",
+			)
+		} else {
+			cmd = exec.Command("ffmpeg",
+				"-i", fmt.Sprintf("./temp/merged%d.mp4", i),
+				"-i", fmt.Sprintf("./temp/temp%d-%d.mp4", i+1, totalNumImages),
+				"-filter_complex", fmt.Sprintf("xfade=transition=%s:duration=%dms:offset=%f[video];acrossfade=d=%d:o=0:c1=tri:c2=tri[audio]", transition, transition_duration, offset, transition_duration/1000),
+				"-vsync", "0", "-map", "[video]",
+				"-map", "[audio]",
+				"-pix_fmt", "yuv420p", "-y", fmt.Sprintf("./temp/merged%d.mp4", i+1),
+			)
+		}
 
 		output, err = cmd.CombinedOutput()
 		checkCMDError(output, err)

@@ -27,7 +27,7 @@
     <timing start="3680" duration="10040"/>
     <transition duration="1000">wipeleft</transition>
   </slide>
-  <!--<slide>
+  <slide>
     <audio>
       <filename>narration-001.mp3</filename>
     </audio>
@@ -37,7 +37,7 @@
     <timing start="13720" duration="8080"/>
      <transition duration="1000">wiperight</transition>
   </slide>
-  <slide>
+  <!--<slide>
     <audio>
       <filename>narration-001.mp3</filename>
     </audio>
