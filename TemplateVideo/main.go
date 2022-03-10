@@ -80,7 +80,6 @@ func main() {
 		combineVideos(Images, Transitions, TransitionDurations, Timings, Audios)
 		fmt.Println("Adding intro music...")
 		addBackgroundMusic(BackAudioPath, BackAudioVolume)
-		lowQualityImage()
 	}
 
 	fmt.Println("Finished making video...")
@@ -154,7 +153,7 @@ func lowQualityImage(Images []string, height string, width string) {
 		go func(i int) {
 			defer wg.Done()
 			cmd := exec.Command("ffmpeg", "-i", "./"+Images[i],
-				"-vf", fmt.Sprintf("scale=852:480", height, width)+",setsar=1:1",
+				"-vf", "scale=852:450"+",setsar=1:1",
 				"-y", "./"+Images[i])
 			output, err := cmd.CombinedOutput()
 			checkCMDError(output, err)
