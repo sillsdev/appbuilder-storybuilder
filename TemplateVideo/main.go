@@ -80,6 +80,7 @@ func main() {
 		combineVideos(Images, Transitions, TransitionDurations, Timings, Audios)
 		fmt.Println("Adding intro music...")
 		addBackgroundMusic(BackAudioPath, BackAudioVolume)
+		lowQualityImage()
 	}
 
 	fmt.Println("Finished making video...")
@@ -138,6 +139,29 @@ func findTemplate(s string, d fs.DirEntry, err error) error {
 		templateName = s
 	}
 	return nil
+}
+
+/* Function that will Generate a low Quality video mostly 852x450
+ */
+func lowQualityImage(Images []string, height string, width string) {
+
+	var wg sync.WaitGroup
+	// Tell the 'wg' WaitGroup how many threads/goroutines
+	//   that are about to run concurrently.
+	wg.Add(len(Images))
+
+	for i := 0; i < len(Images); i++ {
+		go func(i int) {
+			defer wg.Done()
+			cmd := exec.Command("ffmpeg", "-i", "./"+Images[i],
+				"-vf", fmt.Sprintf("scale=852:480", height, width)+",setsar=1:1",
+				"-y", "./"+Images[i])
+			output, err := cmd.CombinedOutput()
+			checkCMDError(output, err)
+		}(i)
+	}
+
+	wg.Wait()
 }
 
 /** Function to create the video with all images + transitions
@@ -281,7 +305,7 @@ func mergeVideos(items []int, Images []string, Transitions []string, TransitionD
 		defer wg.Done()
 		first = mergeVideos(items[:len(items)/2], Images, Transitions, TransitionDurations, Timings, depth+1)
 	}()
-  
+
 	second := mergeVideos(items[len(items)/2:], Images, Transitions, TransitionDurations, Timings, depth+1)
 
 	wg.Wait()
