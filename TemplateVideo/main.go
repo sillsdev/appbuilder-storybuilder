@@ -67,6 +67,8 @@ func main() {
 	fmt.Println("Parsing completed...")
 	fmt.Println("Scaling Images...")
 	//	scaleImages(Images, "1500", "900")
+	lowQualityImage(Images, "852", "450")
+
 	fmt.Println("Creating video...")
 
 	//if using xfade
@@ -153,7 +155,7 @@ func lowQualityImage(Images []string, height string, width string) {
 		go func(i int) {
 			defer wg.Done()
 			cmd := exec.Command("ffmpeg", "-i", "./"+Images[i],
-				"-vf", "scale=852:450"+",setsar=1:1",
+				"-vf", fmt.Sprintf("scale=%s:%s", height, width)+",setsar=1:1",
 				"-y", "./"+Images[i])
 			output, err := cmd.CombinedOutput()
 			checkCMDError(output, err)
