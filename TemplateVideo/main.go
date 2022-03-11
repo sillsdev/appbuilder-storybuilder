@@ -200,7 +200,7 @@ func combineVideos(Images []string, Transitions []string, TransitionDurations []
 		"-max_muxing_queue_size", "9999",
 		"-filter_complex", input_filters, "-map", "[v]",
 		"-map", fmt.Sprintf("%d:a", totalNumImages),
-		"-shortest", "-y", "../mergedVideo.mp4")
+		"-shortest", "-y", "./temp/mergedVideo.mp4")
 
 	fmt.Println("Creating video...")
 	cmd := exec.Command("ffmpeg", input_images...)
