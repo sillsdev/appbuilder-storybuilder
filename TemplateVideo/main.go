@@ -20,6 +20,7 @@ func main() {
 	var fadeType string
 	flag.StringVar(&templateName, "t", "", "Specify template to use.")
 	flag.StringVar(&fadeType, "f", "", "Specify transition type (x) for xfade, leave blank for old fade")
+	var lowQuality = flag.Bool("l", false, "Include to produce a lower quality video (852x480 instead of 1280x720)")
 	flag.Parse()
 	if templateName == "" {
 		fmt.Println("No template provided, searching local folder...")
@@ -66,9 +67,11 @@ func main() {
 	}
 	fmt.Println("Parsing completed...")
 	fmt.Println("Scaling Images...")
-	//	scaleImages(Images, "1500", "900")
-	lowQualityImage(Images, "852", "450")
-
+	if *lowQuality {
+		scaleImages(Images, "852", "480")
+	} else {
+		scaleImages(Images, "1280", "720")
+	}
 	fmt.Println("Creating video...")
 
 	//if using xfade
@@ -140,29 +143,6 @@ func findTemplate(s string, d fs.DirEntry, err error) error {
 		templateName = s
 	}
 	return nil
-}
-
-/* Function that will Generate a low Quality video mostly 852x450
- */
-func lowQualityImage(Images []string, height string, width string) {
-
-	var wg sync.WaitGroup
-	// Tell the 'wg' WaitGroup how many threads/goroutines
-	//   that are about to run concurrently.
-	wg.Add(len(Images))
-
-	for i := 0; i < len(Images); i++ {
-		go func(i int) {
-			defer wg.Done()
-			cmd := exec.Command("ffmpeg", "-i", "./"+Images[i],
-				"-vf", fmt.Sprintf("scale=%s:%s", height, width)+",setsar=1:1",
-				"-y", "./"+Images[i])
-			output, err := cmd.CombinedOutput()
-			checkCMDError(output, err)
-		}(i)
-	}
-
-	wg.Wait()
 }
 
 /** Function to create the video with all images + transitions
