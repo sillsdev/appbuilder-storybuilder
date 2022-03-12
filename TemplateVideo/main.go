@@ -161,8 +161,10 @@ func findTemplate(s string, d fs.DirEntry, err error) error {
 		return err
 	}
 	if slideRegEx.MatchString(d.Name()) {
-		fmt.Println("Found template: " + s + "\nUsing found template...")
-		templateName = s
+		if templateName == "" {
+			fmt.Println("Found template: " + s + "\nUsing found template...")
+			templateName = s
+		}
 	}
 	return nil
 }
