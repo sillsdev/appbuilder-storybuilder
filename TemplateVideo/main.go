@@ -19,16 +19,15 @@ var templateName string
 
 func main() {
 	os.Mkdir("./temp", 0755)
-	var fadeType string
 	var saveTemps = flag.Bool("s", false, "Include if user wishes to save temporary files created during production")
 	flag.StringVar(&templateName, "t", "", "Specify template to use.")
-	flag.StringVar(&fadeType, "f", "", "Specify transition type (x) for xfade, leave blank for old fade")
 	var lowQuality = flag.Bool("l", false, "Include to produce a lower quality video (852x480 instead of 1280x720)")
 	flag.Parse()
 	if templateName == "" {
 		fmt.Println("No template provided, searching local folder...")
 		filepath.WalkDir(".", findTemplate)
 	}
+
 	start := time.Now()
 	// First we parse in the various pieces from the template
 	Images := []string{}
@@ -68,8 +67,13 @@ func main() {
 		temp := []string{slide.Timing.Start, slide.Timing.Duration}
 		Timings = append(Timings, temp)
 	}
+	fmt.Println("Checking ffmpeg version...")
+	var fadeType string = checkFFmpegVersion()
+
 	fmt.Println("Parsing completed...")
 	fmt.Println("Scaling Images...")
+	fmt.Println("Creating video...")
+
 	if *lowQuality {
 		scaleImages(Images, "852", "480")
 	} else {
@@ -77,8 +81,8 @@ func main() {
 	}
 	fmt.Println("Creating video...")
 
-	//if using xfade
-	if fadeType == "xfade" {
+	if fadeType == "X" {
+		fmt.Println("ffmpeg version is > 4.3.0, using xfade transition method...")
 		allImages := make_temp_videos_with_audio(Images, Transitions, TransitionDurations, Timings, Audios)
 		//for testing
 		//allImages := []int{0, 1, 2, 3, 4, 5, 6}
@@ -86,6 +90,7 @@ func main() {
 		mergeVideos(allImages, Images, Transitions, TransitionDurations, Timings, 0)
 		copyFinal()
 	} else {
+		fmt.Println("ffmpeg version is < 4.3.0, using old fade transition method...")
 		combineVideos(Images, Transitions, TransitionDurations, Timings, Audios)
 		fmt.Println("Adding intro music...")
 		addBackgroundMusic(BackAudioPath, BackAudioVolume)
@@ -93,6 +98,7 @@ func main() {
 	fmt.Println("Finished making video...")
 
 	if !*saveTemps { // If user did not specify the -s flag at runtime, delete the temporary videos
+		fmt.Println("-s not specified, removing temporary videos...")
 		err := os.RemoveAll("./temp")
 		check(err)
 	}
@@ -155,10 +161,54 @@ func findTemplate(s string, d fs.DirEntry, err error) error {
 		return err
 	}
 	if slideRegEx.MatchString(d.Name()) {
-		fmt.Println("Found template: " + s + "\nUsing found template...")
-		templateName = s
+		if templateName == "" {
+			fmt.Println("Found template: " + s + "\nUsing found template...")
+			templateName = s
+		}
 	}
 	return nil
+}
+
+/** Function to Check ffmpeg version and choose xfade vs traditional fade accordingly
+*
+ */
+
+func checkFFmpegVersion() string {
+	cmd := exec.Command("ffmpeg", "-version")
+	output, err := cmd.Output()
+	checkCMDError(output, err)
+	re := regexp.MustCompile(`version (?P<num>\d+\.\d+(\.\d+)?)`) // Regular expression to fetch the version number, aslo made last number optional
+	match := re.FindSubmatch(output)                              // Returns an array with the matching string, if found
+	if match == nil {
+		log.Fatal(match)
+	}
+	version := string(match[1]) // Get the string that holds the version number
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("Version is %s\n", version)
+	var result = ""
+	char := []rune(version)
+
+	intArr := []int{4, 3, 0}
+	for i := 0; i < len(intArr); i++ {
+		var temp = string(char[i])
+		if temp == "." {
+			break
+		}
+		num, version := strconv.Atoi(temp)
+
+		if version != nil {
+			return version.Error()
+		}
+
+		if intArr[i] > num {
+			result = "F" //means use old fade
+			return result
+		}
+		result = "X" // use new fade
+	}
+	return result
 }
 
 /** Function to create the video with all images + transitions
