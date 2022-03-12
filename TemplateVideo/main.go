@@ -23,6 +23,7 @@ func main() {
 	var saveTemps = flag.Bool("s", false, "Include if user wishes to save temporary files created during production")
 	flag.StringVar(&templateName, "t", "", "Specify template to use.")
 	flag.StringVar(&fadeType, "f", "", "Specify transition type (x) for xfade, leave blank for old fade")
+	var lowQuality = flag.Bool("l", false, "Include to produce a lower quality video (852x480 instead of 1280x720)")
 	flag.Parse()
 	if templateName == "" {
 		fmt.Println("No template provided, searching local folder...")
@@ -69,7 +70,11 @@ func main() {
 	}
 	fmt.Println("Parsing completed...")
 	fmt.Println("Scaling Images...")
-	//	scaleImages(Images, "1500", "900")
+	if *lowQuality {
+		scaleImages(Images, "852", "480")
+	} else {
+		scaleImages(Images, "1280", "720")
+	}
 	fmt.Println("Creating video...")
 
 	//if using xfade
