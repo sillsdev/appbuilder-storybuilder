@@ -17,19 +17,27 @@ import (
 
 var templateName string
 
+// Main function
 func main() {
+	// Create a temporary folder to store temporary files created when created a video
 	os.Mkdir("./temp", 0755)
+
+	// Ask the user for options
 	var saveTemps = flag.Bool("s", false, "Include if user wishes to save temporary files created during production")
-	flag.StringVar(&templateName, "t", "", "Specify template to use.")
-	var lowQuality = flag.Bool("l", false, "Include to produce a lower quality video (852x480 instead of 1280x720)")
+	flag.StringVar(&templateName, "t", "", "Specify template to use")
+	var lowQuality = flag.Bool("l", false, "Include to produce a lower quality video (1280x720 => 852x480)")
+	// var outputLocation = flag.Bool("o", false, "Include if the user wants to save the final video to a specific location")
 	flag.Parse()
+
+	// Search for a template in local folder if no template is provided
 	if templateName == "" {
 		fmt.Println("No template provided, searching local folder...")
 		filepath.WalkDir(".", findTemplate)
 	}
 
 	start := time.Now()
-	// First we parse in the various pieces from the template
+
+	// Parse in the various pieces from the template
 	Images := []string{}
 	Audios := []string{}
 	BackAudioPath := ""
@@ -67,45 +75,46 @@ func main() {
 		temp := []string{slide.Timing.Start, slide.Timing.Duration}
 		Timings = append(Timings, temp)
 	}
-	fmt.Println("Checking ffmpeg version...")
+	fmt.Println("Parsing completed...")
+
+	// Checking FFmpeg version to use Xfade
+	fmt.Println("Checking FFmpeg version...")
 	var fadeType string = checkFFmpegVersion()
 
-	fmt.Println("Parsing completed...")
-	fmt.Println("Scaling Images...")
-	fmt.Println("Creating video...")
-
+	// Scaling images depending on video quality option
+	fmt.Println("Scaling images...")
 	if *lowQuality {
 		scaleImages(Images, "852", "480")
 	} else {
 		scaleImages(Images, "1280", "720")
 	}
+
 	fmt.Println("Creating video...")
 
 	if fadeType == "X" {
-		fmt.Println("ffmpeg version is > 4.3.0, using xfade transition method...")
-		allImages := make_temp_videos_with_audio(Images, Transitions, TransitionDurations, Timings, Audios)
-		//for testing
-		//allImages := []int{0, 1, 2, 3, 4, 5, 6}
-
+		fmt.Println("FFmpeg version is bigger than 4.3.0, using Xfade transition method...")
+		allImages := makeTempVideosWithAudio(Images, Transitions, TransitionDurations, Timings, Audios)
 		mergeVideos(allImages, Images, Transitions, TransitionDurations, Timings, 0)
 		copyFinal()
 	} else {
-		fmt.Println("ffmpeg version is < 4.3.0, using old fade transition method...")
+		fmt.Println("FFmpeg version is smaller than 4.3.0, using old fade transition method...")
 		combineVideos(Images, Transitions, TransitionDurations, Timings, Audios)
 		fmt.Println("Adding intro music...")
 		addBackgroundMusic(BackAudioPath, BackAudioVolume)
 	}
+
 	fmt.Println("Finished making video...")
 
-	if !*saveTemps { // If user did not specify the -s flag at runtime, delete the temporary videos
+	// If user did not specify the -s flag at runtime, delete all the temporary videos
+	if !*saveTemps {
 		fmt.Println("-s not specified, removing temporary videos...")
 		err := os.RemoveAll("./temp")
 		check(err)
 	}
 
+	fmt.Println("Video production completed!")
 	duration := time.Since(start)
-	fmt.Println("Video completed!")
-	fmt.Printf(fmt.Sprintf("Time Taken: %f seconds\n", duration.Seconds()))
+	fmt.Printf(fmt.Sprintf("Time Taken: %.2f seconds\n", duration.Seconds()))
 }
 
 // Function to check errors from non-CMD output
@@ -131,7 +140,7 @@ func copyFinal() {
 }
 
 /* Function to scale all the input images to a uniform height/width
-*  to prevent issues in the video creation process
+ * to prevent issues in the video creation process
  */
 func scaleImages(Images []string, height string, width string) {
 	var wg sync.WaitGroup
@@ -153,10 +162,9 @@ func scaleImages(Images []string, height string, width string) {
 	wg.Wait()
 }
 
-/* Function to find the .slideshow template if none provided
- */
+// Function to find the .slideshow template if none provided
 func findTemplate(s string, d fs.DirEntry, err error) error {
-	slideRegEx := regexp.MustCompile(`.+(.slideshow)$`)
+	slideRegEx := regexp.MustCompile(`.+(.slideshow)$`) // Regular expression to find the .slideshow file
 	if err != nil {
 		return err
 	}
@@ -169,15 +177,12 @@ func findTemplate(s string, d fs.DirEntry, err error) error {
 	return nil
 }
 
-/** Function to Check ffmpeg version and choose xfade vs traditional fade accordingly
-*
- */
-
+// Function to Check FFmpeg version and choose Xfade or traditional fade accordingly
 func checkFFmpegVersion() string {
 	cmd := exec.Command("ffmpeg", "-version")
 	output, err := cmd.Output()
 	checkCMDError(output, err)
-	re := regexp.MustCompile(`version (?P<num>\d+\.\d+(\.\d+)?)`) // Regular expression to fetch the version number, aslo made last number optional
+	re := regexp.MustCompile(`version (?P<num>\d+\.\d+(\.\d+)?)`) // Regular expression to fetch the version number, also made last number optional
 	match := re.FindSubmatch(output)                              // Returns an array with the matching string, if found
 	if match == nil {
 		log.Fatal(match)
@@ -203,7 +208,7 @@ func checkFFmpegVersion() string {
 		}
 
 		if intArr[i] > num {
-			result = "F" //means use old fade
+			result = "F" // use old fade
 			return result
 		}
 		result = "X" // use new fade
@@ -211,13 +216,13 @@ func checkFFmpegVersion() string {
 	return result
 }
 
-/** Function to create the video with all images + transitions
-*	Parameters:
-*		Images: ([]string) - Array of filenames for the images
-*		Transitions: ([]string) - Array of XFade transition names to use
-*		TransitionDurations: ([]string) - Array of durations for each transition
-*		Timings: ([][]string) - 2-D array of timing data for the audio for each image
-*		Audios: ([]string) - Array of filenames for the audios to be used
+/* Function to create the video with all images + transitions
+ * Parameters:
+ *		Images: ([]string) - Array of filenames for the images
+ *		Transitions: ([]string) - Array of Xfade transition names to use
+ *		TransitionDurations: ([]string) - Array of durations for each transition
+ *		Timings: ([][]string) - 2-D array of timing data for the audio for each image
+ *		Audios: ([]string) - Array of filenames for the audios to be used
  */
 func combineVideos(Images []string, Transitions []string, TransitionDurations []string, Timings [][]string, Audios []string) {
 	input_images := []string{}
@@ -264,8 +269,7 @@ func combineVideos(Images []string, Transitions []string, TransitionDurations []
 	checkCMDError(output, err)
 }
 
-/* Function to add background music to the intro of the video at the end of the production process
- */
+// Function to add background music to the intro of the video at the end of the production process
 func addBackgroundMusic(backgroundAudio string, backgroundVolume string) {
 	tempVol := 0.0
 	// Convert the background volume to a number between 0 and 1, if it exists
@@ -290,7 +294,8 @@ func addBackgroundMusic(backgroundAudio string, backgroundVolume string) {
 	checkCMDError(output, e)
 }
 
-func make_temp_videos_with_audio(Images []string, Transitions []string, TransitionDurations []string, Timings [][]string, Audios []string) []int {
+// Function to add audio to the temporary videos
+func makeTempVideosWithAudio(Images []string, Transitions []string, TransitionDurations []string, Timings [][]string, Audios []string) []int {
 	totalNumImages := len(Images)
 
 	cmd := exec.Command("")
@@ -298,18 +303,14 @@ func make_temp_videos_with_audio(Images []string, Transitions []string, Transiti
 	allImages := []int{}
 
 	var wg sync.WaitGroup
-	// Tell the 'wg' WaitGroup how many threads/goroutines
-	//   that are about to run concurrently.
+	// Tell the 'wg' WaitGroup how many threads/goroutines that are about to run concurrently
 	wg.Add(totalNumImages)
 
 	for i := 0; i < totalNumImages; i++ {
-		// Spawn a thread for each iteration in the loop.
-		// Pass 'i' into the goroutine's function
-		//   in order to make sure each goroutine
-		//   uses a different value for 'i'.
+		// Spawn a thread for each iteration in the loop
+		// Pass 'i' into the goroutine's function in order to make sure each goroutine uses a different value for 'i'
 		go func(i int) {
-			// At the end of the goroutine, tell the WaitGroup
-			//   that another thread has completed.
+			// At the end of the goroutine, tell the WaitGroup that another thread has completed
 			defer wg.Done()
 
 			if Timings[i][0] == "" || Audios[i] == "" {
@@ -340,6 +341,8 @@ func make_temp_videos_with_audio(Images []string, Transitions []string, Transiti
 	return allImages
 }
 
+// Function to merge all temporary videos together
+// Product final video using merge() function
 func mergeVideos(items []int, Images []string, Transitions []string, TransitionDurations []string, Timings [][]string, depth int) []int {
 	if len(items) < 2 {
 		return items
