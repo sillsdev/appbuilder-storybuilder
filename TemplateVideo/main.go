@@ -92,8 +92,8 @@ func main() {
 	fmt.Println("Creating video...")
 
 	if fadeType == "X" {
-		fmt.Println("FFmpeg version is bigger than 4.3.0, using Xfade transition method...")
-		makeTempVideosWithoutAudio(Images, Transitions, TransitionDurations, Timings, Audios)
+		// fmt.Println("FFmpeg version is bigger than 4.3.0, using Xfade transition method...")
+		// makeTempVideosWithoutAudio(Images, Transitions, TransitionDurations, Timings, Audios)
 		MergeTempVideos(Images, Transitions, TransitionDurations, Timings)
 		addAudio(Timings, Audios)
 		copyFinal()
@@ -324,15 +324,6 @@ func makeTempVideosWithoutAudio(Images []string, Transitions []string, Transitio
 			//   that another thread has completed.
 			defer wg.Done()
 
-			// totalDuration := 0
-			// for j := 1; j < i; j++ {
-			// 	if Audios[i] == Audios[j] {
-			// 		duration, err := strconv.Atoi(Timings[j][1])
-			// 		check(err)
-			// 		totalDuration += duration
-			// 	}
-			// }
-
 			fmt.Printf("Making temp%d-%d.mp4 video with empty audio\n", i, totalNumImages)
 			cmd = exec.Command("ffmpeg", "-loop", "1", "-ss", "0ms", "-t", Timings[i][1]+"ms", "-i", Images[i],
 				"-f", "lavfi", "-i", "aevalsrc=0", "-t", Timings[i][1],
@@ -359,6 +350,7 @@ func makeTempVideosWithoutAudio(Images []string, Transitions []string, Transitio
  *		Timings: ([][]string) - 2-D array of timing data for the audio for each image
  */
 func MergeTempVideos(Images []string, Transitions []string, TransitionDurations []string, Timings [][]string) {
+	fmt.Println("Merging temporary videos...")
 	video_fade_filter := ""
 	settb := ""
 	last_fade_output := "0:v"
@@ -411,8 +403,9 @@ func MergeTempVideos(Images []string, Transitions []string, TransitionDurations 
 		if i < totalNumImages-2 {
 			video_fade_filter += fmt.Sprintf("[%s];", next_fade_output)
 		} else {
-			video_fade_filter += ",format=yuv420p;"
+			video_fade_filter += ",format=yuv420p"
 		}
+
 	}
 
 	input_files = append(input_files, "-filter_complex", settb+video_fade_filter, "-y", "./temp/video_with_no_audio.mp4")
