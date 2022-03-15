@@ -92,8 +92,8 @@ func main() {
 	fmt.Println("Creating video...")
 
 	if fadeType == "X" {
-		// fmt.Println("FFmpeg version is bigger than 4.3.0, using Xfade transition method...")
-		// makeTempVideosWithoutAudio(Images, Transitions, TransitionDurations, Timings, Audios)
+		fmt.Println("FFmpeg version is bigger than 4.3.0, using Xfade transition method...")
+		makeTempVideosWithoutAudio(Images, Transitions, TransitionDurations, Timings, Audios)
 		MergeTempVideos(Images, Transitions, TransitionDurations, Timings)
 		addAudio(Timings, Audios)
 		copyFinal()
@@ -353,7 +353,7 @@ func MergeTempVideos(Images []string, Transitions []string, TransitionDurations 
 	fmt.Println("Merging temporary videos...")
 	video_fade_filter := ""
 	settb := ""
-	last_fade_output := "0:v"
+	last_fade_output := "v0"
 
 	totalNumImages := len(Images)
 
@@ -362,15 +362,20 @@ func MergeTempVideos(Images []string, Transitions []string, TransitionDurations 
 
 	input_files := []string{}
 
+	prev_offset := make([]float64, totalNumImages)
+	prev_offset[0] = 0.0
+
 	for i := 0; i < totalNumImages; i++ {
-		settb += fmt.Sprintf("[%d]settb=AVTB[%d:v];", i, i)
 		input_files = append(input_files, "-i", fmt.Sprintf("./temp/temp%d-%d.mp4", i, totalNumImages))
 	}
 
-	for i := 0; i < len(Images)-1; i++ {
+	for i := 0; i < totalNumImages-1; i++ {
 		transition := Transitions[i]
 		transition_duration, err := strconv.ParseFloat(strings.TrimSpace(string(TransitionDurations[i])), 8)
 		transition_duration = transition_duration / 1000
+
+		//add time to the video that is sacrificied to xfade
+		settb += fmt.Sprintf("[%d:v]tpad=stop_mode=clone:stop_duration=%f[v%d];", i, transition_duration/2, i)
 
 		//get the current video length in seconds
 		cmd := exec.Command("ffprobe",
@@ -390,13 +395,13 @@ func MergeTempVideos(Images []string, Transitions []string, TransitionDurations 
 
 		next_fade_output := fmt.Sprintf("v%d%d", i, i+1)
 
-		//calculate the offset
-		offset_from_previous_transitions := transition_duration * 1000
-		offset_from_previous_transitions = (offset_from_previous_transitions * float64(i+1)) / 1000
-		offset := video_total_length - (transition_duration)*(float64(i)) + offset_from_previous_transitions
-
-		video_fade_filter += fmt.Sprintf("[%s][%d:v]xfade=transition=%s:duration=%.2f:offset=%.2f", last_fade_output, i+1,
-			transition, transition_duration, offset)
+		if i < totalNumImages-2 {
+			video_fade_filter += fmt.Sprintf("[%s][v%d]xfade=transition=%s:duration=%f:offset=%f", last_fade_output, i+1,
+				transition, transition_duration, video_total_length)
+		} else {
+			video_fade_filter += fmt.Sprintf("[%s][%d:v]xfade=transition=%s:duration=%f:offset=%f", last_fade_output, i+1,
+				transition, transition_duration, video_total_length)
+		}
 
 		last_fade_output = next_fade_output
 
@@ -411,6 +416,7 @@ func MergeTempVideos(Images []string, Transitions []string, TransitionDurations 
 	input_files = append(input_files, "-filter_complex", settb+video_fade_filter, "-y", "./temp/video_with_no_audio.mp4")
 
 	cmd := exec.Command("ffmpeg", input_files...)
+	fmt.Println(cmd)
 
 	output, err := cmd.CombinedOutput()
 	checkCMDError(output, err)
