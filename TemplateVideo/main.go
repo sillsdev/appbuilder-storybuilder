@@ -412,7 +412,6 @@ func MergeTempVideos(Images []string, Transitions []string, TransitionDurations 
 		}
 
 	}
-
 	input_files = append(input_files, "-filter_complex", settb+video_fade_filter, "-y", "./temp/video_with_no_audio.mp4")
 
 	cmd := exec.Command("ffmpeg", input_files...)
@@ -477,7 +476,7 @@ func TrimEnd() {
 		"-v", "error",
 		"-show_entries", "format=duration",
 		"-of", "default=noprint_wrappers=1:nokey=1",
-		fmt.Sprintf("./temp/video_with_no_audio.mp4"),
+		fmt.Sprintln("./temp/video_with_no_audio.mp4"),
 	)
 	output, err := cmd.CombinedOutput()
 	checkCMDError(output, err)
@@ -489,7 +488,7 @@ func TrimEnd() {
 		"-i", "./temp/merged_video.mp4",
 		"-c", "copy", "-t", fmt.Sprintf("%f", video_length),
 		"-y",
-		fmt.Sprintf("./temp/final.mp4"),
+		fmt.Sprintln("./temp/final.mp4"),
 	)
 
 	output, err = cmd.CombinedOutput()
