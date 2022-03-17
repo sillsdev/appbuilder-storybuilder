@@ -64,7 +64,12 @@ func main() {
 		} else {
 			TransitionDurations = append(TransitionDurations, slide.Transition.Duration)
 		}
-		motions := [][]float64{convertStringToFloat(slide.Motion.Start), convertStringToFloat(slide.Motion.End)}
+		var motions = [][]float64{}
+		if slide.Motion.Start == "" {
+			motions = [][]float64{{0, 0, 1, 1}, {0, 0, 1, 1}}
+		} else {
+			motions = [][]float64{convertStringToFloat(slide.Motion.Start), convertStringToFloat(slide.Motion.End)}
+		}
 		Motions = append(Motions, motions)
 		temp := []string{slide.Timing.Start, slide.Timing.Duration}
 		Timings = append(Timings, temp)
@@ -208,7 +213,6 @@ func combineVideos(Images []string, Transitions []string, TransitionDurations []
 				half_duration, err := strconv.Atoi(TransitionDurations[i])
 				check(err)
 				// generate params for ffmpeg zoompan filter
-
 				input_filters += createZoomCommand(Motions[i], convertStringToFloat(Timings[i][1]))
 				input_filters += fmt.Sprintf(",fade=t=in:st=0:d=%dms,fade=t=out:st=%sms:d=%dms", half_duration/2, Timings[i][1], half_duration/2)
 
@@ -329,6 +333,7 @@ func make_temp_videos(Images []string, Transitions []string, TransitionDurations
 
 func make_temp_videos_with_audio(Images []string, Transitions []string, TransitionDurations []string, Timings [][]string, Audios []string, Motions [][][]float64) []int {
 	totalNumImages := len(Images)
+	fmt.Println("Motions: ", Motions)
 	cmd := exec.Command("")
 
 	allImages := []int{}
@@ -361,6 +366,8 @@ func make_temp_videos_with_audio(Images []string, Transitions []string, Transiti
 						"-ss", Timings[i][0]+"ms", "-t", Timings[i][1]+"ms", "-i", Audios[i],
 						"-shortest", "-pix_fmt", "yuv420p", "-y", fmt.Sprintf("./temp/temp%d-%d.mp4", i, totalNumImages))
 				} else {
+
+					fmt.Println("Adding zoom to video", i)
 					zoom_cmd := createZoomCommand(Motions[i], convertStringToFloat(Timings[i][1]))
 					cmd = exec.Command("ffmpeg", "-loop", "1", "-ss", "0ms", "-t", Timings[i][1]+"ms", "-i", "./"+Images[i],
 						"-ss", Timings[i][0]+"ms", "-t", Timings[i][1]+"ms", "-i", Audios[i], "-filter_complex", zoom_cmd,
