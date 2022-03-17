@@ -416,7 +416,6 @@ func MergeTempVideos(Images []string, Transitions []string, TransitionDurations 
 	input_files = append(input_files, "-filter_complex", settb+video_fade_filter, "-y", "./temp/video_with_no_audio.mp4")
 
 	cmd := exec.Command("ffmpeg", input_files...)
-	fmt.Println(cmd)
 
 	output, err := cmd.CombinedOutput()
 	checkCMDError(output, err)
