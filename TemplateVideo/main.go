@@ -115,7 +115,7 @@ func main() {
 
 	fmt.Println("Video production completed!")
 	duration := time.Since(start)
-	fmt.Printf(fmt.Sprintf("Time Taken: %.2f seconds\n", duration.Seconds()))
+	fmt.Printf("Time Taken: %.2f seconds\n", duration.Seconds())
 }
 
 // Function to check errors from non-CMD output
@@ -196,16 +196,16 @@ func checkFFmpegVersion() string {
 	var result = ""
 	char := []rune(version)
 
-	intArr := []int{4, 3, 0}
+	intArr := []int{4, 3, 0} /// 4.3.0 = 4 3 0
 	for i := 0; i < len(intArr); i++ {
 		var temp = string(char[i])
 		if temp == "." {
 			break
 		}
-		num, version := strconv.Atoi(temp)
+		num, err := strconv.Atoi(temp) // 4
 
-		if version != nil {
-			return version.Error()
+		if err != nil {
+			return err.Error()
 		}
 
 		if intArr[i] > num {
