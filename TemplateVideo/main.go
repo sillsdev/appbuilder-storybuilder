@@ -122,7 +122,6 @@ func main() {
 
 	fmt.Println("Video production completed!")
 	duration := time.Since(start)
-	fmt.Println("Video completed!")
 	fmt.Printf("Time Taken: %f seconds", duration.Seconds())
 }
 
@@ -224,16 +223,16 @@ func checkFFmpegVersion() string {
 	var result = ""
 	char := []rune(version)
 
-	intArr := []int{4, 3, 0}
+	intArr := []int{4, 3, 0} /// 4.3.0 = 4 3 0
 	for i := 0; i < len(intArr); i++ {
 		var temp = string(char[i])
 		if temp == "." {
 			break
 		}
-		num, version := strconv.Atoi(temp)
+		num, err := strconv.Atoi(temp) // 4
 
-		if version != nil {
-			return version.Error()
+		if err != nil {
+			return err.Error()
 		}
 
 		if intArr[i] > num {
@@ -482,8 +481,6 @@ func MergeTempVideos(Images []string, Transitions []string, TransitionDurations 
 	input_files = append(input_files, "-filter_complex", settb+video_fade_filter, "-y", "./temp/video_with_no_audio.mp4")
 
 	cmd := exec.Command("ffmpeg", input_files...)
-
-	fmt.Println(cmd)
 
 	output, err := cmd.CombinedOutput()
 	checkCMDError(output, err)
