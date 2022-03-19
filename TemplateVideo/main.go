@@ -88,7 +88,7 @@ func main() {
 	fmt.Println("Checking FFmpeg version...")
 	var fadeType string = checkFFmpegVersion()
 
-	// Scaling images depending on video quality option
+	//Scaling images depending on video quality option
 	fmt.Println("Scaling images...")
 	if *lowQuality {
 		scaleImages(Images, "852", "480")
@@ -100,8 +100,8 @@ func main() {
 
 	if fadeType == "X" {
 		fmt.Println("FFmpeg version is bigger than 4.3.0, using Xfade transition method...")
-		//makeTempVideosWithoutAudio(Images, Transitions, TransitionDurations, Timings, Audios, Motions)
-		//MergeTempVideos(Images, Transitions, TransitionDurations, Timings)
+		makeTempVideosWithoutAudio(Images, Transitions, TransitionDurations, Timings, Audios, Motions)
+		MergeTempVideos(Images, Transitions, TransitionDurations, Timings)
 		addAudio(Timings, Audios)
 		copyFinal()
 	} else {
@@ -354,7 +354,7 @@ func createZoomCommand(Motions [][]float64, Duration []float64) string {
 	zoom_cmd := fmt.Sprintf("1/((%.3f)%s(%.3f)*on)", size_init-size_incr, checkSign(size_incr), math.Abs(size_incr))
 	x_cmd := fmt.Sprintf("%0.3f*iw%s%0.3f*iw*on", x_init-x_incr, checkSign(x_incr), math.Abs(x_incr))
 	y_cmd := fmt.Sprintf("%0.3f*ih%s%0.3f*ih*on", y_init-y_incr, checkSign(y_incr), math.Abs(y_incr))
-	final_cmd := fmt.Sprintf("zoompan=z='%s':x='%s':y='%s':d=%d:fps=25,scale=1280:720,setsar=1:1", zoom_cmd, x_cmd, y_cmd, num_frames)
+	final_cmd := fmt.Sprintf("scale=8000:-1,zoompan=z='%s':x='%s':y='%s':d=%d:fps=25,scale=1280:720,setsar=1:1", zoom_cmd, x_cmd, y_cmd, num_frames)
 
 	// Test zoompan example from documentation (Zoom in up to 1.5x and pan always at center of picture)
 	//final_cmd = "zoompan=z='min(zoom+0.0015,1.5)':d=700:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)',scale=1500:900,setsar=1:1"
@@ -391,7 +391,7 @@ func makeTempVideosWithoutAudio(Images []string, Transitions []string, Transitio
 			//   that another thread has completed.
 			defer wg.Done()
 			fmt.Printf("Making temp%d-%d.mp4 video\n", i, totalNumImages)
-			zoom_cmd := createZoomCommand(Motions[i], convertStringToFloat(Timings[i][1]))
+			zoom_cmd := createZoomCommand(Motions[i], convertStringToFloat(duration))
 			cmd := exec.Command("ffmpeg", "-loop", "1", "-i", "./"+Images[i],
 				"-t", duration+"ms", "-filter_complex", zoom_cmd,
 				"-shortest", "-pix_fmt", "yuv420p", "-y", fmt.Sprintf("./temp/temp%d-%d.mp4", i, totalNumImages))
