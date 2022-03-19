@@ -100,8 +100,8 @@ func main() {
 
 	if fadeType == "X" {
 		fmt.Println("FFmpeg version is bigger than 4.3.0, using Xfade transition method...")
-		makeTempVideosWithoutAudio(Images, Transitions, TransitionDurations, Timings, Audios, Motions)
-		MergeTempVideos(Images, Transitions, TransitionDurations, Timings)
+		//makeTempVideosWithoutAudio(Images, Transitions, TransitionDurations, Timings, Audios, Motions)
+		//MergeTempVideos(Images, Transitions, TransitionDurations, Timings)
 		addAudio(Timings, Audios)
 		copyFinal()
 	} else {
@@ -171,12 +171,13 @@ func copyFinal() {
  * to prevent issues in the video creation process
  */
 func scaleImages(Images []string, height string, width string) {
+	totalNumImages := len(Images)
 	var wg sync.WaitGroup
 	// Tell the 'wg' WaitGroup how many threads/goroutines
 	//   that are about to run concurrently.
-	wg.Add(len(Images))
+	wg.Add(totalNumImages)
 
-	for i := 0; i < len(Images); i++ {
+	for i := 0; i < totalNumImages; i++ {
 		go func(i int) {
 			defer wg.Done()
 			cmd := exec.Command("ffmpeg", "-i", "./"+Images[i],
@@ -358,7 +359,7 @@ func createZoomCommand(Motions [][]float64, Duration []float64) string {
 
 	// Test zoompan example from documentation (Zoom in up to 1.5x and pan always at center of picture)
 	//final_cmd = "zoompan=z='min(zoom+0.0015,1.5)':d=700:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)',scale=1500:900,setsar=1:1"
-	fmt.Println(final_cmd)
+
 	return final_cmd
 }
 
@@ -374,52 +375,38 @@ func makeTempVideosWithoutAudio(Images []string, Transitions []string, Transitio
 	fmt.Println("Making temporary videos in parallel...")
 	totalNumImages := len(Images)
 
-	for i := 0; i < totalNumImages-1; i++ {
-		fmt.Printf("Making temp%d-%d.mp4 video\n", i, totalNumImages)
-		zoom_cmd := createZoomCommand(Motions[i], convertStringToFloat(Timings[i][1]))
-		cmd := exec.Command("ffmpeg", "-loop", "1", "-i", "./"+Images[i],
-			"-t", Timings[i][1]+"ms", "-filter_complex", zoom_cmd,
-			"-shortest", "-pix_fmt", "yuv420p", "-y", fmt.Sprintf("./temp/temp%d-%d.mp4", i, totalNumImages))
+	var wg sync.WaitGroup
+	// Tell the 'wg' WaitGroup how many threads/goroutines
+	//   that are about to run concurrently.
+	wg.Add(totalNumImages)
 
-		output, err := cmd.CombinedOutput()
-		checkCMDError(output, err)
+	for i := 0; i < totalNumImages; i++ {
+		go func(i int) {
+			duration := "5000"
+
+			if Timings[i][1] != "" {
+				duration = Timings[i][1]
+			}
+
+			// At the end of the goroutine, tell the WaitGroup
+			//   that another thread has completed.
+			defer wg.Done()
+			fmt.Printf("Making temp%d-%d.mp4 video\n", i, totalNumImages)
+			zoom_cmd := createZoomCommand(Motions[i], convertStringToFloat(Timings[i][1]))
+			cmd := exec.Command("ffmpeg", "-loop", "1", "-i", "./"+Images[i],
+				"-t", duration+"ms", "-filter_complex", zoom_cmd,
+				"-shortest", "-pix_fmt", "yuv420p", "-y", fmt.Sprintf("./temp/temp%d-%d.mp4", i, totalNumImages))
+
+			output, err := cmd.CombinedOutput()
+			checkCMDError(output, err)
+		}(i)
 	}
-
-	fmt.Printf("Making temp%d-%d.mp4 video\n", totalNumImages-1, totalNumImages)
-	cmd := exec.Command("ffmpeg", "-loop", "1", "-t", "2000ms", "-i", "./"+Images[totalNumImages-1],
-		"-shortest", "-pix_fmt", "yuv420p",
-		"-y", fmt.Sprintf("./temp/temp%d-%d.mp4", totalNumImages-1, totalNumImages))
-
-	output, err := cmd.CombinedOutput()
-	checkCMDError(output, err)
 
 	// Wait for `wg.Done()` to be exectued the number of times
 	//   specified in the `wg.Add()` call.
 	// `wg.Done()` should be called the exact number of times
 	//   that was specified in `wg.Add()`.
-	// wg.Wait()
-
-	// fmt.Println("Making temporary videos in parallel...")
-	// totalNumImages := len(Images)
-
-	// for i := 0; i < totalNumImages-1; i++ {
-	// 	fmt.Printf("Making temp%d-%d.mp4 video\n", i, totalNumImages)
-	// 	zoom_cmd := createZoomCommand(Motions[i], convertStringToFloat(Timings[i][1]))
-	// 	cmd := exec.Command("ffmpeg", "-loop", "1", "-i", "./"+Images[i],
-	// 		"-t", Timings[i][1]+"ms", "-filter_complex", zoom_cmd,
-	// 		"-shortest", "-pix_fmt", "yuv420p", "-y", fmt.Sprintf("./temp/temp%d-%d.mp4", i, totalNumImages))
-
-	// 	output, err := cmd.CombinedOutput()
-	// 	checkCMDError(output, err)
-	// }
-
-	// fmt.Printf("Making temp%d-%d.mp4 video\n", totalNumImages-1, totalNumImages)
-	// cmd := exec.Command("ffmpeg", "-loop", "1", "-t", "2000ms", "-i", "./"+Images[totalNumImages-1],
-	// 	"-shortest", "-pix_fmt", "yuv420p",
-	// 	"-y", fmt.Sprintf("./temp/temp%d-%d.mp4", totalNumImages-1, totalNumImages))
-
-	// output, err := cmd.CombinedOutput()
-	// checkCMDError(output, err)
+	wg.Wait()
 }
 
 /* Function to merge the temporary videos with transition filters between them
@@ -495,6 +482,7 @@ func MergeTempVideos(Images []string, Transitions []string, TransitionDurations 
 	input_files = append(input_files, "-filter_complex", settb+video_fade_filter, "-y", "./temp/video_with_no_audio.mp4")
 
 	cmd := exec.Command("ffmpeg", input_files...)
+
 	fmt.Println(cmd)
 
 	output, err := cmd.CombinedOutput()
@@ -537,11 +525,9 @@ func addAudio(Timings [][]string, Audios []string) {
 	audio_last_filter += fmt.Sprintf("concat=n=%d:v=0:a=1[a]", len(Audios)-1)
 	audio_filter += audio_last_filter
 
-	audio_inputs = append(audio_inputs, "-filter_complex", audio_filter, "-map", "0:v", "-map", "[a]", "-codec:v", "copy", "-codec:a", "libmp3lame", "-shortest", "./temp/merged_video.mp4")
+	audio_inputs = append(audio_inputs, "-filter_complex", audio_filter, "-map", "0:v", "-map", "[a]", "-codec:v", "copy", "-codec:a", "libmp3lame", "./temp/merged_video.mp4")
 
 	cmd := exec.Command("ffmpeg", audio_inputs...)
-
-	fmt.Println(cmd)
 
 	output, err := cmd.CombinedOutput()
 	checkCMDError(output, err)
