@@ -392,6 +392,34 @@ func makeTempVideosWithoutAudio(Images []string, Transitions []string, Transitio
 
 	output, err := cmd.CombinedOutput()
 	checkCMDError(output, err)
+
+	// Wait for `wg.Done()` to be exectued the number of times
+	//   specified in the `wg.Add()` call.
+	// `wg.Done()` should be called the exact number of times
+	//   that was specified in `wg.Add()`.
+	// wg.Wait()
+
+	// fmt.Println("Making temporary videos in parallel...")
+	// totalNumImages := len(Images)
+
+	// for i := 0; i < totalNumImages-1; i++ {
+	// 	fmt.Printf("Making temp%d-%d.mp4 video\n", i, totalNumImages)
+	// 	zoom_cmd := createZoomCommand(Motions[i], convertStringToFloat(Timings[i][1]))
+	// 	cmd := exec.Command("ffmpeg", "-loop", "1", "-i", "./"+Images[i],
+	// 		"-t", Timings[i][1]+"ms", "-filter_complex", zoom_cmd,
+	// 		"-shortest", "-pix_fmt", "yuv420p", "-y", fmt.Sprintf("./temp/temp%d-%d.mp4", i, totalNumImages))
+
+	// 	output, err := cmd.CombinedOutput()
+	// 	checkCMDError(output, err)
+	// }
+
+	// fmt.Printf("Making temp%d-%d.mp4 video\n", totalNumImages-1, totalNumImages)
+	// cmd := exec.Command("ffmpeg", "-loop", "1", "-t", "2000ms", "-i", "./"+Images[totalNumImages-1],
+	// 	"-shortest", "-pix_fmt", "yuv420p",
+	// 	"-y", fmt.Sprintf("./temp/temp%d-%d.mp4", totalNumImages-1, totalNumImages))
+
+	// output, err := cmd.CombinedOutput()
+	// checkCMDError(output, err)
 }
 
 /* Function to merge the temporary videos with transition filters between them
@@ -506,12 +534,14 @@ func addAudio(Timings [][]string, Audios []string) {
 		}
 	}
 
-	audio_last_filter += fmt.Sprintf("concat=n=%d:v=0:a=1[a]", len(Audios))
+	audio_last_filter += fmt.Sprintf("concat=n=%d:v=0:a=1[a]", len(Audios)-1)
 	audio_filter += audio_last_filter
 
 	audio_inputs = append(audio_inputs, "-filter_complex", audio_filter, "-map", "0:v", "-map", "[a]", "-codec:v", "copy", "-codec:a", "libmp3lame", "-shortest", "./temp/merged_video.mp4")
 
 	cmd := exec.Command("ffmpeg", audio_inputs...)
+
+	fmt.Println(cmd)
 
 	output, err := cmd.CombinedOutput()
 	checkCMDError(output, err)
