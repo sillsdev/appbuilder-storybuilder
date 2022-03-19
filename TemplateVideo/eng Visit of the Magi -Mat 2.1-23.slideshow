@@ -56,7 +56,7 @@
     <motion start="0 0 1 0.774" end="0.017 0.008 0.808 0.629"/>
     <timing start="27600" duration="25780"/>
   </slide>
-  <!--<slide>
+  <slide>
     <audio>
       <filename>narration-001.mp3</filename>
     </audio>
@@ -145,5 +145,4 @@
     <image lang="cust">../Sweet-credits-cust.odg</image>
     <image>Sweet-credits.jpg</image>
   </slide>
-  -->
 </slideshow>
