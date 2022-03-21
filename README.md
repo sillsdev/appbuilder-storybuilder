@@ -34,4 +34,11 @@ Design Document: [Link](https://docs.google.com/document/d/1vjogjaWZ0ww7rJtKz3J4
     
     -l : Lower quality, used to generate a lower quality video for smaller file size for easier distribution (default videos will be 1280x720)
 
+# Testing Documentation
+Our source code can be tested using our provided unit tests in main_test.go, to which we are adding more tests as we progress. This is run as follows:
+1. Ensure GoLang is installed properly, from their website [link]( https://golang.org/dl/ )
+2. Download latest versions of [main.go](https://github.com/gordon-cs/appbuilder-storybuilder/blob/main/TemplateVideo/main.go) [read.go](https://github.com/gordon-cs/appbuilder-storybuilder/blob/main/TemplateVideo/read.go) [main_test.go](https://github.com/gordon-cs/appbuilder-storybuilder/blob/main/TemplateVideo/main_test.go) and [test.slideshow](https://github.com/gordon-cs/appbuilder-storybuilder/blob/main/TemplateVideo/test.slideshow) from our repo and place them all in the same folder.
+3. Navigate to said folder with a CLI and run "go test" to execute all the unit tests provided and ensure all tests pass.
 
+If more thorough testing is desired, or if a unit test fails for some undiscoverable reason, one can manually test our code by downloading and running our code
+with our provided [Test Folder](https://github.com/gordon-cs/appbuilder-storybuilder/tree/main/Test%20Input) which contains a simple template with a few images that can be used to verify if the code is functioning properly.

@@ -171,18 +171,17 @@ func checkCMDError(output []byte, err error) {
 	}
 }
 
-// Function to copy over the final video out of the main directory
 func copyFinal() {
-	// If -o is specified, save the final video at the specified location
-	if len(location) > 0 {
-		cmd := exec.Command("ffmpeg", "-i", "./temp/final.mp4", "-y", location+"/final.mp4")
-		output, err := cmd.CombinedOutput()
-		checkCMDError(output, err)
-	} else { // If -o is not specified, save the final video at the default location
-		cmd := exec.Command("ffmpeg", "-i", "./temp/final.mp4", "-y", "./final.mp4")
-		output, err := cmd.CombinedOutput()
-		checkCMDError(output, err)
-	}
+ 	// If -o is specified, save the final video at the specified location
+ 	if len(location) > 0 {
+ 		cmd := exec.Command("ffmpeg", "-i", "./temp/final.mp4", "-y", location+"/final.mp4")
+ 		output, err := cmd.CombinedOutput()
+ 		checkCMDError(output, err)
+ 	} else { // If -o is not specified, save the final video at the default location
+ 		cmd := exec.Command("ffmpeg", "-i", "./temp/final.mp4", "-y", "./final.mp4")
+ 		output, err := cmd.CombinedOutput()
+ 		checkCMDError(output, err)
+ 	}
 }
 
 /* Function to scale all the input images to a uniform height/width
