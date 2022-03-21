@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"io/fs"
@@ -17,6 +18,7 @@ import (
 )
 
 var templateName string
+var location string
 
 // Main function
 func main() {
@@ -25,10 +27,20 @@ func main() {
 
 	// Ask the user for options
 	var saveTemps = flag.Bool("s", false, "Include if user wishes to save temporary files created during production")
-	flag.StringVar(&templateName, "t", "", "Specify template to use")
 	var lowQuality = flag.Bool("l", false, "Include to produce a lower quality video (1280x720 => 852x480)")
-	// var outputLocation = flag.Bool("o", false, "Include if the user wants to save the final video to a specific location")
+	flag.StringVar(&templateName, "t", "", "Specify template to use")
+	flag.StringVar(&location, "o", "", "Specify template to use")
 	flag.Parse()
+
+	// Create directory if output directory is not exist
+	if location != "" {
+		if _, err := os.Stat(location); errors.Is(err, os.ErrNotExist) {
+			err := os.Mkdir(location, os.ModePerm)
+			if err != nil {
+				log.Println(err)
+			}
+		}
+	}
 
 	// Search for a template in local folder if no template is provided
 	if templateName == "" {
@@ -159,11 +171,17 @@ func checkCMDError(output []byte, err error) {
 	}
 }
 
-// Function to copy over the final video out of the main directory
 func copyFinal() {
-	cmd := exec.Command("ffmpeg", "-i", "./temp/final.mp4", "-y", "./final.mp4")
-	output, err := cmd.CombinedOutput()
-	checkCMDError(output, err)
+ 	// If -o is specified, save the final video at the specified location
+ 	if len(location) > 0 {
+ 		cmd := exec.Command("ffmpeg", "-i", "./temp/final.mp4", "-y", location+"/final.mp4")
+ 		output, err := cmd.CombinedOutput()
+ 		checkCMDError(output, err)
+ 	} else { // If -o is not specified, save the final video at the default location
+ 		cmd := exec.Command("ffmpeg", "-i", "./temp/final.mp4", "-y", "./final.mp4")
+ 		output, err := cmd.CombinedOutput()
+ 		checkCMDError(output, err)
+ 	}
 }
 
 /* Function to scale all the input images to a uniform height/width
