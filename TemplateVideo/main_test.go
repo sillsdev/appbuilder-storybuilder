@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"os/exec"
+	"strings"
 	"testing"
 )
 
@@ -66,6 +68,30 @@ func TestParse(t *testing.T) {
 			}
 		}
 
+	}
+}
+
+func TestScaleImages(t *testing.T) {
+	imageName := "Mat-02-v01.jpg"
+	image_path := "../TestInput/" + imageName
+
+	Images := []string{}
+	Images = append(Images, image_path)
+
+	scaleImages(Images, "852", "480")
+
+	cmd := exec.Command("ffprobe", "-v", "error",
+		"-select_streams", "v:0", "-show_entries", "stream=width,height",
+		"-of", "csv=s=x:p=0", image_path)
+
+	output, err := cmd.CombinedOutput()
+	checkCMDError(output, err)
+	output_string := strings.TrimSpace(string(output))
+
+	expectedOutput := "852x480"
+
+	if output_string != expectedOutput {
+		t.Error(fmt.Sprintf("expected image %s to have widthxheight = %s, but got %s", imageName, expectedOutput, output_string))
 	}
 }
 
