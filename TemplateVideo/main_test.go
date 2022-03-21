@@ -69,24 +69,40 @@ func TestParse(t *testing.T) {
 	}
 }
 
+//expected output should be a png
 // expected output should be a png
-func TestScaleImage(t *testing.T) {
-	inputFile := input_images(Images[i])
-	input := height
-	input2 := width
-	expectedOutput := fmt.Sprintf("test_%d.jpg",i)
-	if inputFile != expectedOutput {
-		t.Errorf("expected image here")
+// func TestScaleImage(t *testing.T) {
+// 	inputFile := input_images(Images[i])
+// 	input := height
+// 	input2 := width
+// 	expectedOutput := fmt.Sprintf("test_%d.jpg", i)
+// 	if inputFile != expectedOutput {
+// 		t.Errorf("expected image here")
+// 	}
+// }
+
+func TestCheckFFmpegVersion(t *testing.T) {
+	got := checkFFmpegVersion("4.4.9")
+	want := "F"
+	if want != got {
+		t.Errorf("Failed, expected " + want + " got " + got + " for 4.0.0")
+	} else {
+		t.Logf("Pass, expected " + want + " got " + got + " for 4.0.0")
+	}
+
+	got = checkFFmpegVersion("5.0")
+	want = "X"
+	if want != got {
+		t.Errorf("Failed, expected " + want + " got " + got + " for 5.0")
+	} else {
+		t.Logf("Pass, expected " + want + " got " + got + " for 5.0")
+	}
+
+	got = checkFFmpegVersion("4.3.0")
+	want = "X"
+	if want != got {
+		t.Errorf("Failed, expected " + want + " got " + got + " for 4.3.0")
+	} else {
+		t.Logf("Pass, expected " + want + " got " + got + " for 4.3.0")
 	}
 }
-}
-
-// func TestReadFile(t *testing.T) {
-// 	data, err := ioutil.ReadFile("data.slideshow")
-// 	if err != nil {
-
-// 	}
-// 	if string(readData) != nil {
-
-// 	}
-//// }//

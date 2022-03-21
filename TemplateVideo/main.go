@@ -79,7 +79,8 @@ func main() {
 
 	// Checking FFmpeg version to use Xfade
 	fmt.Println("Checking FFmpeg version...")
-	var fadeType string = checkFFmpegVersion()
+	var versionString string = getVersion()
+	var fadeType string = checkFFmpegVersion(versionString)
 
 	// Scaling images depending on video quality option
 	fmt.Println("Scaling images...")
@@ -178,8 +179,7 @@ func findTemplate(s string, d fs.DirEntry, err error) error {
 	return nil
 }
 
-// Function to Check FFmpeg version and choose Xfade or traditional fade accordingly
-func checkFFmpegVersion() string {
+func getVersion() string {
 	cmd := exec.Command("ffmpeg", "-version")
 	output, err := cmd.Output()
 	checkCMDError(output, err)
@@ -193,26 +193,45 @@ func checkFFmpegVersion() string {
 		log.Fatal(err)
 	}
 	fmt.Printf("Version is %s\n", version)
+	return version
+}
+
+// Function to Check FFmpeg version and choose Xfade or traditional fade accordingly
+func checkFFmpegVersion(version string) string {
 	var result = ""
 	char := []rune(version)
+	intArr := []int{4, 3, 0}
 
-	intArr := []int{4, 3, 0} /// 4.3.0 = 4 3 0
 	for i := 0; i < len(intArr); i++ {
 		var temp = string(char[i])
-		if temp == "." {
-			break
-		}
-		num, err := strconv.Atoi(temp) // 4
 
+		if temp == "." {
+			continue
+		}
+		num, err := strconv.Atoi(temp)
 		if err != nil {
 			return err.Error()
 		}
+		//numbers we are comparing
+		fmt.Println(string(num) + " compared to: " + string(intArr[i]))
+		if i == 0 && intArr[i] < num {
+			result = "X"
+			return result
+		}
+		if i == 1 && intArr[i] < num {
+			result = "X"
+			return result
+		}
 
-		if intArr[i] > num {
+		if intArr[i] > num { // 4.1.1
 			result = "F" // use old fade
 			return result
 		}
-		result = "X" // use new fade
+
+		if intArr[i] < num { // 4.1.1
+			result = "X" // use old fade
+			return result
+		}
 	}
 	return result
 }
