@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/fs"
 	"log"
+	"math"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -45,6 +46,7 @@ func main() {
 	Transitions := []string{}
 	TransitionDurations := []string{}
 	Timings := [][]string{}
+	Motions := [][][]float64{}
 	fmt.Println("Parsing .slideshow file...")
 	var slideshow = readData(templateName)
 	for _, slide := range slideshow.Slide {
@@ -60,7 +62,6 @@ func main() {
 			}
 		}
 		Images = append(Images, slide.Image.Name)
-
 		if slide.Transition.Type == "" {
 			Transitions = append(Transitions, "fade")
 		} else {
@@ -71,7 +72,13 @@ func main() {
 		} else {
 			TransitionDurations = append(TransitionDurations, slide.Transition.Duration)
 		}
-
+		var motions = [][]float64{}
+		if slide.Motion.Start == "" {
+			motions = [][]float64{{0, 0, 1, 1}, {0, 0, 1, 1}}
+		} else {
+			motions = [][]float64{convertStringToFloat(slide.Motion.Start), convertStringToFloat(slide.Motion.End)}
+		}
+		Motions = append(Motions, motions)
 		temp := []string{slide.Timing.Start, slide.Timing.Duration}
 		Timings = append(Timings, temp)
 	}
@@ -81,7 +88,7 @@ func main() {
 	fmt.Println("Checking FFmpeg version...")
 	var fadeType string = checkFFmpegVersion()
 
-	// Scaling images depending on video quality option
+	//Scaling images depending on video quality option
 	fmt.Println("Scaling images...")
 	if *lowQuality {
 		scaleImages(Images, "852", "480")
@@ -93,13 +100,13 @@ func main() {
 
 	if fadeType == "X" {
 		fmt.Println("FFmpeg version is bigger than 4.3.0, using Xfade transition method...")
-		makeTempVideosWithoutAudio(Images, Transitions, TransitionDurations, Timings, Audios)
+		makeTempVideosWithoutAudio(Images, Transitions, TransitionDurations, Timings, Audios, Motions)
 		MergeTempVideos(Images, Transitions, TransitionDurations, Timings)
 		addAudio(Timings, Audios)
 		copyFinal()
 	} else {
 		fmt.Println("FFmpeg version is smaller than 4.3.0, using old fade transition method...")
-		combineVideos(Images, Transitions, TransitionDurations, Timings, Audios)
+		combineVideos(Images, Transitions, TransitionDurations, Timings, Audios, Motions)
 		fmt.Println("Adding intro music...")
 		addBackgroundMusic(BackAudioPath, BackAudioVolume)
 	}
@@ -115,7 +122,26 @@ func main() {
 
 	fmt.Println("Video production completed!")
 	duration := time.Since(start)
-	fmt.Printf("Time Taken: %.2f seconds\n", duration.Seconds())
+	fmt.Printf("Time Taken: %f seconds", duration.Seconds())
+}
+
+/* Function to split the motion data into 4 pieces and convert them all to floats
+ *  Parameters:
+ *			stringData (string): The string that contains the four numerical values separated by spaces
+ *  Returns:
+ *			A float64 array with the four converted values
+ */
+func convertStringToFloat(stringData string) []float64 {
+	floatData := []float64{}
+	slicedStrings := strings.Split(stringData, " ")
+	for _, str := range slicedStrings {
+		if str != "" {
+			flt, err := strconv.ParseFloat(str, 64)
+			check(err)
+			floatData = append(floatData, flt)
+		}
+	}
+	return floatData
 }
 
 // Function to check errors from non-CMD output
@@ -144,12 +170,13 @@ func copyFinal() {
  * to prevent issues in the video creation process
  */
 func scaleImages(Images []string, height string, width string) {
+	totalNumImages := len(Images)
 	var wg sync.WaitGroup
 	// Tell the 'wg' WaitGroup how many threads/goroutines
 	//   that are about to run concurrently.
-	wg.Add(len(Images))
+	wg.Add(totalNumImages)
 
-	for i := 0; i < len(Images); i++ {
+	for i := 0; i < totalNumImages; i++ {
 		go func(i int) {
 			defer wg.Done()
 			cmd := exec.Command("ffmpeg", "-i", "./"+Images[i],
@@ -225,7 +252,7 @@ func checkFFmpegVersion() string {
  *		Timings: ([][]string) - 2-D array of timing data for the audio for each image
  *		Audios: ([]string) - Array of filenames for the audios to be used
  */
-func combineVideos(Images []string, Transitions []string, TransitionDurations []string, Timings [][]string, Audios []string) {
+func combineVideos(Images []string, Transitions []string, TransitionDurations []string, Timings [][]string, Audios []string, Motions [][][]float64) {
 	input_images := []string{}
 	input_filters := ""
 	totalNumImages := len(Images)
@@ -247,7 +274,10 @@ func combineVideos(Images []string, Transitions []string, TransitionDurations []
 			} else {
 				half_duration, err := strconv.Atoi(TransitionDurations[i])
 				check(err)
+				// generate params for ffmpeg zoompan filter
+				input_filters += createZoomCommand(Motions[i], convertStringToFloat(Timings[i][1]))
 				input_filters += fmt.Sprintf(",fade=t=in:st=0:d=%dms,fade=t=out:st=%sms:d=%dms", half_duration/2, Timings[i][1], half_duration/2)
+
 			}
 		}
 		input_filters += fmt.Sprintf("[v%d];", i)
@@ -270,7 +300,16 @@ func combineVideos(Images []string, Transitions []string, TransitionDurations []
 	checkCMDError(output, err)
 }
 
-// Function to add background music to the intro of the video at the end of the production process
+func checkSign(num float64) string {
+	result := math.Signbit(num)
+
+	if result {
+		return "-"
+	} else {
+		return "+"
+	}
+}
+
 func addBackgroundMusic(backgroundAudio string, backgroundVolume string) {
 	tempVol := 0.0
 	// Convert the background volume to a number between 0 and 1, if it exists
@@ -295,6 +334,34 @@ func addBackgroundMusic(backgroundAudio string, backgroundVolume string) {
 	checkCMDError(output, e)
 }
 
+func createZoomCommand(Motions [][]float64, Duration []float64) string {
+	num_frames := int(Duration[0] / (1000.0 / 25.0))
+
+	size_init := Motions[0][3]
+	size_change := Motions[1][3] - size_init
+	size_incr := size_change / float64(num_frames)
+
+	var x_init float64 = Motions[0][0]
+	var x_end float64 = Motions[1][0]
+	var x_change float64 = x_end - x_init
+	var x_incr float64 = x_change / float64(num_frames)
+
+	var y_init float64 = Motions[0][1]
+	var y_end float64 = Motions[1][1]
+	var y_change float64 = y_end - y_init
+	var y_incr float64 = y_change / float64(num_frames)
+
+	zoom_cmd := fmt.Sprintf("1/((%.3f)%s(%.3f)*on)", size_init-size_incr, checkSign(size_incr), math.Abs(size_incr))
+	x_cmd := fmt.Sprintf("%0.3f*iw%s%0.3f*iw*on", x_init-x_incr, checkSign(x_incr), math.Abs(x_incr))
+	y_cmd := fmt.Sprintf("%0.3f*ih%s%0.3f*ih*on", y_init-y_incr, checkSign(y_incr), math.Abs(y_incr))
+	final_cmd := fmt.Sprintf("scale=8000:-1,zoompan=z='%s':x='%s':y='%s':d=%d:fps=25,scale=1280:720,setsar=1:1", zoom_cmd, x_cmd, y_cmd, num_frames)
+
+	// Test zoompan example from documentation (Zoom in up to 1.5x and pan always at center of picture)
+	//final_cmd = "zoompan=z='min(zoom+0.0015,1.5)':d=700:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)',scale=1500:900,setsar=1:1"
+
+	return final_cmd
+}
+
 /* Function to create temporary videos with the corresponding zoom filters for each slide without any audio
  * Parameters:
  *		Images: ([]string) - Array of filenames for the images
@@ -303,11 +370,9 @@ func addBackgroundMusic(backgroundAudio string, backgroundVolume string) {
  *		Timings: ([][]string) - 2-D array of timing data for the audio for each image
  *		Audios: ([]string) - Array of filenames for the audios to be used
  */
-func makeTempVideosWithoutAudio(Images []string, Transitions []string, TransitionDurations []string, Timings [][]string, Audios []string) {
+func makeTempVideosWithoutAudio(Images []string, Transitions []string, TransitionDurations []string, Timings [][]string, Audios []string, Motions [][][]float64) {
 	fmt.Println("Making temporary videos in parallel...")
 	totalNumImages := len(Images)
-
-	cmd := exec.Command("")
 
 	var wg sync.WaitGroup
 	// Tell the 'wg' WaitGroup how many threads/goroutines
@@ -315,20 +380,21 @@ func makeTempVideosWithoutAudio(Images []string, Transitions []string, Transitio
 	wg.Add(totalNumImages)
 
 	for i := 0; i < totalNumImages; i++ {
-		// Spawn a thread for each iteration in the loop.
-		// Pass 'i' into the goroutine's function
-		//   in order to make sure each goroutine
-		//   uses a different value for 'i'.
 		go func(i int) {
+			duration := "5000"
+
+			if Timings[i][1] != "" {
+				duration = Timings[i][1]
+			}
+
 			// At the end of the goroutine, tell the WaitGroup
 			//   that another thread has completed.
 			defer wg.Done()
-
-			fmt.Printf("Making temp%d-%d.mp4 video with empty audio\n", i, totalNumImages)
-			cmd = exec.Command("ffmpeg", "-loop", "1", "-ss", "0ms", "-t", Timings[i][1]+"ms", "-i", Images[i],
-				"-f", "lavfi", "-i", "aevalsrc=0", "-t", Timings[i][1],
-				"-shortest", "-pix_fmt", "yuv420p",
-				"-y", fmt.Sprintf("./temp/temp%d-%d.mp4", i, totalNumImages))
+			fmt.Printf("Making temp%d-%d.mp4 video\n", i, totalNumImages)
+			zoom_cmd := createZoomCommand(Motions[i], convertStringToFloat(duration))
+			cmd := exec.Command("ffmpeg", "-loop", "1", "-i", "./"+Images[i],
+				"-t", duration+"ms", "-filter_complex", zoom_cmd,
+				"-shortest", "-pix_fmt", "yuv420p", "-y", fmt.Sprintf("./temp/temp%d-%d.mp4", i, totalNumImages))
 
 			output, err := cmd.CombinedOutput()
 			checkCMDError(output, err)
@@ -453,10 +519,10 @@ func addAudio(Timings [][]string, Audios []string) {
 		}
 	}
 
-	audio_last_filter += fmt.Sprintf("concat=n=%d:v=0:a=1[a]", len(Audios))
+	audio_last_filter += fmt.Sprintf("concat=n=%d:v=0:a=1[a]", len(Audios)-1)
 	audio_filter += audio_last_filter
 
-	audio_inputs = append(audio_inputs, "-filter_complex", audio_filter, "-map", "0:v", "-map", "[a]", "-codec:v", "copy", "-codec:a", "libmp3lame", "-shortest", "./temp/merged_video.mp4")
+	audio_inputs = append(audio_inputs, "-filter_complex", audio_filter, "-map", "0:v", "-map", "[a]", "-codec:v", "copy", "-codec:a", "libmp3lame", "./temp/merged_video.mp4")
 
 	cmd := exec.Command("ffmpeg", audio_inputs...)
 
