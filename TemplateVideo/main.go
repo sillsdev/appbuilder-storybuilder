@@ -179,6 +179,7 @@ func findTemplate(s string, d fs.DirEntry, err error) error {
 	return nil
 }
 
+// Function to get FFmpeg version//
 func getVersion() string {
 	cmd := exec.Command("ffmpeg", "-version")
 	output, err := cmd.Output()

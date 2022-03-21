@@ -80,14 +80,20 @@ func TestParse(t *testing.T) {
 // 		t.Errorf("expected image here")
 // 	}
 // }
-
+/*
+	Test function to check if we are getting right version by comparing
+	if a version is less than 4.3.0//
+	if the version is equal to 4.3.0 //
+				or
+	if the version is higher than 4.3.0
+*/
 func TestCheckFFmpegVersion(t *testing.T) {
-	got := checkFFmpegVersion("4.4.9")
+	got := checkFFmpegVersion("4.2.9")
 	want := "F"
 	if want != got {
-		t.Errorf("Failed, expected " + want + " got " + got + " for 4.0.0")
+		t.Errorf("Failed, expected " + want + " got " + got + " for 4.2.9")
 	} else {
-		t.Logf("Pass, expected " + want + " got " + got + " for 4.0.0")
+		t.Logf("Pass, expected " + want + " got " + got + " for 4.2.9")
 	}
 
 	got = checkFFmpegVersion("5.0")
