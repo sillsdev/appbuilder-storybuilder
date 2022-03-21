@@ -23,23 +23,14 @@ var location string
 // Main function
 func main() {
 	// Create a temporary folder to store temporary files created when created a video
-	os.Mkdir("./temp", 0755)
+	createTemporaryFolder()
 
 	// Ask the user for options
-	var saveTemps = flag.Bool("s", false, "Include if user wishes to save temporary files created during production")
-	var lowQuality = flag.Bool("l", false, "Include to produce a lower quality video (1280x720 => 852x480)")
-	flag.StringVar(&templateName, "t", "", "Specify template to use")
-	flag.StringVar(&location, "o", "", "Specify template to use")
-	flag.Parse()
+	saveTemps, lowQuality := parseFlags(&templateName, &location)
 
 	// Create directory if output directory is not exist
 	if location != "" {
-		if _, err := os.Stat(location); errors.Is(err, os.ErrNotExist) {
-			err := os.Mkdir(location, os.ModePerm)
-			if err != nil {
-				log.Println(err)
-			}
-		}
+		createOutputDirectory(location)
 	}
 
 	// Search for a template in local folder if no template is provided
@@ -51,6 +42,70 @@ func main() {
 	start := time.Now()
 
 	// Parse in the various pieces from the template
+	Images, Audios, BackAudioPath, BackAudioVolume, Transitions, TransitionDurations, Timings, Motions := parseSlideshow(templateName)
+	fmt.Println("Parsing completed...")
+
+	// Checking FFmpeg version to use Xfade
+	fmt.Println("Checking FFmpeg version...")
+	var fadeType string = checkFFmpegVersion()
+
+	//Scaling images depending on video quality option
+	fmt.Println("Scaling images...")
+	if *lowQuality {
+		scaleImages(Images, "852", "480")
+	} else {
+		scaleImages(Images, "1280", "720")
+	}
+
+	fmt.Println("Creating video...")
+
+	if fadeType == "X" {
+		fmt.Println("FFmpeg version is bigger than 4.3.0, using Xfade transition method...")
+		makeTempVideosWithoutAudio(Images, Transitions, TransitionDurations, Timings, Audios, Motions)
+		MergeTempVideos(Images, Transitions, TransitionDurations, Timings)
+		addAudio(Timings, Audios)
+		copyFinal()
+	} else {
+		fmt.Println("FFmpeg version is smaller than 4.3.0, using old fade transition method...")
+		combineVideos(Images, Transitions, TransitionDurations, Timings, Audios, Motions)
+		fmt.Println("Adding intro music...")
+		addBackgroundMusic(BackAudioPath, BackAudioVolume)
+	}
+
+	fmt.Println("Finished making video...")
+
+	// If user did not specify the -s flag at runtime, delete all the temporary videos
+	deleteTemporaryVideos(saveTemps)
+
+	fmt.Println("Video production completed!")
+	duration := time.Since(start)
+	fmt.Printf("Time Taken: %f seconds", duration.Seconds())
+}
+
+func createTemporaryFolder() {
+	os.Mkdir("./temp", 0755)
+}
+
+func parseFlags(templateName *string, location *string) (*bool, *bool) {
+	var saveTemps = flag.Bool("s", false, "Include if user wishes to save temporary files created during production")
+	var lowQuality = flag.Bool("l", false, "Include to produce a lower quality video (1280x720 => 852x480)")
+	flag.StringVar(templateName, "t", "", "Specify template to use")
+	flag.StringVar(location, "o", "", "Specify output location")
+	flag.Parse()
+
+	return saveTemps, lowQuality
+}
+
+func createOutputDirectory(location string) {
+	if _, err := os.Stat(location); errors.Is(err, os.ErrNotExist) {
+		err := os.Mkdir(location, os.ModePerm)
+		if err != nil {
+			log.Println(err)
+		}
+	}
+}
+
+func parseSlideshow(templateName string) ([]string, []string, string, string, []string, []string, [][]string, [][][]float64) {
 	Images := []string{}
 	Audios := []string{}
 	BackAudioPath := ""
@@ -94,47 +149,16 @@ func main() {
 		temp := []string{slide.Timing.Start, slide.Timing.Duration}
 		Timings = append(Timings, temp)
 	}
-	fmt.Println("Parsing completed...")
 
-	// Checking FFmpeg version to use Xfade
-	fmt.Println("Checking FFmpeg version...")
-	var fadeType string = checkFFmpegVersion()
+	return Images, Audios, BackAudioPath, BackAudioVolume, Transitions, TransitionDurations, Timings, Motions
+}
 
-	//Scaling images depending on video quality option
-	fmt.Println("Scaling images...")
-	if *lowQuality {
-		scaleImages(Images, "852", "480")
-	} else {
-		scaleImages(Images, "1280", "720")
-	}
-
-	fmt.Println("Creating video...")
-
-	if fadeType == "X" {
-		fmt.Println("FFmpeg version is bigger than 4.3.0, using Xfade transition method...")
-		makeTempVideosWithoutAudio(Images, Transitions, TransitionDurations, Timings, Audios, Motions)
-		MergeTempVideos(Images, Transitions, TransitionDurations, Timings)
-		addAudio(Timings, Audios)
-		copyFinal()
-	} else {
-		fmt.Println("FFmpeg version is smaller than 4.3.0, using old fade transition method...")
-		combineVideos(Images, Transitions, TransitionDurations, Timings, Audios, Motions)
-		fmt.Println("Adding intro music...")
-		addBackgroundMusic(BackAudioPath, BackAudioVolume)
-	}
-
-	fmt.Println("Finished making video...")
-
-	// If user did not specify the -s flag at runtime, delete all the temporary videos
+func deleteTemporaryVideos(saveTemps *bool) {
 	if !*saveTemps {
 		fmt.Println("-s not specified, removing temporary videos...")
 		err := os.RemoveAll("./temp")
 		check(err)
 	}
-
-	fmt.Println("Video production completed!")
-	duration := time.Since(start)
-	fmt.Printf("Time Taken: %f seconds", duration.Seconds())
 }
 
 /* Function to split the motion data into 4 pieces and convert them all to floats
@@ -172,16 +196,16 @@ func checkCMDError(output []byte, err error) {
 }
 
 func copyFinal() {
- 	// If -o is specified, save the final video at the specified location
- 	if len(location) > 0 {
- 		cmd := exec.Command("ffmpeg", "-i", "./temp/final.mp4", "-y", location+"/final.mp4")
- 		output, err := cmd.CombinedOutput()
- 		checkCMDError(output, err)
- 	} else { // If -o is not specified, save the final video at the default location
- 		cmd := exec.Command("ffmpeg", "-i", "./temp/final.mp4", "-y", "./final.mp4")
- 		output, err := cmd.CombinedOutput()
- 		checkCMDError(output, err)
- 	}
+	// If -o is specified, save the final video at the specified location
+	if len(location) > 0 {
+		cmd := exec.Command("ffmpeg", "-i", "./temp/final.mp4", "-y", location+"/final.mp4")
+		output, err := cmd.CombinedOutput()
+		checkCMDError(output, err)
+	} else { // If -o is not specified, save the final video at the default location
+		cmd := exec.Command("ffmpeg", "-i", "./temp/final.mp4", "-y", "./final.mp4")
+		output, err := cmd.CombinedOutput()
+		checkCMDError(output, err)
+	}
 }
 
 /* Function to scale all the input images to a uniform height/width
