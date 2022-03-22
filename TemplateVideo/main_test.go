@@ -8,71 +8,63 @@ import (
 )
 
 func TestParse(t *testing.T) {
-	inputFile := "test.slideshow"
-	var expectedOutput string
-	data := readData(inputFile)
-	for i, slide := range data.Slide {
-		if i == 0 {
-			// Test background filename
-			expectedOutput = "background.mp3"
-			backFilename := slide.Audio.Background_Filename.Path
-			if backFilename != expectedOutput {
-				t.Error(fmt.Sprintf("expected background filename to be %s, but got %s", expectedOutput, backFilename))
-			}
-		} else {
-			expectedOutput = "narration.mp3"
-			audio := slide.Audio.Filename.Name
-			if audio != expectedOutput {
-				t.Error(fmt.Sprintf("expected audio filename to be %s, but got %s", expectedOutput, audio))
-			}
+	templateName := "../TestInput/test.slideshow"
+
+	Images, Audios, BackAudioPath, BackAudioVolume, Transitions, TransitionDurations, Timings, Motions := parseSlideshow(templateName)
+
+	expectedImages := []string{"Jn01.1-18-title.jpg", "./VB-John 1v1.jpg", "./VB-John 1v3.jpg", "./VB-John 1v4.jpg", "./VB-John 1v5a.jpg",
+		"./VB-John 1v5b.jpg", "./VB-John 1v6.jpg", "Gospel of John-credits.jpg"}
+	for i := 0; i < len(expectedImages); i++ {
+		if expectedImages[i] != Images[i] {
+			t.Error(fmt.Sprintf("expected image filename to be %s, but got %s", expectedImages[i], Images[i]))
 		}
-		expectedOutput = fmt.Sprintf("test-%d.jpg", i)
-		image := slide.Image.Name
-		if image != expectedOutput {
-			t.Error(fmt.Sprintf("expected image filename to be %s, but got %s", expectedOutput, image))
+	}
+
+	expectedAudios := []string{"../music-intro-Jn.mp3", "narration-j-001.mp3", "narration-j-001.mp3", "narration-j-001.mp3", "narration-j-001.mp3", "narration-j-001.mp3", "narration-j-001.mp3", ""}
+	for i := 0; i < len(expectedAudios); i++ {
+		if expectedAudios[i] != Audios[i] {
+			t.Error(fmt.Sprintf("expected audio filename to be %s, but got %s", expectedAudios[i], Audios[i]))
 		}
-		if slide.Motion.Start != "" {
-			expectedOutput = "0.0 0.1 0.2 0.3"
-			start := slide.Motion.Start
-			if start != expectedOutput {
-				t.Error(fmt.Sprintf("expected motion start to be %s, but got %s", expectedOutput, start))
-			}
-			expectedOutput = "1 2 3 4"
-			end := slide.Motion.End
-			if end != expectedOutput {
-				t.Error(fmt.Sprintf("expected motion end to be %s, but got %s", expectedOutput, end))
-			}
+	}
+
+	expectedBackAudioPath := "../music-intro-Jn.mp3"
+	if expectedBackAudioPath != BackAudioPath {
+		t.Error(fmt.Sprintf("expected audio filename to be %s, but got %s", expectedBackAudioPath, BackAudioPath))
+	}
+
+	expectedBackAudioVolume := ""
+	if expectedBackAudioVolume != BackAudioVolume {
+		t.Error(fmt.Sprintf("expected audio filename to be %s, but got %s", expectedBackAudioVolume, BackAudioVolume))
+	}
+
+	expectedTransitions := []string{"fade", "fade", "crossfade", "fade", "fade", "wipeleft", "fade"}
+	for i := 0; i < len(expectedTransitions); i++ {
+		if expectedTransitions[i] != Transitions[i] {
+			t.Error(fmt.Sprintf("expected transition to be %s, but got %s", expectedTransitions[i], Transitions[i]))
 		}
-		if slide.Transition.Type != "" {
-			expectedOutput = "transitionTest"
-			transitionType := slide.Transition.Type
-			if transitionType != expectedOutput {
-				t.Error(fmt.Sprintf("expected transtion type to be %s, but got %s", expectedOutput, transitionType))
-			}
-			expectedOutput = "1000"
-			transitionDuration := slide.Transition.Duration
-			if transitionDuration != expectedOutput {
-				t.Error(fmt.Sprintf("expected transtion duration to be %s, but got %s", expectedOutput, transitionDuration))
-			}
+	}
+
+	expectedTransitionDurations := []string{"1000", "1000", "2000", "1000", "1000", "3000", "1000"}
+	for i := 0; i < len(expectedTransitionDurations); i++ {
+		if expectedTransitionDurations[i] != TransitionDurations[i] {
+			t.Error(fmt.Sprintf("expected transition duration to be %s, but got %s", expectedTransitionDurations[i], TransitionDurations[i]))
 		}
-		if slide.Timing.Start != "" {
-			expectedOutput = "1234"
-			timingStart := slide.Timing.Start
-			if timingStart != expectedOutput {
-				t.Error(fmt.Sprintf("expected timing start to be %s, but got %s", expectedOutput, timingStart))
-			}
-			expectedOutput = "5678"
-			timingDuration := slide.Timing.Duration
-			if timingDuration != expectedOutput {
-				t.Error(fmt.Sprintf("expected timing duration to be %s, but got %s", expectedOutput, timingDuration))
-			}
+	}
+
+	expectedTimings := []string{"5000", "9400", "5960", "4200", "2280", "2280", "10880", "5000"}
+	for i := 0; i < len(expectedTimings); i++ {
+		if expectedTimings[i] != Timings[i] {
+			t.Error(fmt.Sprintf("expected timing duration to be %s, but got %s", expectedTimings[i], Timings[i]))
 		}
+	}
+
+	if Motions[0][0][0] == Motions[1][1][1] {
 
 	}
 }
 
 func TestScaleImages(t *testing.T) {
-	imageName := "Mat-02-v01.jpg"
+	imageName := "Jn01.1-18-title.jpg"
 	image_path := "../TestInput/" + imageName
 
 	Images := []string{}
