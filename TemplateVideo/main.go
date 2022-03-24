@@ -28,7 +28,7 @@ func main() {
 	// Ask the user for options
 	saveTemps, lowQuality := parseFlags(&templateName, &location)
 
-	// Create directory if output directory is not exist
+	// Create directory if output directory does not exist
 	if location != "" {
 		createOutputDirectory(location)
 	}

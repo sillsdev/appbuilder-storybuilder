@@ -37,14 +37,14 @@ func TestParse(t *testing.T) {
 		t.Error(fmt.Sprintf("expected audio filename to be %s, but got %s", expectedBackAudioVolume, BackAudioVolume))
 	}
 
-	expectedTransitions := []string{"fade", "fade", "crossfade", "fade", "fade", "wipeleft", "fade"}
+	expectedTransitions := []string{"fade", "fade", "circleopen", "fade", "fade", "fade", "wipeleft", "fade"}
 	for i := 0; i < len(expectedTransitions); i++ {
 		if expectedTransitions[i] != Transitions[i] {
 			t.Error(fmt.Sprintf("expected transition to be %s, but got %s", expectedTransitions[i], Transitions[i]))
 		}
 	}
 
-	expectedTransitionDurations := []string{"1000", "1000", "2000", "1000", "1000", "3000", "1000"}
+	expectedTransitionDurations := []string{"1000", "1000", "2000", "1000", "1000", "1000", "3000", "1000"}
 	for i := 0; i < len(expectedTransitionDurations); i++ {
 		if expectedTransitionDurations[i] != TransitionDurations[i] {
 			t.Error(fmt.Sprintf("expected transition duration to be %s, but got %s", expectedTransitionDurations[i], TransitionDurations[i]))
