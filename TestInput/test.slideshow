@@ -37,7 +37,7 @@
     <narration start="JHN.1.3"/>
     <motion start="0.297 0.204 0.554 0.558" end="0.515 0.381 0.416 0.416"/>
     <timing duration="5960"/>
-    <transition duration="1000">fade</transition>
+    <transition duration="2000">crossfade</transition>
   </slide>
   <slide>
     <audio>
@@ -63,6 +63,7 @@
     <image>./VB-John 1v5b.jpg</image>
     <motion start="0.109 0.097 0.629 0.628" end="0.144 0.142 0.470 0.469"/>
     <timing duration="2280"/>
+    <transition duration="3000">wipeleft</transition>
   </slide>
   <slide>
     <audio>
