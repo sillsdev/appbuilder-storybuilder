@@ -118,9 +118,9 @@ func TestCheckFFmpegVersion(t *testing.T) {
 func TestFindTemplate(t *testing.T) {
 	templateName := ".slideshow"
 	want := regexp.MustCompile(`.+(.slideshow)$`)
-	msg, err :=
+	msg, err := 
 	if !want.MatchString(msg) || err != nil {
-		t.Fatalf(`Hello("Gladys") = %q, %v, want match for %#q, nil`, msg, err, want)
+		t.Fatalf(`Template(".Slideshow") = %q, %v, want match for %#q, nil`, msg, err, want)
 	}
 }
 
