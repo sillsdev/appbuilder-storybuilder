@@ -214,23 +214,23 @@ func checkFFmpegVersion(version string) string {
 			return err.Error()
 		}
 		//numbers we are comparing
-		fmt.Println(string(num) + " compared to: " + string(intArr[i]))
+		//fmt.Sprint(string(num) + " compared to: " + string(intArr[i]))
 		if i == 0 && intArr[i] < num {
-			result = "X"
+			result = "X" // use new old fade
 			return result
 		}
 		if i == 1 && intArr[i] < num {
-			result = "X"
+			result = "F" // use new old fade
 			return result
 		}
 
-		if intArr[i] > num { // 4.1.1
+		if intArr[i] > num {
 			result = "F" // use old fade
 			return result
 		}
 
-		if intArr[i] < num { // 4.1.1
-			result = "X" // use old fade
+		if intArr[i] < num {
+			result = "X" // use new old fade
 			return result
 		}
 	}

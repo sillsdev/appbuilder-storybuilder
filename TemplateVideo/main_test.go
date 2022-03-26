@@ -112,3 +112,21 @@ func TestCheckFFmpegVersion(t *testing.T) {
 		t.Logf("Pass, expected " + want + " got " + got + " for 4.3.0")
 	}
 }
+/*
+	Test function to check if we are getting the template provided
+*/
+func TestFindTemplate(t *testing.T) {
+	templateName := ".slideshow"
+	want := regexp.MustCompile(`.+(.slideshow)$`)
+	msg, err :=
+	if !want.MatchString(msg) || err != nil {
+		t.Fatalf(`Hello("Gladys") = %q, %v, want match for %#q, nil`, msg, err, want)
+	}
+}
+
+// Unit test Ideas
+
+// check the audio and video are the same lenght
+// check the component files are correct
+// check transitions from one images to another
+// check look at what ffmpeg is generating
