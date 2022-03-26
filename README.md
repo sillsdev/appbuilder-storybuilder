@@ -18,9 +18,9 @@ Design Document: [Link](https://docs.google.com/document/d/1vjogjaWZ0ww7rJtKz3J4
 
 # How-To Documentation
 1. Download FFmpeg https://www.ffmpeg.org by selecting the appropriate .zip for your OS (Here's a basic tutorial for [Windows](https://www.wikihow.com/Install-FFmpeg-on-Windows), [Mac](https://manual.audacityteam.org/man/installing_ffmpeg_for_mac.html), and [Linux](https://www.tecmint.com/install-ffmpeg-in-linux/)) 
-2. Download and install GO https://golang.org/dl/ (Should include instructions on their page)
+2. Download and extract executable from repo's releases
 3. Put any images (.png, .jpg, etc) and audios (.mp3, .wav, etc) into a the same folder as the executable, and also include a .slideshow xml file with parameters for the video (.slideshow documentation is listed above)
-4. Run code in a CLI set to main directory of repo with "go run main.go read.go" or just "go run ."
+4. Run code in a CLI set to directory of executable with "./executable_name" or just "executable_name" for Windows
 5. There are also several flags you can include at runtime to alter the output or inputs:
 
     -v : Verbosity, used to modify how much output is reported on the commandline for debugging purposes (less verbose by default)
