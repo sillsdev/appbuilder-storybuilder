@@ -88,14 +88,15 @@ func createTemporaryFolder() {
 	os.Mkdir("./temp", 0755)
 }
 
-func parseFlags(templateName *string, location *string) (*bool, *bool) {
+func parseFlags(templateName *string, location *string) (*bool, *bool, *bool) {
 	var saveTemps = flag.Bool("s", false, "Include if user wishes to save temporary files created during production")
 	var lowQuality = flag.Bool("l", false, "Include to produce a lower quality video (1280x720 => 852x480)")
+	var help = flag.Bool("h", false, "Include option flag to display list of possible flags and their uses")
 	flag.StringVar(templateName, "t", "", "Specify template to use")
 	flag.StringVar(location, "o", "", "Specify output location")
 	flag.Parse()
 
-	return saveTemps, lowQuality
+	return saveTemps, lowQuality, help
 }
 
 func createOutputDirectory(location string) {
