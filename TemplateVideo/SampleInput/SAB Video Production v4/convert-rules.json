@@ -1,0 +1,6 @@
+{
+  "no-copy" : [
+    "-title.jpg",
+    "-credits.jpg"
+  ]
+}
