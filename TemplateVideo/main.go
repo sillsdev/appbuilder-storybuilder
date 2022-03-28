@@ -163,6 +163,7 @@ func parseSlideshow(slideshowDirectory string) ([]string, []string, string, stri
 		} else {
 			motions = [][]float64{convertStringToFloat(slide.Motion.Start), convertStringToFloat(slide.Motion.End)}
 		}
+
 		Motions = append(Motions, motions)
 		Timings = append(Timings, slide.Timing.Duration)
 	}
@@ -451,10 +452,8 @@ func makeTempVideosWithoutAudio(Images []string, Transitions []string, Transitio
 			defer wg.Done()
 			fmt.Printf("Making temp%d-%d.mp4 video\n", i, totalNumImages)
 			zoom_cmd := createZoomCommand(Motions[i], convertStringToFloat(duration))
-			cmd := exec.Command("ffmpeg", "-loop", "1", "-i", "./"+Images[i],
-				"-t", duration+"ms", "-filter_complex", zoom_cmd,
-				"-shortest", "-pix_fmt", "yuv420p", "-y", fmt.Sprintf("./temp/temp%d-%d.mp4", i, totalNumImages))
 
+			cmd := cmdIndividualVideo(Images[i], duration, zoom_cmd, fmt.Sprintf("./temp/temp%d-%d.mp4", i, totalNumImages))
 			output, err := cmd.CombinedOutput()
 			checkCMDError(output, err)
 		}(i)
@@ -503,12 +502,8 @@ func MergeTempVideos(Images []string, Transitions []string, TransitionDurations 
 		settb += fmt.Sprintf("[%d:v]tpad=stop_mode=clone:stop_duration=%f[v%d];", i, transition_duration/2, i)
 
 		//get the current video length in seconds
-		cmd := exec.Command("ffprobe",
-			"-v", "error",
-			"-show_entries", "format=duration",
-			"-of", "default=noprint_wrappers=1:nokey=1",
-			fmt.Sprintf("./temp/temp%d-%d.mp4", i, totalNumImages),
-		)
+		cmd := cmdVideoLength(fmt.Sprintf("./temp/temp%d-%d.mp4", i, totalNumImages))
+
 		output, err := cmd.CombinedOutput()
 		checkCMDError(output, err)
 
@@ -595,25 +590,16 @@ func addAudio(Timings []string, Audios []string) {
  */
 func TrimEnd() {
 	fmt.Println("Trimming video...")
+
 	//get the true length of the video
-	cmd := exec.Command("ffprobe",
-		"-v", "error",
-		"-show_entries", "format=duration",
-		"-of", "default=noprint_wrappers=1:nokey=1",
-		"./temp/video_with_no_audio.mp4",
-	)
+	cmd := cmdVideoLength("./temp/video_with_no_audio.mp4")
 	output, err := cmd.CombinedOutput()
 	checkCMDError(output, err)
 
 	video_length, err := strconv.ParseFloat(strings.TrimSpace(string(output)), 8)
 
 	//match the video length of the merged video with the true length of the video
-	cmd = exec.Command("ffmpeg",
-		"-i", "./temp/merged_video.mp4",
-		"-c", "copy", "-t", fmt.Sprintf("%f", video_length),
-		"-y",
-		"./temp/final.mp4",
-	)
+	cmd = cmdTrimLengthOfVideo(fmt.Sprintf("%f", video_length))
 
 	output, err = cmd.CombinedOutput()
 	checkCMDError(output, err)
