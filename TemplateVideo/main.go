@@ -17,8 +17,8 @@ import (
 	"time"
 )
 
-var templateName string
-var location string
+var slideshowDirectory string
+var outputLocation string
 
 // Main function
 func main() {
@@ -26,15 +26,15 @@ func main() {
 	createTemporaryFolder()
 
 	// Ask the user for options
-	saveTemps, lowQuality := parseFlags(&templateName, &location)
+	saveTemps, lowQuality := parseFlags(&slideshowDirectory, &outputLocation)
 
 	// Create directory if output directory does not exist
-	if location != "" {
-		createOutputDirectory(location)
+	if outputLocation != "" {
+		createOutputDirectory(outputLocation)
 	}
 
 	// Search for a template in local folder if no template is provided
-	if templateName == "" {
+	if slideshowDirectory == "" {
 		fmt.Println("No template provided, searching local folder...")
 		filepath.WalkDir(".", findTemplate)
 	}
@@ -42,10 +42,8 @@ func main() {
 	start := time.Now()
 
 	// Parse in the various pieces from the template
-	Images, Audios, BackAudioPath, BackAudioVolume, Transitions, TransitionDurations, Timings, Motions := parseSlideshow(templateName)
+	Images, Audios, BackAudioPath, BackAudioVolume, Transitions, TransitionDurations, Timings, Motions := parseSlideshow(slideshowDirectory)
 	fmt.Println("Parsing completed...")
-
-	fmt.Println(Motions)
 
 	// Checking FFmpeg version to use Xfade
 	fmt.Println("Checking FFmpeg version...")
@@ -88,10 +86,10 @@ func createTemporaryFolder() {
 	os.Mkdir("./temp", 0755)
 }
 
-func parseFlags(templateName *string, location *string) (*bool, *bool) {
+func parseFlags(slideshowDirectory *string, location *string) (*bool, *bool) {
 	var saveTemps = flag.Bool("s", false, "Include if user wishes to save temporary files created during production")
 	var lowQuality = flag.Bool("l", false, "Include to produce a lower quality video (1280x720 => 852x480)")
-	flag.StringVar(templateName, "t", "", "Specify template to use")
+	flag.StringVar(slideshowDirectory, "t", "", "Specify template to use")
 	flag.StringVar(location, "o", "", "Specify output location")
 	flag.Parse()
 
@@ -107,7 +105,22 @@ func createOutputDirectory(location string) {
 	}
 }
 
-func parseSlideshow(templateName string) ([]string, []string, string, string, []string, []string, []string, [][][]float64) {
+func removeFileNameFromDirectory(slideshowDirectory string) string {
+	template_directory_split := strings.Split(slideshowDirectory, "/")
+	template_directory := ""
+
+	if len(template_directory_split) == 1 {
+		template_directory = "./"
+	} else {
+		for i := 0; i < len(template_directory_split)-1; i++ {
+			template_directory += template_directory_split[i] + "/"
+		}
+	}
+
+	return template_directory
+}
+
+func parseSlideshow(slideshowDirectory string) ([]string, []string, string, string, []string, []string, []string, [][][]float64) {
 	Images := []string{}
 	Audios := []string{}
 	BackAudioPath := ""
@@ -117,20 +130,23 @@ func parseSlideshow(templateName string) ([]string, []string, string, string, []
 	Timings := []string{}
 	Motions := [][][]float64{}
 	fmt.Println("Parsing .slideshow file...")
-	var slideshow = readData(templateName)
+	var slideshow = readData(slideshowDirectory)
+
+	template_directory := removeFileNameFromDirectory(slideshowDirectory)
+
 	for _, slide := range slideshow.Slide {
 		if slide.Audio.Background_Filename.Path != "" {
-			Audios = append(Audios, slide.Audio.Background_Filename.Path)
+			Audios = append(Audios, template_directory+slide.Audio.Background_Filename.Path)
 			BackAudioPath = slide.Audio.Background_Filename.Path
 			BackAudioVolume = slide.Audio.Background_Filename.Volume
 		} else {
 			if slide.Audio.Filename.Name == "" {
 				Audios = append(Audios, "")
 			} else {
-				Audios = append(Audios, slide.Audio.Filename.Name)
+				Audios = append(Audios, template_directory+slide.Audio.Filename.Name)
 			}
 		}
-		Images = append(Images, slide.Image.Name)
+		Images = append(Images, template_directory+slide.Image.Name)
 		if slide.Transition.Type == "" {
 			Transitions = append(Transitions, "fade")
 		} else {
@@ -198,8 +214,8 @@ func checkCMDError(output []byte, err error) {
 
 func copyFinal() {
 	// If -o is specified, save the final video at the specified location
-	if len(location) > 0 {
-		cmd := exec.Command("ffmpeg", "-i", "./temp/final.mp4", "-y", location+"/final.mp4")
+	if len(outputLocation) > 0 {
+		cmd := exec.Command("ffmpeg", "-i", "./temp/final.mp4", "-y", outputLocation+"/final.mp4")
 		output, err := cmd.CombinedOutput()
 		checkCMDError(output, err)
 	} else { // If -o is not specified, save the final video at the default location
@@ -240,9 +256,9 @@ func findTemplate(s string, d fs.DirEntry, err error) error {
 		return err
 	}
 	if slideRegEx.MatchString(d.Name()) {
-		if templateName == "" {
+		if slideshowDirectory == "" {
 			fmt.Println("Found template: " + s + "\nUsing found template...")
-			templateName = s
+			slideshowDirectory = s
 		}
 	}
 	return nil
