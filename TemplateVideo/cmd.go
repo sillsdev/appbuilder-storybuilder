@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os/exec"
 )
 
@@ -40,5 +41,19 @@ func cmdAddBackgroundMusic(backgroundAudioPath string, volume string) *exec.Cmd 
 		"-map", "0:v:0",
 		"-y", "../finalvideo.mp4",
 	)
+	return cmd
+}
+
+func cmdCopyFile(oldPath string, newPath string) *exec.Cmd {
+	cmd := exec.Command("ffmpeg", "-i", oldPath, "-y", newPath)
+
+	return cmd
+}
+
+func cmdScaleImage(imagePath string, height string, width string, imageOutputPath string) *exec.Cmd {
+	cmd := exec.Command("ffmpeg", "-i", imagePath,
+		"-vf", fmt.Sprintf("scale=%s:%s", height, width)+",setsar=1:1",
+		"-y", imageOutputPath)
+
 	return cmd
 }

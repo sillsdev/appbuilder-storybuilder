@@ -216,11 +216,11 @@ func checkCMDError(output []byte, err error) {
 func copyFinal() {
 	// If -o is specified, save the final video at the specified location
 	if len(outputLocation) > 0 {
-		cmd := exec.Command("ffmpeg", "-i", "./temp/final.mp4", "-y", outputLocation+"/final.mp4")
+		cmd := cmdCopyFile("./temp/final.mp4", outputLocation+"/final.mp4")
 		output, err := cmd.CombinedOutput()
 		checkCMDError(output, err)
 	} else { // If -o is not specified, save the final video at the default location
-		cmd := exec.Command("ffmpeg", "-i", "./temp/final.mp4", "-y", "./final.mp4")
+		cmd := cmdCopyFile("./temp/final.mp4", "/final.mp4")
 		output, err := cmd.CombinedOutput()
 		checkCMDError(output, err)
 	}
@@ -239,9 +239,7 @@ func scaleImages(Images []string, height string, width string) {
 	for i := 0; i < totalNumImages; i++ {
 		go func(i int) {
 			defer wg.Done()
-			cmd := exec.Command("ffmpeg", "-i", "./"+Images[i],
-				"-vf", fmt.Sprintf("scale=%s:%s", height, width)+",setsar=1:1",
-				"-y", "./"+Images[i])
+			cmd := cmdScaleImage("./"+Images[i], height, width, "./"+Images[i])
 			output, err := cmd.CombinedOutput()
 			checkCMDError(output, err)
 		}(i)
