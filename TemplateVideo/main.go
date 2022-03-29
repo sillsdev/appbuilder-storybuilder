@@ -383,13 +383,8 @@ func addBackgroundMusic(backgroundAudio string, backgroundVolume string) {
 	} else {
 		tempVol = .5
 	}
-	cmd := exec.Command("ffmpeg",
-		"-i", "./temp/mergedVideo.mp4",
-		"-i", backgroundAudio,
-		"-filter_complex", "[1:0]volume="+fmt.Sprintf("%f", tempVol)+"[a1];[0:a][a1]amix=inputs=2:duration=first",
-		"-map", "0:v:0",
-		"-y", "../finalvideo.mp4",
-	)
+
+	cmd := cmdAddBackgroundMusic(backgroundAudio, fmt.Sprintf("%f", tempVol))
 	output, e := cmd.CombinedOutput()
 	checkCMDError(output, e)
 }
@@ -453,7 +448,7 @@ func makeTempVideosWithoutAudio(Images []string, Transitions []string, Transitio
 			fmt.Printf("Making temp%d-%d.mp4 video\n", i, totalNumImages)
 			zoom_cmd := createZoomCommand(Motions[i], convertStringToFloat(duration))
 
-			cmd := cmdIndividualVideo(Images[i], duration, zoom_cmd, fmt.Sprintf("./temp/temp%d-%d.mp4", i, totalNumImages))
+			cmd := cmdCreateTempVideo(Images[i], duration, zoom_cmd, fmt.Sprintf("./temp/temp%d-%d.mp4", i, totalNumImages))
 			output, err := cmd.CombinedOutput()
 			checkCMDError(output, err)
 		}(i)
@@ -502,7 +497,7 @@ func MergeTempVideos(Images []string, Transitions []string, TransitionDurations 
 		settb += fmt.Sprintf("[%d:v]tpad=stop_mode=clone:stop_duration=%f[v%d];", i, transition_duration/2, i)
 
 		//get the current video length in seconds
-		cmd := cmdVideoLength(fmt.Sprintf("./temp/temp%d-%d.mp4", i, totalNumImages))
+		cmd := cmdGetVideoLength(fmt.Sprintf("./temp/temp%d-%d.mp4", i, totalNumImages))
 
 		output, err := cmd.CombinedOutput()
 		checkCMDError(output, err)
@@ -592,7 +587,7 @@ func TrimEnd() {
 	fmt.Println("Trimming video...")
 
 	//get the true length of the video
-	cmd := cmdVideoLength("./temp/video_with_no_audio.mp4")
+	cmd := cmdGetVideoLength("./temp/video_with_no_audio.mp4")
 	output, err := cmd.CombinedOutput()
 	checkCMDError(output, err)
 
