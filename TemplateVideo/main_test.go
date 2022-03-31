@@ -90,26 +90,72 @@ func TestParse(t *testing.T) {
 	}
 }
 
-func TestScaleImages(t *testing.T) {
-	imageName := "Jn01.1-18-title.jpg"
-	image_path := "../TestInput/" + imageName
-
-	Images := []string{}
-	Images = append(Images, image_path)
-
-	scaleImages(Images, "852", "480")
+func Test_scaleImages(t *testing.T) {
+	type args struct {
+		Images []string
+		height string
+		width  string
+	}
+	tests := []struct {
+		name string
+		args args
+	}{
+		{
+			"Scaling images to smaller size",
+			args{Images: []string{"../TestInput/Jn01.1-18-title.jpg"}, height: "852", width: "480"},
+		},
+		{
+			"Scaling images to original size",
+			args{Images: []string{"../TestInput/Jn01.1-18-title.jpg"}, height: "1280", width: "720"},
+			//args{Images: []string{"../TestInput/Jn01.1-18-title.jpg", "../TestInput/./VB-John 1v1.jpg", "../TestInput/./VB-John 1v3.jpg", "../TestInput/./VB-John 1v4.jpg", "../TestInput/./VB-John 1v5a.jpg",
+			// "../TestInput/./VB-John 1v5b.jpg", "../TestInput/./VB-John 1v6.jpg", "../TestInput/Gospel of John-credits.jpg"}, height: "1280", width: "720"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			scaleImages(tt.args.Images, tt.args.height, tt.args.width)
+		})
+	}
 
 	cmd := exec.Command("ffprobe", "-v", "error",
 		"-select_streams", "v:0", "-show_entries", "stream=width,height",
-		"-of", "csv=s=x:p=0", image_path)
+		"-of", "csv=s=x:p=0", "../TestInput/Jn01.1-18-title.jpg")
 
 	output, err := cmd.CombinedOutput()
 	checkCMDError(output, err)
 	output_string := strings.TrimSpace(string(output))
 
-	expectedOutput := "852x480"
+	expectedOutput := "1280x720"
+
+	t.Log(output_string)
 
 	if output_string != expectedOutput {
-		t.Error(fmt.Sprintf("expected image %s to have widthxheight = %s, but got %s", imageName, expectedOutput, output_string))
+		t.Error(fmt.Sprintf("expected image %s to have widthxheight = %s, but got %s", "Jn01.1-18-title.jpg", expectedOutput, output_string))
+	}
+}
+
+func Test_createZoomCommand(t *testing.T) {
+	type args struct {
+		Motions  [][]float64
+		Duration []float64
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			"Creating zoom command for VB-John 1v1.jpg",
+			args{Motions: [][]float64{{0.282, 0.088, 0.718, 0.717}, {0.391, 0.115, 0.475, 0.478}},
+				Duration: []float64{9400}},
+			"scale=8000:-1,zoompan=z='1/((0.718)-(0.001)*on)':x='0.282*iw+0.000*iw*on':y='0.088*ih+0.000*ih*on':d=235:fps=25,scale=1280:720,setsar=1:1",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := createZoomCommand(tt.args.Motions, tt.args.Duration); got != tt.want {
+				t.Errorf("createZoomCommand() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }

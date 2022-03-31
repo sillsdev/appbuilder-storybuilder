@@ -116,7 +116,6 @@ func removeFileNameFromDirectory(slideshowDirectory string) string {
 			template_directory += template_directory_split[i] + "/"
 		}
 	}
-
 	return template_directory
 }
 
@@ -220,7 +219,7 @@ func copyFinal() {
 		output, err := cmd.CombinedOutput()
 		checkCMDError(output, err)
 	} else { // If -o is not specified, save the final video at the default location
-		cmd := cmdCopyFile("./temp/final.mp4", "/final.mp4")
+		cmd := cmdCopyFile("./temp/final.mp4", "./final.mp4")
 		output, err := cmd.CombinedOutput()
 		checkCMDError(output, err)
 	}
@@ -387,8 +386,8 @@ func addBackgroundMusic(backgroundAudio string, backgroundVolume string) {
 	checkCMDError(output, e)
 }
 
-func createZoomCommand(Motions [][]float64, Duration []float64) string {
-	num_frames := int(Duration[0] / (1000.0 / 25.0))
+func createZoomCommand(Motions [][]float64, TimingDuration []float64) string {
+	num_frames := int(TimingDuration[0] / (1000.0 / 25.0))
 
 	size_init := Motions[0][3]
 	size_change := Motions[1][3] - size_init
