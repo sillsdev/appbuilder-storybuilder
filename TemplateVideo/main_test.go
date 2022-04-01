@@ -48,14 +48,14 @@ func TestParse(t *testing.T) {
 		t.Error(fmt.Sprintf("expected audio filename to be %s, but got %s", expectedBackAudioVolume, BackAudioVolume))
 	}
 
-	expectedTransitions := []string{"fade", "fade", "circleopen", "fade", "fade", "fade", "wipeleft", "fade"}
+	expectedTransitions := []string{"fade", "fade", "circleopen", "fade", "fade", "wipeleft", "wipeleft", "fade"}
 	for i := 0; i < len(expectedTransitions); i++ {
 		if expectedTransitions[i] != Transitions[i] {
 			t.Error(fmt.Sprintf("expected transition to be %s, but got %s", expectedTransitions[i], Transitions[i]))
 		}
 	}
 
-	expectedTransitionDurations := []string{"1000", "1000", "2000", "1000", "1000", "1000", "3000", "1000"}
+	expectedTransitionDurations := []string{"1000", "1000", "2000", "1000", "1000", "3000", "3000", "1000"}
 	for i := 0; i < len(expectedTransitionDurations); i++ {
 		if expectedTransitionDurations[i] != TransitionDurations[i] {
 			t.Error(fmt.Sprintf("expected transition duration to be %s, but got %s", expectedTransitionDurations[i], TransitionDurations[i]))
@@ -101,47 +101,30 @@ func TestParse(t *testing.T) {
 	}
 }
 
-func Test_scaleImages(t *testing.T) {
+func Test_cmdScaleImage(t *testing.T) {
 	type args struct {
-		Images []string
-		height string
-		width  string
+		imagePath       string
+		height          string
+		width           string
+		imageOutputPath string
 	}
 	tests := []struct {
 		name string
 		args args
+		want *exec.Cmd
 	}{
 		{
-			"Scaling images to smaller size",
-			args{Images: []string{"../TestInput/Jn01.1-18-title.jpg"}, height: "852", width: "480"},
-		},
-		{
-			"Scaling images to original size",
-			args{Images: []string{"../TestInput/Jn01.1-18-title.jpg"}, height: "1280", width: "720"},
-			//args{Images: []string{"../TestInput/Jn01.1-18-title.jpg", "../TestInput/./VB-John 1v1.jpg", "../TestInput/./VB-John 1v3.jpg", "../TestInput/./VB-John 1v4.jpg", "../TestInput/./VB-John 1v5a.jpg",
-			// "../TestInput/./VB-John 1v5b.jpg", "../TestInput/./VB-John 1v6.jpg", "../TestInput/Gospel of John-credits.jpg"}, height: "1280", width: "720"},
+			"Ffmpeg command to scale images to 480x852",
+			args{imagePath: "../TestInput/Jn01.1-18-title.jpg", height: "852", width: "480", imageOutputPath: "../TestInput/Jn01.1-18-title.jpg"},
+			exec.Command(ffmpeg + " -i ../TestInput/Jn01.1-18-title.jpg -vf scale=852:480,setsar=1:1 -y ../TestInput/Jn01.1-18-title.jpg"),
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			scaleImages(tt.args.Images, tt.args.height, tt.args.width)
+			if got := cmdScaleImage(tt.args.imagePath, tt.args.height, tt.args.width, tt.args.imageOutputPath).String(); got != tt.want.String() {
+				t.Errorf("cmdScaleImage() = %v, want %v", got, tt.want)
+			}
 		})
-	}
-
-	cmd := exec.Command("ffprobe", "-v", "error",
-		"-select_streams", "v:0", "-show_entries", "stream=width,height",
-		"-of", "csv=s=x:p=0", "../TestInput/Jn01.1-18-title.jpg")
-
-	output, err := cmd.CombinedOutput()
-	checkCMDError(output, err)
-	output_string := strings.TrimSpace(string(output))
-
-	expectedOutput := "1280x720"
-
-	t.Log(output_string)
-
-	if output_string != expectedOutput {
-		t.Error(fmt.Sprintf("expected image %s to have widthxheight = %s, but got %s", "Jn01.1-18-title.jpg", expectedOutput, output_string))
 	}
 }
 
@@ -169,7 +152,6 @@ func Test_cmdCreateTempVideo(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			fmt.Println(cmdCreateTempVideo(tt.args.ImageDirectory, tt.args.duration, tt.args.zoom_cmd, tt.args.finalOutputDirectory).String())
 			if got := cmdCreateTempVideo(tt.args.ImageDirectory, tt.args.duration, tt.args.zoom_cmd, tt.args.finalOutputDirectory).String(); got != tt.want.String() {
 				t.Errorf("cmdCreateTempVideo() = %v, want %v", got, tt.want)
 			}
