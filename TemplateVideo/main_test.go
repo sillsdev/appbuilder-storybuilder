@@ -120,7 +120,7 @@ func Test_cmdScaleImage(t *testing.T) {
 		want *exec.Cmd
 	}{
 		{
-			"Ffmpeg command to scale images to 480x852",
+			"Ffmpeg command to scale image ../TestInput/Jn01.1-18-title.jpg to 480x852",
 			args{imagePath: "../TestInput/Jn01.1-18-title.jpg", height: "852", width: "480", imageOutputPath: "../TestInput/Jn01.1-18-title.jpg"},
 			exec.Command(ffmpeg + " -i ../TestInput/Jn01.1-18-title.jpg -vf scale=852:480,setsar=1:1 -y ../TestInput/Jn01.1-18-title.jpg"),
 		},
@@ -201,7 +201,7 @@ func Test_cmdGetVideoLength(t *testing.T) {
 		want *exec.Cmd
 	}{
 		{
-			"get correct video duration",
+			"Getting video length ffmpeg command for ../TestInput/sample_video.mp4",
 			args{inputDirectory: "../TestInput/sample_video.mp4"},
 			exec.Command(ffprobe + " -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 ../TestInput/sample_video.mp4"),
 		},
@@ -211,6 +211,30 @@ func Test_cmdGetVideoLength(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := cmdGetVideoLength(tt.args.inputDirectory).String(); got != tt.want.String() {
 				t.Errorf("createZoomCommand() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_cmdTrimLengthOfVideo(t *testing.T) {
+	type args struct {
+		duration string
+	}
+	tests := []struct {
+		name string
+		args args
+		want *exec.Cmd
+	}{
+		{
+			"Ffmpeg command to trim length of video to 20 seconds",
+			args{duration: "20"},
+			exec.Command(ffmpeg + " -i ./temp/merged_video.mp4 -c copy -t 20 -y ./temp/final.mp4"),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := cmdTrimLengthOfVideo(tt.args.duration).String(); got != tt.want.String() {
+				t.Errorf("cmdTrimLengthOfVideo() = %v, want %v", got, tt.want)
 			}
 		})
 	}
