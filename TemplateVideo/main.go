@@ -19,6 +19,7 @@ import (
 
 var templateName string
 var location string
+var overlayVideoPath string
 
 // Main function
 func main() {
@@ -26,7 +27,7 @@ func main() {
 	createTemporaryFolder()
 
 	// Ask the user for options
-	saveTemps, lowQuality, helpFlag := parseFlags(&templateName, &location)
+	saveTemps, lowQuality, helpFlag := parseFlags(&templateName, &location, &overlayVideoPath)
 	if *helpFlag {
 		displayHelpMessage()
 		return
@@ -47,8 +48,6 @@ func main() {
 	// Parse in the various pieces from the template
 	Images, Audios, BackAudioPath, BackAudioVolume, Transitions, TransitionDurations, Timings, Motions := parseSlideshow(templateName)
 	fmt.Println("Parsing completed...")
-
-	fmt.Println(Motions)
 
 	// Checking FFmpeg version to use Xfade
 	fmt.Println("Checking FFmpeg version...")
@@ -84,19 +83,26 @@ func main() {
 
 	fmt.Println("Video production completed!")
 	duration := time.Since(start)
-	fmt.Printf("Time Taken: %f seconds", duration.Seconds())
+	fmt.Sprintln(fmt.Sprintf("Time Taken: %f seconds", duration.Seconds()))
+
+	if overlayVideoPath != "" {
+		fmt.Println("Creating overlay video...")
+		createOverlaidVideoForTesting(overlayVideoPath, location)
+		fmt.Println("Finished creating overlay video")
+	}
 }
 
 func createTemporaryFolder() {
 	os.Mkdir("./temp", 0755)
 }
 
-func parseFlags(templateName *string, location *string) (*bool, *bool, *bool) {
+func parseFlags(templateName *string, location *string, overlayVideoPath *string) (*bool, *bool, *bool) {
 	var saveTemps = flag.Bool("s", false, "Include if user wishes to save temporary files created during production")
 	var lowQuality = flag.Bool("l", false, "Include to produce a lower quality video (1280x720 => 852x480)")
 	var help = flag.Bool("h", false, "Include option flag to display list of possible flags and their uses")
 	flag.StringVar(templateName, "t", "", "Specify template to use")
 	flag.StringVar(location, "o", "", "Specify output location")
+	flag.StringVar(overlayVideoPath, "ov", "", "Specify test video location to create overlay video")
 	flag.Parse()
 
 	return saveTemps, lowQuality, help
@@ -612,14 +618,18 @@ func TrimEnd() {
  * Parameters:
  *		trueVideo: (string) - file path to the testing video
 */
-func createOverlaidVideoForTesting(trueVideo string) {
+func createOverlaidVideoForTesting(trueVideo string, destinationLocation string) {
+	outputDir := "./overlayVideo.mp4"
+	if destinationLocation != "" {
+		outputDir = location + "/overlayVideo.mp4"
+	}
 	cmd := exec.Command("ffmpeg",
 		"-i", "./final.mp4",
 		"-i", trueVideo,
 		"-filter_complex", "[1:v]format=yuva444p,lut=c3=128,negate[video2withAlpha],[0:v][video2withAlpha]overlay[out]",
 		"-map", "[out]",
 		"-y",
-		"./temp/testOverlaidVideo.mp4",
+		outputDir,
 	)
 
 	output, err := cmd.CombinedOutput()
