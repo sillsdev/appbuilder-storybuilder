@@ -26,8 +26,11 @@ func main() {
 	createTemporaryFolder()
 
 	// Ask the user for options
-	saveTemps, lowQuality := parseFlags(&templateName, &location)
-
+	saveTemps, lowQuality, helpFlag := parseFlags(&templateName, &location)
+	if *helpFlag {
+		displayHelpMessage()
+		return
+	}
 	// Create directory if output directory does not exist
 	if location != "" {
 		createOutputDirectory(location)
@@ -621,4 +624,15 @@ func createOverlaidVideoForTesting(trueVideo string) {
 
 	output, err := cmd.CombinedOutput()
 	checkCMDError(output, err)
+}
+
+func displayHelpMessage() {
+	println("Usage: program-name [OPTIONS]\n")
+	println("Options list:\n")
+	println("            -t [filepath]: Template Name, specify a template to use (if not included searches current folder for template)\n")
+	println("            -s (boolean): Save Temporaries, include to save temporary files generated during video process)\n")
+	println("            -o [filepath]: Output Location, specify where to store final result (default is current directory)\n")
+	println("            -l (boolean): Low Quality, include to generate a lower quality video (480p instead of 720p)\n")
+	println("            -v (boolean): Verbosity, include to increase the verbosity of the status messages printed during video process\n")
+	println("            -h (boolean): Help, include to display this help message and quit\n")
 }
