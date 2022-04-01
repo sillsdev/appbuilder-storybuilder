@@ -17,8 +17,8 @@ import (
 	"time"
 )
 
-var templateName string
-var location string
+var slideshowDirectory string
+var outputLocation string
 var overlayVideoPath string
 
 // Main function
@@ -27,18 +27,19 @@ func main() {
 	createTemporaryFolder()
 
 	// Ask the user for options
-	saveTemps, lowQuality, helpFlag := parseFlags(&templateName, &location, &overlayVideoPath)
+	saveTemps, lowQuality, helpFlag := parseFlags(&slideshowDirectory, &outputLocation, &overlayVideoPath)
 	if *helpFlag {
 		displayHelpMessage()
 		return
 	}
+
 	// Create directory if output directory does not exist
-	if location != "" {
-		createOutputDirectory(location)
+	if outputLocation != "" {
+		createOutputDirectory(outputLocation)
 	}
 
 	// Search for a template in local folder if no template is provided
-	if templateName == "" {
+	if slideshowDirectory == "" {
 		fmt.Println("No template provided, searching local folder...")
 		filepath.WalkDir(".", findTemplate)
 	}
@@ -46,7 +47,7 @@ func main() {
 	start := time.Now()
 
 	// Parse in the various pieces from the template
-	Images, Audios, BackAudioPath, BackAudioVolume, Transitions, TransitionDurations, Timings, Motions := parseSlideshow(templateName)
+	Images, Audios, BackAudioPath, BackAudioVolume, Transitions, TransitionDurations, Timings, Motions := parseSlideshow(slideshowDirectory)
 	fmt.Println("Parsing completed...")
 
 	// Checking FFmpeg version to use Xfade
@@ -87,7 +88,7 @@ func main() {
 
 	if overlayVideoPath != "" {
 		fmt.Println("Creating overlay video...")
-		createOverlaidVideoForTesting(overlayVideoPath, location)
+		createOverlaidVideoForTesting(overlayVideoPath, outputLocation)
 		fmt.Println("Finished creating overlay video")
 	}
 }
@@ -101,6 +102,7 @@ func parseFlags(templateName *string, location *string, overlayVideoPath *string
 	var lowQuality = flag.Bool("l", false, "Include to produce a lower quality video (1280x720 => 852x480)")
 	var help = flag.Bool("h", false, "Include option flag to display list of possible flags and their uses")
 	flag.StringVar(templateName, "t", "", "Specify template to use")
+
 	flag.StringVar(location, "o", "", "Specify output location")
 	flag.StringVar(overlayVideoPath, "ov", "", "Specify test video location to create overlay video")
 	flag.Parse()
@@ -117,7 +119,21 @@ func createOutputDirectory(location string) {
 	}
 }
 
-func parseSlideshow(templateName string) ([]string, []string, string, string, []string, []string, []string, [][][]float64) {
+func removeFileNameFromDirectory(slideshowDirectory string) string {
+	template_directory_split := strings.Split(slideshowDirectory, "/")
+	template_directory := ""
+
+	if len(template_directory_split) == 1 {
+		template_directory = "./"
+	} else {
+		for i := 0; i < len(template_directory_split)-1; i++ {
+			template_directory += template_directory_split[i] + "/"
+		}
+	}
+	return template_directory
+}
+
+func parseSlideshow(slideshowDirectory string) ([]string, []string, string, string, []string, []string, []string, [][][]float64) {
 	Images := []string{}
 	Audios := []string{}
 	BackAudioPath := ""
@@ -127,20 +143,23 @@ func parseSlideshow(templateName string) ([]string, []string, string, string, []
 	Timings := []string{}
 	Motions := [][][]float64{}
 	fmt.Println("Parsing .slideshow file...")
-	var slideshow = readData(templateName)
+	var slideshow = readData(slideshowDirectory)
+
+	template_directory := removeFileNameFromDirectory(slideshowDirectory)
+
 	for _, slide := range slideshow.Slide {
 		if slide.Audio.Background_Filename.Path != "" {
-			Audios = append(Audios, slide.Audio.Background_Filename.Path)
+			Audios = append(Audios, template_directory+slide.Audio.Background_Filename.Path)
 			BackAudioPath = slide.Audio.Background_Filename.Path
 			BackAudioVolume = slide.Audio.Background_Filename.Volume
 		} else {
 			if slide.Audio.Filename.Name == "" {
 				Audios = append(Audios, "")
 			} else {
-				Audios = append(Audios, slide.Audio.Filename.Name)
+				Audios = append(Audios, template_directory+slide.Audio.Filename.Name)
 			}
 		}
-		Images = append(Images, slide.Image.Name)
+		Images = append(Images, template_directory+slide.Image.Name)
 		if slide.Transition.Type == "" {
 			Transitions = append(Transitions, "fade")
 		} else {
@@ -157,6 +176,7 @@ func parseSlideshow(templateName string) ([]string, []string, string, string, []
 		} else {
 			motions = [][]float64{convertStringToFloat(slide.Motion.Start), convertStringToFloat(slide.Motion.End)}
 		}
+
 		Motions = append(Motions, motions)
 		Timings = append(Timings, slide.Timing.Duration)
 	}
@@ -208,12 +228,12 @@ func checkCMDError(output []byte, err error) {
 
 func copyFinal() {
 	// If -o is specified, save the final video at the specified location
-	if len(location) > 0 {
-		cmd := exec.Command("ffmpeg", "-i", "./temp/final.mp4", "-y", location+"/final.mp4")
+	if len(outputLocation) > 0 {
+		cmd := cmdCopyFile("./temp/final.mp4", outputLocation+"/final.mp4")
 		output, err := cmd.CombinedOutput()
 		checkCMDError(output, err)
 	} else { // If -o is not specified, save the final video at the default location
-		cmd := exec.Command("ffmpeg", "-i", "./temp/final.mp4", "-y", "./final.mp4")
+		cmd := cmdCopyFile("./temp/final.mp4", "./final.mp4")
 		output, err := cmd.CombinedOutput()
 		checkCMDError(output, err)
 	}
@@ -232,9 +252,7 @@ func scaleImages(Images []string, height string, width string) {
 	for i := 0; i < totalNumImages; i++ {
 		go func(i int) {
 			defer wg.Done()
-			cmd := exec.Command("ffmpeg", "-i", "./"+Images[i],
-				"-vf", fmt.Sprintf("scale=%s:%s", height, width)+",setsar=1:1",
-				"-y", "./"+Images[i])
+			cmd := cmdScaleImage("./"+Images[i], height, width, "./"+Images[i])
 			output, err := cmd.CombinedOutput()
 			checkCMDError(output, err)
 		}(i)
@@ -250,9 +268,9 @@ func findTemplate(s string, d fs.DirEntry, err error) error {
 		return err
 	}
 	if slideRegEx.MatchString(d.Name()) {
-		if templateName == "" {
+		if slideshowDirectory == "" {
 			fmt.Println("Found template: " + s + "\nUsing found template...")
-			templateName = s
+			slideshowDirectory = s
 		}
 	}
 	return nil
@@ -376,19 +394,14 @@ func addBackgroundMusic(backgroundAudio string, backgroundVolume string) {
 	} else {
 		tempVol = .5
 	}
-	cmd := exec.Command("ffmpeg",
-		"-i", "./temp/mergedVideo.mp4",
-		"-i", backgroundAudio,
-		"-filter_complex", "[1:0]volume="+fmt.Sprintf("%f", tempVol)+"[a1];[0:a][a1]amix=inputs=2:duration=first",
-		"-map", "0:v:0",
-		"-y", "../finalvideo.mp4",
-	)
+
+	cmd := cmdAddBackgroundMusic(backgroundAudio, fmt.Sprintf("%f", tempVol))
 	output, e := cmd.CombinedOutput()
 	checkCMDError(output, e)
 }
 
-func createZoomCommand(Motions [][]float64, Duration []float64) string {
-	num_frames := int(Duration[0] / (1000.0 / 25.0))
+func createZoomCommand(Motions [][]float64, TimingDuration []float64) string {
+	num_frames := int(TimingDuration[0] / (1000.0 / 25.0))
 
 	size_init := Motions[0][3]
 	size_change := Motions[1][3] - size_init
@@ -445,10 +458,8 @@ func makeTempVideosWithoutAudio(Images []string, Transitions []string, Transitio
 			defer wg.Done()
 			fmt.Printf("Making temp%d-%d.mp4 video\n", i, totalNumImages)
 			zoom_cmd := createZoomCommand(Motions[i], convertStringToFloat(duration))
-			cmd := exec.Command("ffmpeg", "-loop", "1", "-i", "./"+Images[i],
-				"-t", duration+"ms", "-filter_complex", zoom_cmd,
-				"-shortest", "-pix_fmt", "yuv420p", "-y", fmt.Sprintf("./temp/temp%d-%d.mp4", i, totalNumImages))
 
+			cmd := cmdCreateTempVideo(Images[i], duration, zoom_cmd, fmt.Sprintf("./temp/temp%d-%d.mp4", i, totalNumImages))
 			output, err := cmd.CombinedOutput()
 			checkCMDError(output, err)
 		}(i)
@@ -497,12 +508,8 @@ func MergeTempVideos(Images []string, Transitions []string, TransitionDurations 
 		settb += fmt.Sprintf("[%d:v]tpad=stop_mode=clone:stop_duration=%f[v%d];", i, transition_duration/2, i)
 
 		//get the current video length in seconds
-		cmd := exec.Command("ffprobe",
-			"-v", "error",
-			"-show_entries", "format=duration",
-			"-of", "default=noprint_wrappers=1:nokey=1",
-			fmt.Sprintf("./temp/temp%d-%d.mp4", i, totalNumImages),
-		)
+		cmd := cmdGetVideoLength(fmt.Sprintf("./temp/temp%d-%d.mp4", i, totalNumImages))
+
 		output, err := cmd.CombinedOutput()
 		checkCMDError(output, err)
 
@@ -589,25 +596,16 @@ func addAudio(Timings []string, Audios []string) {
  */
 func TrimEnd() {
 	fmt.Println("Trimming video...")
+
 	//get the true length of the video
-	cmd := exec.Command("ffprobe",
-		"-v", "error",
-		"-show_entries", "format=duration",
-		"-of", "default=noprint_wrappers=1:nokey=1",
-		"./temp/video_with_no_audio.mp4",
-	)
+	cmd := cmdGetVideoLength("./temp/video_with_no_audio.mp4")
 	output, err := cmd.CombinedOutput()
 	checkCMDError(output, err)
 
 	video_length, err := strconv.ParseFloat(strings.TrimSpace(string(output)), 8)
 
 	//match the video length of the merged video with the true length of the video
-	cmd = exec.Command("ffmpeg",
-		"-i", "./temp/merged_video.mp4",
-		"-c", "copy", "-t", fmt.Sprintf("%f", video_length),
-		"-y",
-		"./temp/final.mp4",
-	)
+	cmd = cmdTrimLengthOfVideo(fmt.Sprintf("%f", video_length))
 
 	output, err = cmd.CombinedOutput()
 	checkCMDError(output, err)
@@ -621,7 +619,7 @@ func TrimEnd() {
 func createOverlaidVideoForTesting(trueVideo string, destinationLocation string) {
 	outputDir := "./overlayVideo.mp4"
 	if destinationLocation != "" {
-		outputDir = location + "/overlayVideo.mp4"
+		outputDir = destinationLocation + "/overlayVideo.mp4"
 	}
 	cmd := exec.Command("ffmpeg",
 		"-i", "./final.mp4",

@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<slideshow>
+  <title lang="en">John Baptizes Jesus</title>
+  <title lang="fr">Jean baptise Jésus</title>
+  <title lang="nl">Johannes doopt Jezus</title>
+  <title lang="pt">João batiza Jesus</title>
+  <title lang="es">Juan bautiza a Jesús</title>
+  <title lang="cust">John Baptizes Jesus</title>
+  <slide>
+    <audio background="play">
+      <background-filename>../music-intro-Jn.mp3</background-filename>
+    </audio>
+    <image lang="en">Jn01.19-34-title-eng.odg</image>
+    <image lang="fr">Jn01.19-34-title-fra.odg</image>
+    <image lang="nl">Jn01.19-34-title-ndl.odg</image>
+    <image lang="pt">Jn01.19-34-title-por.odg</image>
+    <image lang="es">Jn01.19-34-title-spa.odg</image>
+    <image lang="cust">Jn01.19-34-title-cust.odg</image>
+    <image>../../templates/Jn01.19-34 John Baptizes Jesus/Jn01.19-34-title.jpg</image>
+    <timing duration="5000"/>
+  </slide>
+  <slide>
+    <image>../../templates/Jn01.19-34 John Baptizes Jesus/VB-John 1v19.jpg</image>
+    <narration start="JHN.1.19"/>
+    <motion start="0.327 0.088 0.649 0.646" end="0 0 1 1"/>
+  </slide>
+  <slide>
+    <image>../../templates/Jn01.19-34 John Baptizes Jesus/VB-John 1v20.jpg</image>
+    <narration start="JHN.1.20"/>
+    <motion start="0 0 1 1" end="0.223 0.080 0.738 0.735"/>
+  </slide>
+  <slide>
+    <image>../../templates/Jn01.19-34 John Baptizes Jesus/VB-John 1v21.jpg</image>
+    <narration start="JHN.1.21"/>
+    <motion start="0 0 1 1" end="0.168 0.080 0.663 0.664"/>
+  </slide>
+  <slide>
+    <image>../../templates/Jn01.19-34 John Baptizes Jesus/VB-John 1v22.jpg</image>
+    <narration start="JHN.1.22"/>
+    <motion start="0.084 0.142 0.688 0.690" end="0.025 0.053 0.817 0.814"/>
+  </slide>
+  <slide>
+    <image>../../templates/Jn01.19-34 John Baptizes Jesus/VB-John 1v23.jpg</image>
+    <narration start="JHN.1.23"/>
+    <motion start="0.045 0 0.955 0.956" end="0.208 0.071 0.787 0.788"/>
+  </slide>
+  <slide>
+    <image>../../templates/Jn01.19-34 John Baptizes Jesus/VB-John 1v24.jpg</image>
+    <narration start="JHN.1.24"/>
+    <motion start="0.025 0 0.975 0.973" end="0 0 1 1"/>
+  </slide>
+  <slide>
+    <image>../../templates/Jn01.19-34 John Baptizes Jesus/VB-John 1v25.jpg</image>
+    <narration start="JHN.1.25"/>
+    <motion start="0.223 0.186 0.772 0.770" end="0 0 1 1"/>
+  </slide>
+  <slide>
+    <image>../../templates/Jn01.19-34 John Baptizes Jesus/VB-John 1v26.jpg</image>
+    <narration start="JHN.1.26"/>
+    <motion start="0.228 0.080 0.718 0.717" end="0.129 0.142 0.856 0.858"/>
+  </slide>
+  <slide>
+    <image>../../templates/Jn01.19-34 John Baptizes Jesus/VB-John 1v27.jpg</image>
+    <narration start="JHN.1.27"/>
+    <motion start="0.045 0.053 0.812 0.814" end="0.163 0.018 0.837 0.841"/>
+  </slide>
+  <slide>
+    <image>../../templates/Jn01.19-34 John Baptizes Jesus/VB-John 1v28.jpg</image>
+    <narration start="JHN.1.28"/>
+    <motion start="0 0 1 1" end="0.149 0.124 0.787 0.788"/>
+  </slide>
+  <slide>
+    <image>../../templates/Jn01.19-34 John Baptizes Jesus/VB-John 1v29.jpg</image>
+    <narration start="JHN.1.29"/>
+    <motion start="0.178 0.106 0.743 0.743" end="0 0.071 0.817 0.814"/>
+  </slide>
+  <slide>
+    <image>../../templates/Jn01.19-34 John Baptizes Jesus/VB-John 1v30.jpg</image>
+    <narration start="JHN.1.30"/>
+    <motion start="0 0 1 1" end="0.163 0.097 0.733 0.735"/>
+  </slide>
+  <slide>
+    <image>../../templates/Jn01.19-34 John Baptizes Jesus/VB-John 1v31.jpg</image>
+    <narration start="JHN.1.31"/>
+    <motion start="0 0 1 1" end="0.158 0.106 0.777 0.779"/>
+  </slide>
+  <slide>
+    <image>../../templates/Jn01.19-34 John Baptizes Jesus/VB-John 1v32.jpg</image>
+    <narration start="JHN.1.32"/>
+    <motion start="0 0 1 1" end="0.030 0.168 0.757 0.761"/>
+  </slide>
+  <slide>
+    <image>../../templates/Jn01.19-34 John Baptizes Jesus/VB-John 1v33.jpg</image>
+    <narration start="JHN.1.33"/>
+    <motion start="0.015 0.044 0.812 0.814" end="0 0 1 1"/>
+  </slide>
+  <slide>
+    <image>../../templates/Jn01.19-34 John Baptizes Jesus/VB-John 1v34.jpg</image>
+    <narration start="JHN.1.34" end="JHN.1.34"/>
+    <motion start="0 0 1 1" end="0.089 0.071 0.782 0.779"/>
+  </slide>
+  <slide>
+    <image lang="en">../Gospel of John-credits-eng.odg</image>
+    <image lang="fr">../Gospel of John-credits-fra.odg</image>
+    <image lang="nl">../Gospel of John-credits-ndl.odg</image>
+    <image lang="pt">../Gospel of John-credits-por.odg</image>
+    <image lang="es">../Gospel of John-credits-spa.odg</image>
+    <image lang="cust">../Gospel of John-credits-cust.odg</image>
+    <image>Gospel of John-credits.jpg</image>
+    <timing duration="5000"/>
+  </slide>
+</slideshow>
