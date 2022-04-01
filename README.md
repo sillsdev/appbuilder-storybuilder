@@ -48,7 +48,7 @@ with our provided [Test Folder](https://github.com/gordon-cs/appbuilder-storybui
 In order to generate a release version for our code after making adjustments you will need to follow the steps below:
 1. Install GoReleaser [link](https://goreleaser.com/install/)
 2. In a CLI, navigate to the directory containing the source code (main.go and read.go)
-3. Run `goreleaser init` to generate a `.gorleaser.yaml` file
+3. Run `goreleaser init` to generate a `.goreleaser.yaml` file
 4. Ensure you have proper write access to the repository and generate a GitHub [personal access token](https://github.com/settings/tokens) for your account, making sure it has at least the `write:packages` option checked
 5. Create a folder in your `homedirectory~/.config/` labeled `goreleaser` if it doesn't already exist
 6. Copy your token into a file called `github_token` and place it into the `goreleaser` folder you created.
