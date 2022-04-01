@@ -32,6 +32,8 @@ Design Document: [Link](https://docs.google.com/document/d/1vjogjaWZ0ww7rJtKz3J4
     -o : Output location, used to specify where to store the finished video, will use current directory by default
     
     -l : Lower quality, used to generate a lower quality video for smaller file size for easier distribution (default videos will be 1280x720)
+    
+    -os : Overlay video, used to specify the location of a test video to create an overlay video with the generated video
 
 # Testing Documentation
 Our source code can be tested using our provided unit tests in main_test.go, to which we are adding more tests as we progress. This is run as follows:
