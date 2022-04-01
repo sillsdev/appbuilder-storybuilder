@@ -27,7 +27,7 @@ func main() {
 	createTemporaryFolder()
 
 	// Ask the user for options
-	saveTemps, lowQuality, helpFlag := parseFlags(&templateName, &location, &overlayVideoPath)
+	saveTemps, lowQuality, helpFlag := parseFlags(&slideshowDirectory, &outputLocation, &overlayVideoPath)
 	if *helpFlag {
 		displayHelpMessage()
 		return
@@ -88,7 +88,7 @@ func main() {
 
 	if overlayVideoPath != "" {
 		fmt.Println("Creating overlay video...")
-		createOverlaidVideoForTesting(overlayVideoPath, location)
+		createOverlaidVideoForTesting(overlayVideoPath, outputLocation)
 		fmt.Println("Finished creating overlay video")
 	}
 }
@@ -96,7 +96,6 @@ func main() {
 func createTemporaryFolder() {
 	os.Mkdir("./temp", 0755)
 }
-
 
 func parseFlags(templateName *string, location *string, overlayVideoPath *string) (*bool, *bool, *bool) {
 	var saveTemps = flag.Bool("s", false, "Include if user wishes to save temporary files created during production")
@@ -620,7 +619,7 @@ func TrimEnd() {
 func createOverlaidVideoForTesting(trueVideo string, destinationLocation string) {
 	outputDir := "./overlayVideo.mp4"
 	if destinationLocation != "" {
-		outputDir = location + "/overlayVideo.mp4"
+		outputDir = destinationLocation + "/overlayVideo.mp4"
 	}
 	cmd := exec.Command("ffmpeg",
 		"-i", "./final.mp4",
