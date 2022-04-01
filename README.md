@@ -43,3 +43,19 @@ Our source code can be tested using our provided unit tests in main_test.go, to 
 
 If more thorough testing is desired, or if a unit test fails for some undiscoverable reason, one can manually test our code by downloading and running our code
 with our provided [Test Folder](https://github.com/gordon-cs/appbuilder-storybuilder/tree/main/Test%20Input) which contains a simple template with a few images that can be used to verify if the code is functioning properly.
+
+# Release Documentation
+In order to generate a release version for our code after making adjustments you will need to follow the steps below:
+1. Install GoReleaser [link](https://goreleaser.com/install/)
+2. In a CLI, navigate to the directory containing the source code (main.go and read.go)
+3. Run `goreleaser init` to generate a `.gorleaser.yaml` file
+4. Ensure you have proper write access to the repository and generate a GitHub [personal access token](https://github.com/settings/tokens) for your account, making sure it has at least the `write:packages` option checked
+5. Create a folder in your `homedirectory~/.config/` labeled `goreleaser` if it doesn't already exist
+6. Copy your token into a file called `github_token` and place it into the `goreleaser` folder you created.
+7. With your CLI set to the folder with your source code and the `.goreleaser.yaml` file, create a tag for your release with `git tag -a TAG_ID -m TAG_MESSAGE`(e.g. `git tag -a v0.1.0 -m "Release Version 0.1.0"`)
+8. Push your tag using `git push origin TAG_ID` (e.g. `git push origin v0.1.0)
+9. Now in that same directory run `goreleaser release` and let GoReleaser do the building and publishing for you! T
+
+(Optional) 10. If you wish to compile without releasing to GitHub you can use `goreleaser build` or `goreleaser release --skip-publish` in your source code directory to prevent publishing to GitHub
+
+If any of these steps cause issues you can reference the [GoReleaser documentation](https://goreleaser.com/)
