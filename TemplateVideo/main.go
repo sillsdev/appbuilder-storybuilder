@@ -26,8 +26,11 @@ func main() {
 	createTemporaryFolder()
 
 	// Ask the user for options
-	saveTemps, lowQuality := parseFlags(&templateName, &location)
-
+	saveTemps, lowQuality, helpFlag := parseFlags(&templateName, &location)
+	if *helpFlag {
+		displayHelpMessage()
+		return
+	}
 	// Create directory if output directory does not exist
 	if location != "" {
 		createOutputDirectory(location)
@@ -88,14 +91,15 @@ func createTemporaryFolder() {
 	os.Mkdir("./temp", 0755)
 }
 
-func parseFlags(templateName *string, location *string) (*bool, *bool) {
+func parseFlags(templateName *string, location *string) (*bool, *bool, *bool) {
 	var saveTemps = flag.Bool("s", false, "Include if user wishes to save temporary files created during production")
 	var lowQuality = flag.Bool("l", false, "Include to produce a lower quality video (1280x720 => 852x480)")
+	var help = flag.Bool("h", false, "Include option flag to display list of possible flags and their uses")
 	flag.StringVar(templateName, "t", "", "Specify template to use")
 	flag.StringVar(location, "o", "", "Specify output location")
 	flag.Parse()
 
-	return saveTemps, lowQuality
+	return saveTemps, lowQuality, help
 }
 
 func createOutputDirectory(location string) {
@@ -620,4 +624,15 @@ func createOverlaidVideoForTesting(trueVideo string) {
 
 	output, err := cmd.CombinedOutput()
 	checkCMDError(output, err)
+}
+
+func displayHelpMessage() {
+	println("Usage: program-name [OPTIONS]\n")
+	println("Options list:\n")
+	println("            -t [filepath]: Template Name, specify a template to use (if not included searches current folder for template)\n")
+	println("            -s (boolean): Save Temporaries, include to save temporary files generated during video process)\n")
+	println("            -o [filepath]: Output Location, specify where to store final result (default is current directory)\n")
+	println("            -l (boolean): Low Quality, include to generate a lower quality video (480p instead of 720p)\n")
+	println("            -v (boolean): Verbosity, include to increase the verbosity of the status messages printed during video process\n")
+	println("            -h (boolean): Help, include to display this help message and quit\n")
 }
