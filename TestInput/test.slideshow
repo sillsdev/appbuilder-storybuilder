@@ -63,6 +63,7 @@
     <image>./VB-John 1v5b.jpg</image>
     <motion start="0.109 0.097 0.629 0.628" end="0.144 0.142 0.470 0.469"/>
     <timing duration="2280"/>
+    <transition duration="3000">wipeleft</transition>
   </slide>
   <slide>
     <audio>
