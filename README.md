@@ -54,7 +54,7 @@ In order to generate a release version for our code after making adjustments you
 6. Copy your token into a file called `github_token` and place it into the `goreleaser` folder you created.
 7. With your CLI set to the folder with your source code and the `.goreleaser.yaml` file, create a tag for your release with `git tag -a TAG_ID -m TAG_MESSAGE`(e.g. `git tag -a v0.1.0 -m "Release Version 0.1.0"`)
 8. Push your tag using `git push origin TAG_ID` (e.g. `git push origin v0.1.0`)
-9. Now in that same directory run `goreleaser release` and let GoReleaser do the building and publishing for you! T
+9. Now in that same directory run `goreleaser release` and let GoReleaser do the building and publishing for you!
 
 (Optional) 10. If you wish to compile without releasing to GitHub you can use `goreleaser build` or `goreleaser release --skip-publish` in your source code directory to prevent publishing to GitHub
 
