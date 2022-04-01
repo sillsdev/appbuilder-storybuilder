@@ -50,7 +50,7 @@ In order to generate a release version for our code after making adjustments you
 2. In a CLI, navigate to the directory containing the source code (main.go and read.go)
 3. Run `goreleaser init` to generate a `.goreleaser.yaml` file
 4. Ensure you have proper write access to the repository and generate a GitHub [personal access token](https://github.com/settings/tokens) for your account, making sure it has at least the `write:packages` option checked
-5. Create a folder in your `homedirectory~/.config/` labeled `goreleaser` if it doesn't already exist
+5. Create a folder in your `homedirectory~/.config/` directory labeled `goreleaser` if it doesn't already exist
 6. Copy your token into a file called `github_token` and place it into the `goreleaser` folder you created.
 7. With your CLI set to the folder with your source code and the `.goreleaser.yaml` file, create a tag for your release with `git tag -a TAG_ID -m TAG_MESSAGE`(e.g. `git tag -a v0.1.0 -m "Release Version 0.1.0"`)
 8. Push your tag using `git push origin TAG_ID` (e.g. `git push origin v0.1.0`)
