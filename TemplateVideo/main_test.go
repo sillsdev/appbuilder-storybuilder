@@ -2,8 +2,15 @@ package main
 
 import (
 	"fmt"
+	"io/fs"
+	"regexp"
 	"testing"
 )
+
+type Test struct {
+	d   *fs.DirEntry
+	err *error
+}
 
 func TestParse(t *testing.T) {
 	inputFile := "test.slideshow"
@@ -115,15 +122,19 @@ func TestCheckFFmpegVersion(t *testing.T) {
 
 /*
 	Test function to check if we are getting the template provided
-*/
-// func TestFindTemplate(t *testing.T) {
-// 	templateName := ".slideshow"
-// 	want := regexp.MustCompile(`.+(.slideshow)$`)
-// 	msg, err :=
-// 	if !want.MatchString(msg) || err != nil {
-// 		t.Fatalf(`Template(".Slideshow") = %q, %v, want match for %#q, nil`, msg, err, want)
-// 	}
-// }
+// */
+
+func TestFindTemplate(t *testing.T) {
+	var d fs.DirEntry
+	var err error
+	var s string
+	name := ".slideshow"
+	want := regexp.MustCompile(`\b` + name + `\b`)
+	msg, err := slideRegEx(".slideshow")
+	if !want.MatchString(msg) || err != nil {
+		t.Fatalf(`TemplateName %q, %v, want match for %#q, nil`, msg, err, want)
+	}
+}
 
 // Unit test Ideas
 
