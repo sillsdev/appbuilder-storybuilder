@@ -93,10 +93,12 @@ func main() {
 	}
 }
 
+// Function that create temporary folder
 func createTemporaryFolder() {
 	os.Mkdir("./temp", 0755)
 }
 
+// Flags Function that contains all the possible flags and their uses
 func parseFlags(templateName *string, location *string, overlayVideoPath *string) (*bool, *bool, *bool) {
 	var saveTemps = flag.Bool("s", false, "Include if user wishes to save temporary files created during production")
 	var lowQuality = flag.Bool("l", false, "Include to produce a lower quality video (1280x720 => 852x480)")
@@ -119,6 +121,7 @@ func createOutputDirectory(location string) {
 	}
 }
 
+// Function that removes file from directory
 func removeFileNameFromDirectory(slideshowDirectory string) string {
 	template_directory_split := strings.Split(slideshowDirectory, "/")
 	template_directory := ""
@@ -184,6 +187,7 @@ func parseSlideshow(slideshowDirectory string) ([]string, []string, string, stri
 	return Images, Audios, BackAudioPath, BackAudioVolume, Transitions, TransitionDurations, Timings, Motions
 }
 
+// Funtion to delete temporary videos while not saved
 func deleteTemporaryVideos(saveTemps *bool) {
 	if !*saveTemps {
 		fmt.Println("-s not specified, removing temporary videos...")
