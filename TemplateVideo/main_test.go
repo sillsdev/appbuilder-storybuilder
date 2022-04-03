@@ -1,9 +1,9 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io/fs"
-	"regexp"
 	"testing"
 )
 
@@ -125,14 +125,23 @@ func TestCheckFFmpegVersion(t *testing.T) {
 // */
 
 func TestFindTemplate(t *testing.T) {
-	var d fs.DirEntry
-	var err error
-	var s string
 	name := ".slideshow"
-	want := regexp.MustCompile(`\b` + name + `\b`)
-	msg, err := slideRegEx(".slideshow")
-	if !want.MatchString(msg) || err != nil {
-		t.Fatalf(`TemplateName %q, %v, want match for %#q, nil`, msg, err, want)
+	//want := regexp.MustCompile(`\b` + name + `\b`)
+	err := errors.New("Test error")
+	if findTemplate(name, nil, err) == err {
+		t.Logf("Pass, Expected and empty string")
+	} else {
+		t.Errorf("Failed, Expected an empty string")
+	}
+
+}
+
+func TestErroRFindTemplate(t *testing.T) {
+	err := errors.New("Test error")
+	if findTemplate(".slideshow", nil, err) == err {
+		t.Logf("Pass, Expected an Error")
+	} else {
+		t.Errorf("Failed, Expedcted an Error")
 	}
 }
 
