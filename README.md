@@ -32,7 +32,9 @@ Design Document: [Link](https://docs.google.com/document/d/1vjogjaWZ0ww7rJtKz3J4
     -o : Output location, used to specify where to store the finished video, will use current directory by default
     
     -l : Lower quality, used to generate a lower quality video for smaller file size for easier distribution (default videos will be 1280x720)
-    
+
+    -h : Help, display list of possible flags and their uses
+
     -os : Overlay video, used to specify the location of a test video to create an overlay video with the generated video
 
 # Testing Documentation
