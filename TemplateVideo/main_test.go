@@ -3,14 +3,8 @@ package main
 import (
 	"errors"
 	"fmt"
-	"io/fs"
 	"testing"
 )
-
-type Test struct {
-	d   *fs.DirEntry
-	err *error
-}
 
 func TestParse(t *testing.T) {
 	inputFile := "test.slideshow"
@@ -122,16 +116,14 @@ func TestCheckFFmpegVersion(t *testing.T) {
 
 /*
 	Test function to check if we are getting the template provided
-// */
-
+*/
 func TestFindTemplate(t *testing.T) {
 	name := ".slideshow"
-	//want := regexp.MustCompile(`\b` + name + `\b`)
 	err := errors.New("Test error")
-	if findTemplate(name, nil, err) == err {
-		t.Logf("Pass, Expected and empty string")
+	if findTemplate(name, nil, err) != nil {
+		t.Logf("Pass, Expected nothing")
 	} else {
-		t.Errorf("Failed, Expected an empty string")
+		t.Errorf("Failed, Expected nothing")
 	}
 
 }

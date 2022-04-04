@@ -163,7 +163,10 @@ func scaleImages(Images []string, height string, width string) {
 	wg.Wait()
 }
 
-// Function to find the .slideshow template if none provided
+/* Function to find the .slideshow template if none provided
+
+
+ */
 func findTemplate(s string, d fs.DirEntry, err error) error {
 	slideRegEx := regexp.MustCompile(`.+(.slideshow)$`) // Regular expression to find the .slideshow file
 	if err != nil {
