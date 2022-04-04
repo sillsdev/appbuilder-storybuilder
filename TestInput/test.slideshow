@@ -8,7 +8,7 @@
   <title lang="cust">The Word</title>
   <slide>
     <audio background="play">
-      <background-filename>../music-intro-Jn.mp3</background-filename>
+      <background-filename>./music-intro-Jn.mp3</background-filename>
     </audio>
     <image lang="en">Jn01.1-18-title-eng.odg</image>
     <image lang="fr">Jn01.1-18-title-fra.odg</image>
@@ -63,6 +63,7 @@
     <image>./VB-John 1v5b.jpg</image>
     <motion start="0.109 0.097 0.629 0.628" end="0.144 0.142 0.470 0.469"/>
     <timing duration="2280"/>
+    <transition duration="3000">wipeleft</transition>
   </slide>
   <slide>
     <audio>
@@ -75,12 +76,12 @@
     <transition duration="3000">wipeleft</transition>
   </slide>
   <slide>
-    <image lang="en">../Gospel of John-credits-eng.odg</image>
-    <image lang="fr">../Gospel of John-credits-fra.odg</image>
-    <image lang="nl">../Gospel of John-credits-ndl.odg</image>
-    <image lang="pt">../Gospel of John-credits-por.odg</image>
-    <image lang="es">../Gospel of John-credits-spa.odg</image>
-    <image lang="cust">../Gospel of John-credits-cust.odg</image>
+    <image lang="en">./Gospel of John-credits-eng.odg</image>
+    <image lang="fr">./Gospel of John-credits-fra.odg</image>
+    <image lang="nl">./Gospel of John-credits-ndl.odg</image>
+    <image lang="pt">./Gospel of John-credits-por.odg</image>
+    <image lang="es">./Gospel of John-credits-spa.odg</image>
+    <image lang="cust">./Gospel of John-credits-cust.odg</image>
     <image>Gospel of John-credits.jpg</image>
     <timing duration="5000"/>
   </slide>
