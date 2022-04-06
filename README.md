@@ -24,6 +24,8 @@ Design Document: [Link](https://docs.google.com/document/d/1vjogjaWZ0ww7rJtKz3J4
     -v : Verbosity, used to modify how much output is reported on the commandline for debugging purposes (less verbose by default)
   
     -s : Save files, used to specify if user wants to preserve the temporary files used in the video production (videos are deleted by default)
+
+    -td : Temporary Directory, used to specify a location to store the temporary files used in video production (default is current-directory/temp)
     
     -t : Template, used to input a specific template file to use, otherwise the program searches current directory for any .slideshow files and uses the first it finds
     
