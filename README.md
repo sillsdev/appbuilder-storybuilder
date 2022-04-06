@@ -16,7 +16,7 @@ Design Document: [Link](https://docs.google.com/document/d/1vjogjaWZ0ww7rJtKz3J4
 
 # How-To Documentation
 1. Download FFmpeg https://www.ffmpeg.org by selecting the appropriate .zip for your OS (Here's a basic tutorial for [Windows](https://www.wikihow.com/Install-FFmpeg-on-Windows), [Mac](https://manual.audacityteam.org/man/installing_ffmpeg_for_mac.html), and [Linux](https://www.tecmint.com/install-ffmpeg-in-linux/)) 
-2. Download and extract executable from repo's releases
+2. Download and extract executable for your system from repo's releases
 3. Put any images (.png, .jpg, etc) and audios (.mp3, .wav, etc) into a folder, and also include a .slideshow xml file with proper parameters for the video (.slideshow documentation is listed above)
 4. Run code in a CLI set to directory of executable with "./executable_name" or just "executable_name" for Windows
 5. There are also several flags you can include at runtime to alter the output or inputs:
@@ -24,13 +24,17 @@ Design Document: [Link](https://docs.google.com/document/d/1vjogjaWZ0ww7rJtKz3J4
     -v : Verbosity, used to modify how much output is reported on the commandline for debugging purposes (less verbose by default)
   
     -s : Save files, used to specify if user wants to preserve the temporary files used in the video production (videos are deleted by default)
+
+    -td : Temporary Directory, used to specify a location to store the temporary files used in video production (default is current-directory/temp)
     
     -t : Template, used to input a specific template file to use, otherwise the program searches current directory for any .slideshow files and uses the first it finds
     
     -o : Output location, used to specify where to store the finished video, will use current directory by default
     
     -l : Lower quality, used to generate a lower quality video for smaller file size for easier distribution (default videos will be 1280x720)
-    
+
+    -h : Help, display list of possible flags and their uses
+
     -os : Overlay video, used to specify the location of a test video to create an overlay video with the generated video
 
 # Testing Documentation

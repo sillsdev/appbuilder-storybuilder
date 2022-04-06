@@ -23,12 +23,12 @@ func cmdGetVideoLength(inputDirectory string) *exec.Cmd {
 	return cmd
 }
 
-func cmdTrimLengthOfVideo(duration string) *exec.Cmd {
+func cmdTrimLengthOfVideo(duration string, tempPath string) *exec.Cmd {
 	cmd := exec.Command("ffmpeg",
-		"-i", "./temp/merged_video.mp4",
+		"-i", tempPath+"/merged_video.mp4",
 		"-c", "copy", "-t", duration,
 		"-y",
-		"./temp/final.mp4",
+		tempPath+"/final.mp4",
 	)
 	return cmd
 }
