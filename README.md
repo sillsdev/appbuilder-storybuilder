@@ -14,12 +14,10 @@ Proof of Work Repo (Python): [Link](https://github.com/sillsdev/storybuilder/tre
 Inputs Template Documentation: [Link](https://docs.google.com/document/d/1J4X6RWUgXnI0aeaLEv4ePBXeZJQJSMgZ-WLQNx7Hcj8/edit?usp=sharing)<br>
 Design Document: [Link](https://docs.google.com/document/d/1vjogjaWZ0ww7rJtKz3J4iuVbbFrZF3KASdHBW-zPYfE/edit#)
 
-# Plans/Ideas for Project:
-
 # How-To Documentation
 1. Download FFmpeg https://www.ffmpeg.org by selecting the appropriate .zip for your OS (Here's a basic tutorial for [Windows](https://www.wikihow.com/Install-FFmpeg-on-Windows), [Mac](https://manual.audacityteam.org/man/installing_ffmpeg_for_mac.html), and [Linux](https://www.tecmint.com/install-ffmpeg-in-linux/)) 
-2. Download and extract executable from repo's releases
-3. Put any images (.png, .jpg, etc) and audios (.mp3, .wav, etc) into a the same folder as the executable, and also include a .slideshow xml file with parameters for the video (.slideshow documentation is listed above)
+2. Download and extract executable for your system from repo's releases
+3. Put any images (.png, .jpg, etc) and audios (.mp3, .wav, etc) into a folder, and also include a .slideshow xml file with proper parameters for the video (.slideshow documentation is listed above)
 4. Run code in a CLI set to directory of executable with "./executable_name" or just "executable_name" for Windows
 5. There are also several flags you can include at runtime to alter the output or inputs:
 
@@ -32,13 +30,15 @@ Design Document: [Link](https://docs.google.com/document/d/1vjogjaWZ0ww7rJtKz3J4
     -o : Output location, used to specify where to store the finished video, will use current directory by default
     
     -l : Lower quality, used to generate a lower quality video for smaller file size for easier distribution (default videos will be 1280x720)
-    
+
+    -h : Help, display list of possible flags and their uses
+
     -os : Overlay video, used to specify the location of a test video to create an overlay video with the generated video
 
 # Testing Documentation
 Our source code can be tested using our provided unit tests in main_test.go, to which we are adding more tests as we progress. This is run as follows:
 1. Ensure GoLang is installed properly, from their website [link]( https://golang.org/dl/ )
-2. Download latest versions of [main.go](https://github.com/gordon-cs/appbuilder-storybuilder/blob/main/TemplateVideo/main.go) [read.go](https://github.com/gordon-cs/appbuilder-storybuilder/blob/main/TemplateVideo/read.go) [main_test.go](https://github.com/gordon-cs/appbuilder-storybuilder/blob/main/TemplateVideo/main_test.go) and [test.slideshow](https://github.com/gordon-cs/appbuilder-storybuilder/blob/main/TemplateVideo/test.slideshow) from our repo and place them all in the same folder.
+2. Download latest release source code from our repo and place all included files in the same folder.
 3. Navigate to said folder with a CLI and run "go test" to execute all the unit tests provided and ensure all tests pass.
 
 If more thorough testing is desired, or if a unit test fails for some undiscoverable reason, one can manually test our code by downloading and running our code
