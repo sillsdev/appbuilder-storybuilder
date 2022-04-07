@@ -556,6 +556,7 @@ func MergeTempVideosOldFade(Images []string, Transitions []string, TransitionDur
 	fmt.Println("Merging temporary videos with traditional fade...")
 	video_fade_filter := ""
 	last_fade_output := ""
+	settb := ""
 
 	totalNumImages := len(Images)
 	video_total_duration := 0.0
@@ -591,29 +592,30 @@ func MergeTempVideosOldFade(Images []string, Transitions []string, TransitionDur
 
 		video_total_length_minus_fade_transition = video_total_duration - transition_duration
 
+		//add time to the video that is sacrificied to xfade
+		settb += fmt.Sprintf("[%d:v]tpad=stop_mode=clone:stop_duration=%f[v%d];", i, transition_duration/2, i)
+
 		if i == 0 {
-			video_fade_filter += fmt.Sprintf("[0:v]fade=out:st=%f:d=%f:alpha=1,setpts=PTS-STARTPTS[v0];", video_each_length[0], transition_duration/2)
-			last_fade_output += "[base][v0]overlay[tmp1];"
-		} else if i <= totalNumImages-2 {
-			video_fade_filter += fmt.Sprintf("[%d:v]fade=in:st=0:d=%f:alpha=1,fade=out:st=%f:d=%f:alpha=1,setpts=PTS-STARTPTS+((%f-%f)/TB)[v%d];",
-				i, transition_duration/2, video_total_duration, transition_duration/2, video_total_duration-video_each_length[i], transition_duration/2*float64(i), i)
+			video_fade_filter += "[v0]setpts=PTS-STARTPTS[v_0];"
+			last_fade_output += "[base][v_0]overlay[tmp1];"
+		} else if i != totalNumImages-1 {
+			video_fade_filter += fmt.Sprintf("[v%d]fade=in:st=0:d=%f:alpha=1,setpts=PTS-STARTPTS+((%f)/TB)[v_%d];",
+				i, transition_duration, video_total_duration-video_each_length[i], i)
 
-			last_fade_output += fmt.Sprintf("[tmp%d][v%d]overlay[tmp%d];", i, i, i+1)
+			last_fade_output += fmt.Sprintf("[tmp%d][v_%d]overlay[tmp%d];", i, i, i+1)
 		} else {
-			video_fade_filter += fmt.Sprintf("[%d:v]fade=in:st=0:d=%f:alpha=1,setpts=PTS-STARTPTS+((%f-%f)/TB)[v%d];",
-				i, transition_duration/2, video_total_duration-video_each_length[i], transition_duration/2*float64(i-1), i)
+			video_fade_filter += fmt.Sprintf("[v%d]fade=in:st=0:d=%f:alpha=1,setpts=PTS-STARTPTS+((%f)/TB)[v_%d];",
+				i, transition_duration, video_total_duration-video_each_length[i], i)
 
-			last_fade_output += fmt.Sprintf("[tmp%d][v%d]overlay,format=yuv420p[fv]", i, i)
+			last_fade_output += fmt.Sprintf("[tmp%d][v_%d]overlay,format=yuv420p[fv]", i, i)
 		}
 	}
 
 	setDimensions := fmt.Sprintf("color=black:%dx%d:d=%f[base];", 1280, 720, video_total_length_minus_fade_transition)
 
-	input_files = append(input_files, "-filter_complex", setDimensions+video_fade_filter+last_fade_output, "-map", "[fv]", "-y", "./temp/video_with_no_audio.mp4")
+	input_files = append(input_files, "-filter_complex", setDimensions+settb+video_fade_filter+last_fade_output, "-map", "[fv]", "-y", "./temp/video_with_no_audio.mp4")
 
 	cmd := exec.Command("ffmpeg", input_files...)
-
-	fmt.Println(cmd)
 
 	output, err := cmd.CombinedOutput()
 	checkCMDError(output, err)
