@@ -68,13 +68,14 @@ func main() {
 
 	var finalVideoName string = slideshowDirectory
 	finalVideoName = strings.TrimSuffix(finalVideoName, ".slideshow")
+	fmt.Println(finalVideoName)
 
 	if fadeType == "X" {
 		fmt.Println("FFmpeg version is bigger than 4.3.0, using Xfade transition method...")
 		makeTempVideosWithoutAudio(Images, Transitions, TransitionDurations, Timings, Audios, Motions, tempLocation)
 		MergeTempVideos(Images, Transitions, TransitionDurations, Timings, tempLocation)
 		addAudio(Timings, Audios, tempLocation)
-		copyFinal(tempLocation, outputLocation)
+		copyFinal(tempLocation, outputLocation, finalVideoName)
 	} else {
 		fmt.Println("FFmpeg version is smaller than 4.3.0, using old fade transition method...")
 		combineVideos(Images, Transitions, TransitionDurations, Timings, Audios, Motions, tempLocation)
@@ -238,14 +239,14 @@ func checkCMDError(output []byte, err error) {
 	}
 }
 
-func copyFinal(tempPath string, outputFolder string) {
-
+func copyFinal(tempPath string, outputFolder string, name string) {
+	// If -o is specified, save the final video at the specified location
 	if len(outputFolder) > 0 {
-		cmd := cmdCopyFile(tempPath+"/final.mp4", outputFolder+"/final.mp4")
+		cmd := cmdCopyFile(tempPath+"/final.mp4", outputFolder+"/"+name+".mp4")
 		output, err := cmd.CombinedOutput()
 		checkCMDError(output, err)
 	} else { // If -o is not specified, save the final video at the default location
-		cmd := cmdCopyFile(tempPath+"/final.mp4", "./final.mp4")
+		cmd := cmdCopyFile(tempPath+"/final.mp4", "/"+name+".mp4")
 		output, err := cmd.CombinedOutput()
 		checkCMDError(output, err)
 	}
