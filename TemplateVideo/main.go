@@ -76,8 +76,8 @@ func main() {
 		fmt.Println("FFmpeg version is smaller than 4.3.0, using old fade transition method...")
 		makeTempVideosWithoutAudio(Images, Transitions, TransitionDurations, Timings, Audios, Motions)
 		MergeTempVideosOldFade(Images, Transitions, TransitionDurations, Timings)
-		// fmt.Println("Adding intro music...")
-		// addBackgroundMusic(BackAudioPath, BackAudioVolume)
+		addAudio(Timings, Audios)
+		copyFinal()
 	}
 
 	fmt.Println("Finished making video...")
@@ -570,6 +570,12 @@ func MergeTempVideosOldFade(Images []string, Transitions []string, TransitionDur
 
 	for i := 0; i < totalNumImages; i++ {
 		input_files = append(input_files, "-i", fmt.Sprintf("./temp/temp%d-%d.mp4", i, totalNumImages))
+	}
+
+	for i := 0; i < totalNumImages; i++ {
+		transition_duration, err := strconv.ParseFloat(strings.TrimSpace(string(TransitionDurations[i])), 8)
+		check(err)
+		transition_duration = transition_duration / 1000
 
 		//get the current video length in seconds
 		cmd := cmdGetVideoLength(fmt.Sprintf("./temp/temp%d-%d.mp4", i, totalNumImages))
@@ -582,31 +588,28 @@ func MergeTempVideosOldFade(Images []string, Transitions []string, TransitionDur
 
 		//get the total video length of the videos combined thus far in seconds
 		video_total_duration += video_each_length[i]
-	}
 
-	for i := 0; i < totalNumImages-1; i++ {
-		transition_duration, err := strconv.ParseFloat(strings.TrimSpace(string(TransitionDurations[i])), 8)
-		check(err)
-		transition_duration = transition_duration / 1000
+		video_total_length_minus_fade_transition = video_total_duration - transition_duration
 
 		if i == 0 {
 			video_fade_filter += fmt.Sprintf("[0:v]fade=out:st=%f:d=%f:alpha=1,setpts=PTS-STARTPTS[v0];", video_each_length[0], transition_duration/2)
 			last_fade_output += "[base][v0]overlay[tmp1];"
 		} else if i <= totalNumImages-2 {
 			video_fade_filter += fmt.Sprintf("[%d:v]fade=in:st=0:d=%f:alpha=1,fade=out:st=%f:d=%f:alpha=1,setpts=PTS-STARTPTS+((%f-%f)/TB)[v%d];",
-				i, transition_duration/2, video_total_length_minus_fade_transition, transition_duration/2, video_each_length[i-1], transition_duration/2*float64(i), i)
+				i, transition_duration/2, video_total_duration, transition_duration/2, video_total_duration-video_each_length[i], transition_duration/2*float64(i), i)
 
 			last_fade_output += fmt.Sprintf("[tmp%d][v%d]overlay[tmp%d];", i, i, i+1)
 		} else {
+			video_fade_filter += fmt.Sprintf("[%d:v]fade=in:st=0:d=%f:alpha=1,setpts=PTS-STARTPTS+((%f-%f)/TB)[v%d];",
+				i, transition_duration/2, video_total_duration-video_each_length[i], transition_duration/2*float64(i-1), i)
+
 			last_fade_output += fmt.Sprintf("[tmp%d][v%d]overlay,format=yuv420p[fv]", i, i)
 		}
-
-		video_total_length_minus_fade_transition = video_total_duration - float64(transition_duration)
 	}
 
 	setDimensions := fmt.Sprintf("color=black:%dx%d:d=%f[base];", 1280, 720, video_total_length_minus_fade_transition)
 
-	input_files = append(input_files, "-filter_complex", setDimensions+video_fade_filter+last_fade_output, "-y", "./temp/video_with_no_audio.mp4")
+	input_files = append(input_files, "-filter_complex", setDimensions+video_fade_filter+last_fade_output, "-map", "[fv]", "-y", "./temp/video_with_no_audio.mp4")
 
 	cmd := exec.Command("ffmpeg", input_files...)
 
