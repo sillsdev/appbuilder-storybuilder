@@ -41,7 +41,7 @@ Design Document: [Link](https://docs.google.com/document/d/1vjogjaWZ0ww7rJtKz3J4
 Our source code can be tested using our provided unit tests in main_test.go, to which we are adding more tests as we progress. This is run as follows:
 1. Ensure GoLang is installed properly, from their website [link]( https://golang.org/dl/ )
 2. Download latest release source code from our repo and place all included files in the same folder.
-3. Navigate to said folder with a CLI and run "go test" to execute all the unit tests provided and ensure all tests pass.
+3. Navigate to folder with source code with a CLI and run "go test" to execute all the unit tests provided and ensure all tests pass.
 
 If more thorough testing is desired, or if a unit test fails for some undiscoverable reason, one can manually test our code by downloading and running our code
 with our provided [Test Folder](https://github.com/gordon-cs/appbuilder-storybuilder/tree/main/Test%20Input) which contains a simple template with a few images that can be used to verify if the code is functioning properly.
