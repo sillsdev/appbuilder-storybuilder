@@ -1,4 +1,5 @@
 # SIL Video Converter
+
 21-22 Gordon College CS Senior Project<br>
 Se Hee Hyung, David Gurge, Roddy Ngolomingi, Hyungyu Park<br>
 
@@ -8,7 +9,6 @@ End-To-End Proposal [Link](https://docs.google.com/document/d/1h8e6FNbOrI4lRuMVR
 1st Lo-Fi Usability Test [Link](https://drive.google.com/file/d/1L9HBFWGztYsH0RSPItrjFPIrZDt0xkz8/view?usp=sharing).<br>
 1st Lo-Fi Usability Test Report [Link](https://docs.google.com/document/d/1-MmKXZmo_WDw9Ju-L8kHIel8QrqPs31j3IiaVdt6B-k/edit?usp=sharing)
 
-
 MVP Document: [Link](https://docs.google.com/document/d/1ZZWAUzAl-bXXmUvLlqPjvj4Cw5By6yFNDDiA70PlY2E/edit?usp=sharing)<br>
 Proof of Work Repo (Python): [Link](https://github.com/sillsdev/storybuilder/tree/v2)<br>
 Inputs Template Documentation: [Link](https://docs.google.com/document/d/1J4X6RWUgXnI0aeaLEv4ePBXeZJQJSMgZ-WLQNx7Hcj8/edit?usp=sharing)<br>
@@ -17,27 +17,32 @@ Design Document: [Link](https://docs.google.com/document/d/1vjogjaWZ0ww7rJtKz3J4
 # Plans/Ideas for Project:
 
 # How-To Documentation
-1. Download FFmpeg https://www.ffmpeg.org by selecting the appropriate .zip for your OS (Here's a basic tutorial for [Windows](https://www.wikihow.com/Install-FFmpeg-on-Windows), [Mac](https://manual.audacityteam.org/man/installing_ffmpeg_for_mac.html), and [Linux](https://www.tecmint.com/install-ffmpeg-in-linux/)) 
+
+1. Download FFmpeg https://www.ffmpeg.org by selecting the appropriate .zip for your OS (Here's a basic tutorial for [Windows](https://www.wikihow.com/Install-FFmpeg-on-Windows), [Mac](https://manual.audacityteam.org/man/installing_ffmpeg_for_mac.html), and [Linux](https://www.tecmint.com/install-ffmpeg-in-linux/))
 2. Download and extract executable from repo's releases
 3. Put any images (.png, .jpg, etc) and audios (.mp3, .wav, etc) into a the same folder as the executable, and also include a .slideshow xml file with parameters for the video (.slideshow documentation is listed above)
 4. Run code in a CLI set to directory of executable with "./executable_name" or just "executable_name" for Windows
 5. There are also several flags you can include at runtime to alter the output or inputs:
 
-    -v : Verbosity, used to modify how much output is reported on the commandline for debugging purposes (less verbose by default)
-  
-    -s : Save files, used to specify if user wants to preserve the temporary files used in the video production (videos are deleted by default)
-    
-    -t : Template, used to input a specific template file to use, otherwise the program searches current directory for any .slideshow files and uses the first it finds
-    
-    -o : Output location, used to specify where to store the finished video, will use current directory by default
-    
-    -l : Lower quality, used to generate a lower quality video for smaller file size for easier distribution (default videos will be 1280x720)
-    
-    -os : Overlay video, used to specify the location of a test video to create an overlay video with the generated video
+   -v : Verbosity, used to modify how much output is reported on the commandline for debugging purposes (less verbose by default)
+
+   -s : Save files, used to specify if user wants to preserve the temporary files used in the video production (videos are deleted by default)
+
+   -t : Template, used to input a specific template file to use, otherwise the program searches current directory for any .slideshow files and uses the first it finds
+
+   -o : Output location, used to specify where to store the finished video, will use current directory by default
+
+   -l : Lower quality, used to generate a lower quality video for smaller file size for easier distribution (default videos will be 1280x720)
+
+   -os : Overlay video, used to specify the location of a test video to create an overlay video with the generated video
+
+   -f : Old fade, used to force the function to use old fade
 
 # Testing Documentation
+
 Our source code can be tested using our provided unit tests in main_test.go, to which we are adding more tests as we progress. This is run as follows:
-1. Ensure GoLang is installed properly, from their website [link]( https://golang.org/dl/ )
+
+1. Ensure GoLang is installed properly, from their website [link](https://golang.org/dl/)
 2. Download latest versions of [main.go](https://github.com/gordon-cs/appbuilder-storybuilder/blob/main/TemplateVideo/main.go) [read.go](https://github.com/gordon-cs/appbuilder-storybuilder/blob/main/TemplateVideo/read.go) [main_test.go](https://github.com/gordon-cs/appbuilder-storybuilder/blob/main/TemplateVideo/main_test.go) and [test.slideshow](https://github.com/gordon-cs/appbuilder-storybuilder/blob/main/TemplateVideo/test.slideshow) from our repo and place them all in the same folder.
 3. Navigate to said folder with a CLI and run "go test" to execute all the unit tests provided and ensure all tests pass.
 
@@ -45,7 +50,9 @@ If more thorough testing is desired, or if a unit test fails for some undiscover
 with our provided [Test Folder](https://github.com/gordon-cs/appbuilder-storybuilder/tree/main/Test%20Input) which contains a simple template with a few images that can be used to verify if the code is functioning properly.
 
 # Release Documentation
+
 In order to generate a release version for our code after making adjustments you will need to follow the steps below:
+
 1. Install GoReleaser [link](https://goreleaser.com/install/)
 2. In a CLI, navigate to the directory containing the source code (main.go and read.go)
 3. Run `goreleaser init` to generate a `.goreleaser.yaml` file
