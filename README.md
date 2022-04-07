@@ -15,7 +15,7 @@ Inputs Template Documentation: [Link](https://github.com/gordon-cs/appbuilder-st
 Design Document: [Link](https://docs.google.com/document/d/1vjogjaWZ0ww7rJtKz3J4iuVbbFrZF3KASdHBW-zPYfE/edit#)
 
 # How-To Documentation
-1. Download FFmpeg https://www.ffmpeg.org by selecting the appropriate .zip for your OS. Make sure the version number is greater than 4.3.0 to make full use of our code (Here's a basic tutorial for [Windows](https://www.wikihow.com/Install-FFmpeg-on-Windows), [Mac using Homebrew](https://sites.duke.edu/ddmc/2013/12/30/install-ffmpeg-on-a-mac/), and [Linux using a PPA with ffmpeg v4.4.1](https://launchpad.net/~savoury1/+archive/ubuntu/ffmpeg4) 
+1. Download FFmpeg https://www.ffmpeg.org by selecting the appropriate .zip for your OS. Make sure the version number is greater than 4.3.0 to make full use of our code (Here's a basic tutorial for [Windows](https://www.wikihow.com/Install-FFmpeg-on-Windows), [Mac using Homebrew](https://sites.duke.edu/ddmc/2013/12/30/install-ffmpeg-on-a-mac/), and [Linux using a PPA with ffmpeg v4.4.1](https://launchpad.net/~savoury1/+archive/ubuntu/ffmpeg4))
 2. Download and extract executable for your system from repo's releases
 3. Put any images (.png, .jpg, etc) and audios (.mp3, .wav, etc) into a folder, and also include a .slideshow xml file with proper parameters for the video (.slideshow documentation is listed above)
 4. Run code in a CLI set to directory of executable with "./executable_name" or just "executable_name" for Windows
