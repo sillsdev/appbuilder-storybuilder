@@ -35,7 +35,7 @@ Design Document: [Link](https://docs.google.com/document/d/1vjogjaWZ0ww7rJtKz3J4
 
     -h : Help, display list of possible flags and their uses
 
-    -os : Overlay video, used to specify the location of a test video to create an overlay video with the generated video
+    -ov : Overlay video, used to specify the location of a test video to create an overlay video with the generated video
 
 # Testing Documentation
 Our source code can be tested using our provided unit tests in main_test.go, to which we are adding more tests as we progress. This is run as follows:
