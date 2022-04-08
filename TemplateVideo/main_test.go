@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os/exec"
-	"strconv"
 	"strings"
 	"testing"
 )
@@ -215,21 +214,30 @@ func Test_cmdGetVideoLength(t *testing.T) {
 		{
 			"get correct video duration",
 			args{inputDirectory: "../TestInput/sample_video.mp4"},
-			45.0,
+			// check the command that we are running is the right command.
+			exec.Command("ffprobe",
+				"-v", "error",
+				"-show_entries", "format=duration",
+				"-of", "default=noprint_wrappers=1:nokey=1",
+				"../TestInput/sample_video.mp4"),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cmd := cmdGetVideoLength(tt.args.inputDirectory)
-			output, err := cmd.CombinedOutput()
-			checkCMDError(output, err)
-
-			video_length, err := strconv.ParseFloat(strings.TrimSpace(string(output)), 8)
-
-			if video_length != tt.want {
-				t.Errorf("expected video length of sample_video.mp4 to be %f but got %f", tt.want, video_length)
+			//cmd := cmdGetVideoLength(tt.args.inputDirectory)
+			//check if it is equal of what we want
+			if got := cmdGetVideoLength(tt.args.inputDirectory); got != tt.want {
+				t.Errorf("expected video length of sample_video.mp4 to be %f but got %f", tt.want)
 			}
+			//output, err := cmd.CombinedOutput()
+			//checkCMDError(output, err)
+
+			//video_length, err := strconv.ParseFloat(strings.TrimSpace(string(output)), 8)
+
+			// if video_length != tt.want {
+			// 	t.Errorf("expected video length of sample_video.mp4 to be %f but got %f", tt.want, video_length)
+			// }
 		})
 	}
 }
