@@ -254,16 +254,18 @@ func Test_cmdTrimLengthOfVideo(t *testing.T) {
 		args args
 		want *exec.Cmd
 	}{
-		" get correct video duration",
-		args{duration: "9400",
-			tempPath: "",
+		{
+			" get correct video duration",
+			args{duration: "9400",
+				tempPath: "./temp"},
 			exec.Command("ffmpeg",
-				"-i", tempPath+"/merged_video.mp4",
-				"-c", "copy", "-t", duration,
+				"-i", "./temp"+"/merged_video.mp4",
+				"-c", "copy", "-t", "9400ms",
 				"-y",
-				tempPath+"/final.mp4"),
+				"./temp"+"/final.mp4"),
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			fmt.Println(cmdTrimLengthOfVideo(tt.args.duration, tt.args.tempPath).String())
