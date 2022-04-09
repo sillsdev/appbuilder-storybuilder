@@ -255,8 +255,8 @@ func Test_cmdTrimLengthOfVideo(t *testing.T) {
 		want *exec.Cmd
 	}{
 		{
-			" get correct video duration",
-			args{duration: "1000",
+			" ffmpeg command for triming video",
+			args{duration: "30",
 				tempPath: "./temp"},
 			exec.Command("ffmpeg",
 				"-i", "./temp"+"/merged_video.mp4",
@@ -287,7 +287,7 @@ func Test_cmdAddBackgroundMusic(t *testing.T) {
 		want *exec.Cmd
 	}{
 		{
-			" say what it does ",
+			" Checking the backgroundAudioPath and the volume ",
 			args{backgroundAudioPath: "./music-intro-Jn.mp3",
 				volume: ""},
 
@@ -321,11 +321,11 @@ func Test_cmdCopyFile(t *testing.T) {
 		want *exec.Cmd
 	}{
 		{
-			" checking the video path ",
-			args{oldPath: "",
-				newPath: ""},
+			" checking the video oldpath and NewpPath ",
+			args{oldPath: "./oldPath",
+				newPath: "./newPath"},
 
-			exec.Command("ffmpeg", "-i", oldPath, "-y", newPath),
+			exec.Command("ffmpeg", "-i", "./oldPath", "-y", "./newPath"),
 		},
 	}
 
