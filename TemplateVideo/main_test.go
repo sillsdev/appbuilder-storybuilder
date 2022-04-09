@@ -10,7 +10,7 @@ import (
 var ffmpeg string
 
 func init() {
-	cmd := exec.Command("where", "ffmpeg")
+	cmd := exec.Command("which", "ffmpeg")
 	output, err := cmd.CombinedOutput()
 	checkCMDError(output, err)
 
@@ -209,7 +209,7 @@ func Test_cmdGetVideoLength(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want float64
+		want *exec.Cmd
 	}{
 		{
 			"get correct video duration",
@@ -227,8 +227,10 @@ func Test_cmdGetVideoLength(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			//cmd := cmdGetVideoLength(tt.args.inputDirectory)
 			//check if it is equal of what we want
+
 			if got := cmdGetVideoLength(tt.args.inputDirectory); got != tt.want {
-				t.Errorf("expected video length of sample_video.mp4 to be %f but got %f", tt.want)
+				t.Errorf("cmdGetVideoLength() = %v, want %v", got, tt.want)
+
 			}
 			//output, err := cmd.CombinedOutput()
 			//checkCMDError(output, err)
@@ -238,6 +240,36 @@ func Test_cmdGetVideoLength(t *testing.T) {
 			// if video_length != tt.want {
 			// 	t.Errorf("expected video length of sample_video.mp4 to be %f but got %f", tt.want, video_length)
 			// }
+		})
+	}
+}
+
+func Test_cmdTrimLengthOfVideo(t *testing.T) {
+	type args struct {
+		duration string
+		tempPath string
+	}
+	tests := []struct {
+		name string
+		args args
+		want *exec.Cmd
+	}{
+		" get correct video duration",
+		args{duration: "9400",
+			tempPath: "",
+			exec.Command("ffmpeg",
+				"-i", tempPath+"/merged_video.mp4",
+				"-c", "copy", "-t", duration,
+				"-y",
+				tempPath+"/final.mp4"),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fmt.Println(cmdTrimLengthOfVideo(tt.args.duration, tt.args.tempPath).String())
+			if got := cmdTrimLengthOfVideo(tt.args.duration, tt.args.tempPath).String(); got != tt.want.String() {
+				t.Errorf("cmdTrimLengthOfVideo() =  = %v, want %v", got, tt.want)
+			}
 		})
 	}
 }
