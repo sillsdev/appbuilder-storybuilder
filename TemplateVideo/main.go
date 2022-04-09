@@ -170,7 +170,7 @@ func parseSlideshow(slideshowDirectory string) ([]string, []string, string, stri
 				Audios = append(Audios, template_directory+slide.Audio.Filename.Name)
 			}
 		}
-		Images = append(Images, template_directory+slide.Image.Name)
+		Images = append(Images, template_directory+slide.Image.Name) //
 		if slide.Transition.Type == "" {
 			Transitions = append(Transitions, "fade")
 		} else {

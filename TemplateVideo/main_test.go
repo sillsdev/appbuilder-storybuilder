@@ -256,11 +256,11 @@ func Test_cmdTrimLengthOfVideo(t *testing.T) {
 	}{
 		{
 			" get correct video duration",
-			args{duration: "9400",
+			args{duration: "1000",
 				tempPath: "./temp"},
 			exec.Command("ffmpeg",
 				"-i", "./temp"+"/merged_video.mp4",
-				"-c", "copy", "-t", "9400ms",
+				"-c", "copy", "-t", "1000ms",
 				"-y",
 				"./temp"+"/final.mp4"),
 		},
@@ -270,7 +270,70 @@ func Test_cmdTrimLengthOfVideo(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			fmt.Println(cmdTrimLengthOfVideo(tt.args.duration, tt.args.tempPath).String())
 			if got := cmdTrimLengthOfVideo(tt.args.duration, tt.args.tempPath).String(); got != tt.want.String() {
-				t.Errorf("cmdTrimLengthOfVideo() =  = %v, want %v", got, tt.want)
+				t.Errorf("cmdTrimLengthOfVideo() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_cmdAddBackgroundMusic(t *testing.T) {
+	type args struct {
+		backgroundAudioPath string
+		volume              string
+	}
+	tests := []struct {
+		name string
+		args args
+		want *exec.Cmd
+	}{
+		{
+			" say what it does ",
+			args{backgroundAudioPath: "./music-intro-Jn.mp3",
+				volume: ""},
+
+			exec.Command("ffmpeg",
+				"-i", "./temp/mergedVideo.mp4",
+				"-i", "./music-intro-Jn.mp3",
+				"-filter_complex", "[1:0]volume="+""+"[a1];[0:a][a1]amix=inputs=2:duration=first",
+				"-map", "0:v:0",
+				"-y", "../finalvideo.mp4"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fmt.Println(cmdAddBackgroundMusic(tt.args.backgroundAudioPath, tt.args.volume).String())
+			if got := cmdAddBackgroundMusic(tt.args.backgroundAudioPath, tt.args.volume).String(); got != tt.want.String() {
+				t.Errorf("cmdAddBackgroundMusic() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_cmdCopyFile(t *testing.T) {
+	type args struct {
+		oldPath string
+		newPath string
+	}
+	tests := []struct {
+		name string
+		args args
+		want *exec.Cmd
+	}{
+		{
+			" checking the video path ",
+			args{oldPath: "",
+				newPath: ""},
+
+			exec.Command("ffmpeg", "-i", oldPath, "-y", newPath),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fmt.Println(cmdCopyFile(tt.args.oldPath, tt.args.newPath).String())
+			if got := cmdCopyFile(tt.args.oldPath, tt.args.newPath).String(); got != tt.want.String() {
+				t.Errorf("cmdAddBackgroundMusic() = %v, want %v", got, tt.want)
 			}
 		})
 	}
