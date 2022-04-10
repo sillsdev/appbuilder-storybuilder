@@ -33,7 +33,7 @@ func main() {
 	}
 
 	// Create a temporary folder to store temporary files created when created a video
-	createTemporaryFolder(tempLocation)
+	tempLocation = createTemporaryFolder(tempLocation)
 
 	// Create directory if output directory does not exist
 	if outputLocation != "" {
@@ -97,8 +97,15 @@ func main() {
 	}
 }
 
-func createTemporaryFolder(tempPath string) {
-	createDirectory(tempPath)
+func createTemporaryFolder(tempPath string) string {
+	if tempPath == "" {
+		dir, err := os.MkdirTemp("", "storybuilder-*")
+		check(err)
+		tempPath = dir
+	} else {
+		createDirectory(tempPath)
+	}
+	return tempPath
 }
 
 func createDirectory(location string) {
@@ -119,9 +126,7 @@ func parseFlags(templateName *string, outputPath *string, tempPath *string, over
 	flag.StringVar(tempPath, "td", "", "Specify temp directory location (If user wishes to save temporary files created during production)")
 	flag.StringVar(overlayVideoPath, "ov", "", "Specify test video location to create overlay video")
 	flag.Parse()
-	if *tempPath == "" {
-		*tempPath = "./temp"
-	}
+
 	return lowQuality, help, saveTemps
 }
 
