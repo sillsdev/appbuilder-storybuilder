@@ -26,7 +26,7 @@ var overlayVideoPath string
 // Main function
 func main() {
 	// Ask the user for options
-	saveTemps, lowQuality, helpFlag, useOldfade := parseFlags(&slideshowDirectory, &outputLocation, &tempLocation, &overlayVideoPath)
+	lowQuality, helpFlag, saveTemps, useOldfade := parseFlags(&slideshowDirectory, &outputLocation, &tempLocation, &overlayVideoPath)
 	if *helpFlag {
 		displayHelpMessage()
 		return
