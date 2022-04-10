@@ -27,9 +27,9 @@ Design Document: [Link](https://docs.google.com/document/d/1vjogjaWZ0ww7rJtKz3J4
 
     -td : Temporary Directory, used to specify a location to store the temporary files used in video production (default is in your OS' temp directory/storybuilder-*)
     
-    -t : Template, used to input a specific template file to use, otherwise the program searches current directory for any .slideshow files and uses the first it finds
+    -t : Template, used to input a specific template file to use, otherwise the program searches executable's current directory for any .slideshow files and uses the first it finds
     
-    -o : Output location, used to specify where to store the finished video, will use current directory by default
+    -o : Output location, used to specify where to store the finished video, will use executable's current directory by default
     
     -l : Lower quality, used to generate a lower quality video for smaller file size for easier distribution (default videos will be 1280x720)
 
