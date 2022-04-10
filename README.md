@@ -17,7 +17,7 @@ Design Document: [Link](https://docs.google.com/document/d/1vjogjaWZ0ww7rJtKz3J4
 # How-To Documentation
 1. Download FFmpeg https://www.ffmpeg.org by selecting the appropriate .zip for your OS. Make sure the version number is greater than 4.3.0 to make full use of our code (Here's a basic tutorial for [Windows](https://www.wikihow.com/Install-FFmpeg-on-Windows), [Mac using Homebrew](https://sites.duke.edu/ddmc/2013/12/30/install-ffmpeg-on-a-mac/), and [Linux using a PPA with ffmpeg v4.4.1](https://launchpad.net/~savoury1/+archive/ubuntu/ffmpeg4))
 2. Download and extract executable for your system from repo's releases
-3. Put any images (.png, .jpg, etc) and audios (.mp3, .wav, etc) into a folder, and also include a .slideshow xml file with proper parameters for the video (.slideshow documentation is listed above)
+3. Put any images (.png, .jpg, etc) and audios (.mp3, .wav, etc) into a folder, and also include a .slideshow xml file with proper parameters for the video ([.slideshow documentation linked here](https://github.com/gordon-cs/appbuilder-storybuilder/blob/main/slideshow.md))
 4. Run code in a CLI set to directory of executable with "./executable_name" or just "executable_name" for Windows
 5. There are also several flags you can include at runtime to alter the output or inputs:
 
@@ -25,7 +25,7 @@ Design Document: [Link](https://docs.google.com/document/d/1vjogjaWZ0ww7rJtKz3J4
   
     -s : Save files, used to specify if user wants to preserve the temporary files used in the video production (videos are deleted by default)
 
-    -td : Temporary Directory, used to specify a location to store the temporary files used in video production (default is current-directory/temp)
+    -td : Temporary Directory, used to specify a location to store the temporary files used in video production (default is in your OS' temp directory/storybuilder-*)
     
     -t : Template, used to input a specific template file to use, otherwise the program searches current directory for any .slideshow files and uses the first it finds
     
