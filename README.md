@@ -1,4 +1,5 @@
 # SIL Video Converter
+
 21-22 Gordon College CS Senior Project<br>
 Se Hee Hyung, David Gurge, Roddy Ngolomingi, Hyungyu Park<br>
 
@@ -7,7 +8,6 @@ Initial Design Document [Link](https://docs.google.com/document/d/16FA-5HbT2uVkv
 End-To-End Proposal [Link](https://docs.google.com/document/d/1h8e6FNbOrI4lRuMVRTbiZil3-PrC2OoKQ6b0vckxl1w/edit?usp=sharing).<br>
 1st Lo-Fi Usability Test [Link](https://drive.google.com/file/d/1L9HBFWGztYsH0RSPItrjFPIrZDt0xkz8/view?usp=sharing).<br>
 1st Lo-Fi Usability Test Report [Link](https://docs.google.com/document/d/1-MmKXZmo_WDw9Ju-L8kHIel8QrqPs31j3IiaVdt6B-k/edit?usp=sharing)
-
 
 MVP Document: [Link](https://docs.google.com/document/d/1ZZWAUzAl-bXXmUvLlqPjvj4Cw5By6yFNDDiA70PlY2E/edit?usp=sharing)<br>
 Proof of Work Repo (Python): [Link](https://github.com/sillsdev/storybuilder/tree/v2)<br>
@@ -38,6 +38,7 @@ Design Document: [Link](https://docs.google.com/document/d/1vjogjaWZ0ww7rJtKz3J4
     -ov : Overlay video, used to specify the location of a test video to create an overlay video with the generated video
 
 # Testing Documentation
+
 Our source code can be tested using our provided unit tests in main_test.go, to which we are adding more tests as we progress. This is run as follows:
 1. Ensure GoLang is installed properly, from their website [link]( https://golang.org/dl/ )
 2. Download latest release source code from our repo and place `main.go` `main_test.go` `read.go` and `cmd.go` in the same folder.
@@ -47,7 +48,9 @@ If more thorough testing is desired, or if a unit test fails for some undiscover
 with our provided [Test Folder](https://github.com/gordon-cs/appbuilder-storybuilder/tree/main/Test%20Input) which contains a simple template with a few images that can be used to verify if the code is functioning properly.
 
 # Release Documentation
+
 In order to generate a release version for our code after making adjustments you will need to follow the steps below:
+
 1. Install GoReleaser [link](https://goreleaser.com/install/)
 2. In a CLI, navigate to the directory containing the source code (main.go and read.go)
 3. Run `goreleaser init` to generate a `.goreleaser.yaml` file
