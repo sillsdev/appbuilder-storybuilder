@@ -52,8 +52,6 @@ func main() {
 	Images, Audios, Transitions, TransitionDurations, Timings, Motions := parseSlideshow(slideshowDirectory)
 	fmt.Println("Parsing completed...")
 
-	//fmt.Sprintln(BackAudioPath, BackAudioVolume)
-
 	// Checking FFmpeg version to use Xfade
 	fmt.Println("Checking FFmpeg version...")
 	var fadeType string = checkFFmpegVersion()
