@@ -49,10 +49,10 @@ func main() {
 	start := time.Now()
 
 	// Parse in the various pieces from the template
-	Images, Audios, BackAudioPath, BackAudioVolume, Transitions, TransitionDurations, Timings, Motions := parseSlideshow(slideshowDirectory)
+	Images, Audios, Transitions, TransitionDurations, Timings, Motions := parseSlideshow(slideshowDirectory)
 	fmt.Println("Parsing completed...")
 
-	fmt.Sprintln(BackAudioPath, BackAudioVolume)
+	//fmt.Sprintln(BackAudioPath, BackAudioVolume)
 
 	// Checking FFmpeg version to use Xfade
 	fmt.Println("Checking FFmpeg version...")
@@ -148,11 +148,9 @@ func removeFileNameFromDirectory(slideshowDirectory string) string {
 	return template_directory
 }
 
-func parseSlideshow(slideshowDirectory string) ([]string, []string, string, string, []string, []string, []string, [][][]float64) {
+func parseSlideshow(slideshowDirectory string) ([]string, []string, []string, []string, []string, [][][]float64) {
 	Images := []string{}
 	Audios := []string{}
-	BackAudioPath := ""
-	BackAudioVolume := ""
 	Transitions := []string{}
 	TransitionDurations := []string{}
 	Timings := []string{}
@@ -165,8 +163,6 @@ func parseSlideshow(slideshowDirectory string) ([]string, []string, string, stri
 	for _, slide := range slideshow.Slide {
 		if slide.Audio.Background_Filename.Path != "" {
 			Audios = append(Audios, template_directory+slide.Audio.Background_Filename.Path)
-			BackAudioPath = slide.Audio.Background_Filename.Path
-			BackAudioVolume = slide.Audio.Background_Filename.Volume
 		} else {
 			if slide.Audio.Filename.Name == "" {
 				Audios = append(Audios, "")
@@ -196,7 +192,7 @@ func parseSlideshow(slideshowDirectory string) ([]string, []string, string, stri
 		Timings = append(Timings, slide.Timing.Duration)
 	}
 
-	return Images, Audios, BackAudioPath, BackAudioVolume, Transitions, TransitionDurations, Timings, Motions
+	return Images, Audios, Transitions, TransitionDurations, Timings, Motions
 }
 
 func deleteTemporaryVideos(tempPath string) {
