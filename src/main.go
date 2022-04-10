@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -19,23 +20,24 @@ import (
 
 var slideshowDirectory string
 var outputLocation string
+var tempLocation string
 var overlayVideoPath string
 
 // Main function
 func main() {
-	// Create a temporary folder to store temporary files created when created a video
-	createTemporaryFolder()
-
 	// Ask the user for options
-	saveTemps, lowQuality, helpFlag, useOldfade := parseFlags(&slideshowDirectory, &outputLocation, &overlayVideoPath)
+	saveTemps, lowQuality, helpFlag, useOldfade := parseFlags(&slideshowDirectory, &outputLocation, &tempLocation, &overlayVideoPath)
 	if *helpFlag {
 		displayHelpMessage()
 		return
 	}
 
+	// Create a temporary folder to store temporary files created when created a video
+	createTemporaryFolder(tempLocation)
+
 	// Create directory if output directory does not exist
 	if outputLocation != "" {
-		createOutputDirectory(outputLocation)
+		createDirectory(outputLocation)
 	}
 
 	// Search for a template in local folder if no template is provided
@@ -68,22 +70,24 @@ func main() {
 
 	if fadeType == "X" && !*useOldfade {
 		fmt.Println("FFmpeg version is bigger than 4.3.0, using Xfade transition method...")
-		makeTempVideosWithoutAudio(Images, Transitions, TransitionDurations, Timings, Audios, Motions)
-		MergeTempVideos(Images, Transitions, TransitionDurations, Timings)
-		addAudio(Timings, Audios)
-		copyFinal()
+		makeTempVideosWithoutAudio(Images, Transitions, TransitionDurations, Timings, Audios, Motions, tempLocation)
+		MergeTempVideos(Images, Transitions, TransitionDurations, Timings, tempLocation)
+		addAudio(Timings, Audios, tempLocation)
+		copyFinal(tempLocation, outputLocation)
 	} else {
 		fmt.Println("FFmpeg version is smaller than 4.3.0, using old fade transition method...")
-		makeTempVideosWithoutAudio(Images, Transitions, TransitionDurations, Timings, Audios, Motions)
-		MergeTempVideosOldFade(Images, Transitions, TransitionDurations, Timings)
-		addAudio(Timings, Audios)
-		copyFinal()
+		makeTempVideosWithoutAudio(Images, Transitions, TransitionDurations, Timings, Audios, Motions, tempLocation)
+		MergeTempVideosOldFade(Images, TransitionDurations, Timings, tempLocation)
+		addAudio(Timings, Audios, tempLocation)
+		copyFinal(tempLocation, outputLocation)
 	}
 
 	fmt.Println("Finished making video...")
 
 	// If user did not specify the -s flag at runtime, delete all the temporary videos
-	deleteTemporaryVideos(saveTemps)
+	if !*saveTemps {
+		deleteTemporaryVideos(tempLocation)
+	}
 
 	fmt.Println("Video production completed!")
 	duration := time.Since(start)
@@ -96,25 +100,11 @@ func main() {
 	}
 }
 
-func createTemporaryFolder() {
-	os.Mkdir("./temp", 0755)
+func createTemporaryFolder(tempPath string) {
+	createDirectory(tempPath)
 }
 
-func parseFlags(templateName *string, location *string, overlayVideoPath *string) (*bool, *bool, *bool, *bool) {
-	var saveTemps = flag.Bool("s", false, "Include if user wishes to save temporary files created during production")
-	var lowQuality = flag.Bool("l", false, "Include to produce a lower quality video (1280x720 => 852x480)")
-	var help = flag.Bool("h", false, "Include option flag to display list of possible flags and their uses")
-	var useOldFade = flag.Bool("f", false, "Include to use traditional ffmpeg fade")
-	flag.StringVar(templateName, "t", "", "Specify template to use")
-
-	flag.StringVar(location, "o", "", "Specify output location")
-	flag.StringVar(overlayVideoPath, "ov", "", "Specify test video location to create overlay video")
-	flag.Parse()
-
-	return saveTemps, lowQuality, help, useOldFade
-}
-
-func createOutputDirectory(location string) {
+func createDirectory(location string) {
 	if _, err := os.Stat(location); errors.Is(err, os.ErrNotExist) {
 		err := os.Mkdir(location, os.ModePerm)
 		if err != nil {
@@ -123,8 +113,29 @@ func createOutputDirectory(location string) {
 	}
 }
 
+func parseFlags(templateName *string, outputPath *string, tempPath *string, overlayVideoPath *string) (*bool, *bool, *bool, *bool) {
+	var lowQuality = flag.Bool("l", false, "Include to produce a lower quality video (1280x720 => 852x480)")
+	var help = flag.Bool("h", false, "Include option flag to display list of possible flags and their uses")
+	var saveTemps = flag.Bool("s", false, "Include to save the temporary files after production")
+	var useOldFade = flag.Bool("f", false, "Include to use traditional ffmpeg fade")
+	flag.StringVar(templateName, "t", "", "Specify template to use")
+	flag.StringVar(outputPath, "o", "", "Specify output location")
+	flag.StringVar(tempPath, "td", "", "Specify temp directory location (If user wishes to save temporary files created during production)")
+	flag.StringVar(overlayVideoPath, "ov", "", "Specify test video location to create overlay video")
+	flag.Parse()
+	if *tempPath == "" {
+		*tempPath = "./temp"
+	}
+	return lowQuality, help, saveTemps, useOldFade
+}
+
 func removeFileNameFromDirectory(slideshowDirectory string) string {
-	template_directory_split := strings.Split(slideshowDirectory, "/")
+	var template_directory_split []string
+	if runtime.GOOS == "windows" { // Windows uses '\' for filepaths
+		template_directory_split = strings.Split(slideshowDirectory, "\\")
+	} else {
+		template_directory_split = strings.Split(slideshowDirectory, "/")
+	}
 	template_directory := ""
 
 	if len(template_directory_split) == 1 {
@@ -188,12 +199,10 @@ func parseSlideshow(slideshowDirectory string) ([]string, []string, string, stri
 	return Images, Audios, BackAudioPath, BackAudioVolume, Transitions, TransitionDurations, Timings, Motions
 }
 
-func deleteTemporaryVideos(saveTemps *bool) {
-	if !*saveTemps {
-		fmt.Println("-s not specified, removing temporary videos...")
-		err := os.RemoveAll("./temp")
-		check(err)
-	}
+func deleteTemporaryVideos(tempPath string) {
+	fmt.Println("-s not specified, removing temporary videos...")
+	err := os.RemoveAll(tempPath)
+	check(err)
 }
 
 /* Function to split the motion data into 4 pieces and convert them all to floats
@@ -230,17 +239,18 @@ func checkCMDError(output []byte, err error) {
 	}
 }
 
-func copyFinal() {
-	// If -o is specified, save the final video at the specified location
-	if len(outputLocation) > 0 {
-		cmd := cmdCopyFile("./temp/final.mp4", outputLocation+"/final.mp4")
+func copyFinal(tempPath string, outputFolder string) {
+
+	if len(outputFolder) > 0 {
+		cmd := cmdCopyFile(tempPath+"/final.mp4", outputFolder+"/final.mp4")
 		output, err := cmd.CombinedOutput()
 		checkCMDError(output, err)
 	} else { // If -o is not specified, save the final video at the default location
-		cmd := cmdCopyFile("./temp/final.mp4", "./final.mp4")
+		cmd := cmdCopyFile(tempPath+"/final.mp4", "./final.mp4")
 		output, err := cmd.CombinedOutput()
 		checkCMDError(output, err)
 	}
+
 }
 
 /* Function to scale all the input images to a uniform height/width
@@ -256,7 +266,7 @@ func scaleImages(Images []string, height string, width string) {
 	for i := 0; i < totalNumImages; i++ {
 		go func(i int) {
 			defer wg.Done()
-			cmd := cmdScaleImage("./"+Images[i], height, width, "./"+Images[i])
+			cmd := cmdScaleImage(Images[i], height, width, Images[i])
 			output, err := cmd.CombinedOutput()
 			checkCMDError(output, err)
 		}(i)
@@ -327,7 +337,7 @@ func checkFFmpegVersion() string {
  *		Timings: ([]string) - array of timing duration for the audio for each image
  *		Audios: ([]string) - Array of filenames for the audios to be used
  */
-func combineVideos(Images []string, Transitions []string, TransitionDurations []string, Timings []string, Audios []string, Motions [][][]float64) {
+func combineVideos(Images []string, Transitions []string, TransitionDurations []string, Timings []string, Audios []string, Motions [][][]float64, tempPath string) {
 	input_images := []string{}
 	input_filters := ""
 	totalNumImages := len(Images)
@@ -340,9 +350,9 @@ func combineVideos(Images []string, Transitions []string, TransitionDurations []
 		// Everything needs to be cropped so add the crop filter to every image
 		input_filters += fmt.Sprintf("[%d:v]crop=trunc(iw/2)*2:trunc(ih/2)*2", i)
 		if i == totalNumImages-1 { // Credits image has no timings/transitions
-			input_images = append(input_images, "-i", "./"+Images[i])
+			input_images = append(input_images, "-i", Images[i])
 		} else {
-			input_images = append(input_images, "-loop", "1", "-ss", "0ms", "-t", Timings[i]+"ms", "-i", "./"+Images[i])
+			input_images = append(input_images, "-loop", "1", "-ss", "0ms", "-t", Timings[i]+"ms", "-i", Images[i])
 
 			if i == 0 {
 				input_filters += fmt.Sprintf(",fade=t=out:st=%sms:d=%sms", Timings[1], TransitionDurations[i])
@@ -366,7 +376,7 @@ func combineVideos(Images []string, Transitions []string, TransitionDurations []
 		"-max_muxing_queue_size", "9999",
 		"-filter_complex", input_filters, "-map", "[v]",
 		"-map", fmt.Sprintf("%d:a", totalNumImages),
-		"-shortest", "-y", "./temp/mergedVideo.mp4")
+		"-shortest", "-y", tempPath+"/mergedVideo.mp4")
 
 	fmt.Println("Creating video...")
 	cmd := exec.Command("ffmpeg", input_images...)
@@ -442,7 +452,7 @@ func createZoomCommand(Motions [][]float64, TimingDuration []float64) string {
  *		Timings: ([]string) - array of timing duration for the audio for each image
  *		Audios: ([]string) - Array of filenames for the audios to be used
  */
-func makeTempVideosWithoutAudio(Images []string, Transitions []string, TransitionDurations []string, Timings []string, Audios []string, Motions [][][]float64) {
+func makeTempVideosWithoutAudio(Images []string, Transitions []string, TransitionDurations []string, Timings []string, Audios []string, Motions [][][]float64, tempPath string) {
 	fmt.Println("Making temporary videos in parallel...")
 	totalNumImages := len(Images)
 
@@ -465,7 +475,10 @@ func makeTempVideosWithoutAudio(Images []string, Transitions []string, Transitio
 			fmt.Printf("Making temp%d-%d.mp4 video\n", i, totalNumImages)
 			zoom_cmd := createZoomCommand(Motions[i], convertStringToFloat(duration))
 
-			cmd := cmdCreateTempVideo(Images[i], duration, zoom_cmd, fmt.Sprintf("./temp/temp%d-%d.mp4", i, totalNumImages))
+			var cmd *exec.Cmd
+
+			cmd = cmdCreateTempVideo(Images[i], duration, zoom_cmd, fmt.Sprintf(tempPath+"/temp%d-%d.mp4", i, totalNumImages))
+
 			output, err := cmd.CombinedOutput()
 			checkCMDError(output, err)
 		}(i)
@@ -485,7 +498,7 @@ func makeTempVideosWithoutAudio(Images []string, Transitions []string, Transitio
  *		TransitionDurations: ([]string) - Array of durations for each transition
  *		Timings: ([]string) - array of timing duration for the audio for each image
  */
-func MergeTempVideos(Images []string, Transitions []string, TransitionDurations []string, Timings []string) {
+func MergeTempVideos(Images []string, Transitions []string, TransitionDurations []string, Timings []string, tempPath string) {
 	fmt.Println("Merging temporary videos...")
 	video_fade_filter := ""
 	settb := ""
@@ -502,7 +515,9 @@ func MergeTempVideos(Images []string, Transitions []string, TransitionDurations 
 	prev_offset[0] = 0.0
 
 	for i := 0; i < totalNumImages; i++ {
-		input_files = append(input_files, "-i", fmt.Sprintf("./temp/temp%d-%d.mp4", i, totalNumImages))
+
+		input_files = append(input_files, "-i", fmt.Sprintf(tempPath+"/temp%d-%d.mp4", i, totalNumImages))
+
 	}
 
 	for i := 0; i < totalNumImages-1; i++ {
@@ -514,7 +529,9 @@ func MergeTempVideos(Images []string, Transitions []string, TransitionDurations 
 		settb += fmt.Sprintf("[%d:v]tpad=stop_mode=clone:stop_duration=%f[v%d];", i, transition_duration/2, i)
 
 		//get the current video length in seconds
-		cmd := cmdGetVideoLength(fmt.Sprintf("./temp/temp%d-%d.mp4", i, totalNumImages))
+		var cmd *exec.Cmd
+
+		cmd = cmdGetVideoLength(fmt.Sprintf(tempPath+"/temp%d-%d.mp4", i, totalNumImages))
 
 		output, err := cmd.CombinedOutput()
 		checkCMDError(output, err)
@@ -544,7 +561,8 @@ func MergeTempVideos(Images []string, Transitions []string, TransitionDurations 
 		}
 
 	}
-	input_files = append(input_files, "-filter_complex", settb+video_fade_filter, "-y", "./temp/video_with_no_audio.mp4")
+
+	input_files = append(input_files, "-filter_complex", settb+video_fade_filter, "-y", tempPath+"/video_with_no_audio.mp4")
 
 	cmd := exec.Command("ffmpeg", input_files...)
 
@@ -552,7 +570,14 @@ func MergeTempVideos(Images []string, Transitions []string, TransitionDurations 
 	checkCMDError(output, err)
 }
 
-func MergeTempVideosOldFade(Images []string, Transitions []string, TransitionDurations []string, Timings []string) {
+/** Merges the temporary videos using the old fade method with just plain crossfade transitions
+ *
+ *	Parameters:
+ *		Images: ([]string) - Array of filenames for the images
+ *		TransitionDurations: ([]string) - Array of durations for each transition
+ *		Timings: ([]string) - array of timing duration for the audio for each image
+ */
+func MergeTempVideosOldFade(Images []string, TransitionDurations []string, Timings []string, tempLocation string) {
 	fmt.Println("Merging temporary videos with traditional fade...")
 	video_fade_filter := ""
 	last_fade_output := ""
@@ -570,7 +595,7 @@ func MergeTempVideosOldFade(Images []string, Transitions []string, TransitionDur
 	prev_offset[0] = 0.0
 
 	for i := 0; i < totalNumImages; i++ {
-		input_files = append(input_files, "-i", fmt.Sprintf("./temp/temp%d-%d.mp4", i, totalNumImages))
+		input_files = append(input_files, "-i", fmt.Sprintf(tempLocation+"/temp%d-%d.mp4", i, totalNumImages))
 	}
 
 	for i := 0; i < totalNumImages; i++ {
@@ -579,7 +604,7 @@ func MergeTempVideosOldFade(Images []string, Transitions []string, TransitionDur
 		transition_duration = transition_duration / 1000
 
 		//get the current video length in seconds
-		cmd := cmdGetVideoLength(fmt.Sprintf("./temp/temp%d-%d.mp4", i, totalNumImages))
+		cmd := cmdGetVideoLength(fmt.Sprintf(tempLocation+"/temp%d-%d.mp4", i, totalNumImages))
 
 		output, err := cmd.CombinedOutput()
 		checkCMDError(output, err)
@@ -613,7 +638,7 @@ func MergeTempVideosOldFade(Images []string, Transitions []string, TransitionDur
 
 	setDimensions := fmt.Sprintf("color=black:%dx%d:d=%f[base];", 1280, 720, video_total_length_minus_fade_transition)
 
-	input_files = append(input_files, "-filter_complex", setDimensions+settb+video_fade_filter+last_fade_output, "-map", "[fv]", "-y", "./temp/video_with_no_audio.mp4")
+	input_files = append(input_files, "-filter_complex", setDimensions+settb+video_fade_filter+last_fade_output, "-map", "[fv]", "-y", tempLocation+"/video_with_no_audio.mp4")
 
 	cmd := exec.Command("ffmpeg", input_files...)
 
@@ -626,13 +651,14 @@ func MergeTempVideosOldFade(Images []string, Transitions []string, TransitionDur
  *		Timings: ([]string) - array of timing duration for the audio for each image
  *		Audios: ([]string) - Array of filenames for the audios to be used
  */
-func addAudio(Timings []string, Audios []string) {
+func addAudio(Timings []string, Audios []string, tempPath string) {
 	fmt.Println("Adding audio...")
 	audio_inputs := []string{}
 
 	audio_filter := ""
 	audio_last_filter := ""
-	audio_inputs = append(audio_inputs, "-y", "-i", "./temp/video_with_no_audio.mp4")
+
+	audio_inputs = append(audio_inputs, "-y", "-i", tempPath+"/video_with_no_audio.mp4")
 
 	for i := 0; i < len(Audios); i++ {
 		if Audios[i] != "" {
@@ -657,30 +683,32 @@ func addAudio(Timings []string, Audios []string) {
 	audio_last_filter += fmt.Sprintf("concat=n=%d:v=0:a=1[a]", len(Audios)-1)
 	audio_filter += audio_last_filter
 
-	audio_inputs = append(audio_inputs, "-filter_complex", audio_filter, "-map", "0:v", "-map", "[a]", "-codec:v", "copy", "-codec:a", "libmp3lame", "./temp/merged_video.mp4")
+	audio_inputs = append(audio_inputs, "-filter_complex", audio_filter, "-map", "0:v", "-map", "[a]", "-codec:v", "copy", "-codec:a", "libmp3lame", tempPath+"/merged_video.mp4")
 
 	cmd := exec.Command("ffmpeg", audio_inputs...)
-
 	output, err := cmd.CombinedOutput()
 	checkCMDError(output, err)
 
-	TrimEnd()
+	TrimEnd(tempPath)
 }
 
 /* Function to trim the end of the video and remove excess empty audio when the audio file is longer than the video file
  */
-func TrimEnd() {
+func TrimEnd(tempPath string) {
 	fmt.Println("Trimming video...")
 
 	//get the true length of the video
-	cmd := cmdGetVideoLength("./temp/video_with_no_audio.mp4")
+	var cmd *exec.Cmd
+
+	cmd = cmdGetVideoLength(tempPath + "/video_with_no_audio.mp4")
+
 	output, err := cmd.CombinedOutput()
 	checkCMDError(output, err)
 
 	video_length, err := strconv.ParseFloat(strings.TrimSpace(string(output)), 8)
 
 	//match the video length of the merged video with the true length of the video
-	cmd = cmdTrimLengthOfVideo(fmt.Sprintf("%f", video_length))
+	cmd = cmdTrimLengthOfVideo(fmt.Sprintf("%f", video_length), tempPath)
 
 	output, err = cmd.CombinedOutput()
 	checkCMDError(output, err)
@@ -714,6 +742,7 @@ func displayHelpMessage() {
 	println("Options list:\n")
 	println("            -t [filepath]: Template Name, specify a template to use (if not included searches current folder for template)\n")
 	println("            -s (boolean): Save Temporaries, include to save temporary files generated during video process)\n")
+	println("            -td [filepath]: Temporary Directory, used to specify a location to store the temporary files used in video production (default is current-directory/temp)\n")
 	println("            -o [filepath]: Output Location, specify where to store final result (default is current directory)\n")
 	println("            -l (boolean): Low Quality, include to generate a lower quality video (480p instead of 720p)\n")
 	println("            -v (boolean): Verbosity, include to increase the verbosity of the status messages printed during video process\n")
