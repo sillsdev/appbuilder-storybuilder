@@ -6,7 +6,7 @@ import (
 )
 
 func cmdCreateTempVideo(ImageDirectory string, duration string, zoom_cmd string, finalOutputDirectory string) *exec.Cmd {
-	cmd := exec.Command("ffmpeg", "-loop", "1", "-i", "./"+ImageDirectory,
+	cmd := exec.Command("ffmpeg", "-loop", "1", "-i", ImageDirectory,
 		"-t", duration+"ms", "-filter_complex", zoom_cmd,
 		"-shortest", "-pix_fmt", "yuv420p", "-y", finalOutputDirectory)
 
@@ -29,17 +29,6 @@ func cmdTrimLengthOfVideo(duration string, tempPath string) *exec.Cmd {
 		"-c", "copy", "-t", duration,
 		"-y",
 		tempPath+"/final.mp4",
-	)
-	return cmd
-}
-
-func cmdAddBackgroundMusic(backgroundAudioPath string, volume string) *exec.Cmd {
-	cmd := exec.Command("ffmpeg",
-		"-i", "./temp/mergedVideo.mp4",
-		"-i", backgroundAudioPath,
-		"-filter_complex", "[1:0]volume="+volume+"[a1];[0:a][a1]amix=inputs=2:duration=first",
-		"-map", "0:v:0",
-		"-y", "../finalvideo.mp4",
 	)
 	return cmd
 }

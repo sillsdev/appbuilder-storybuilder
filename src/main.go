@@ -148,6 +148,7 @@ func removeFileNameFromDirectory(slideshowDirectory string) string {
 			template_directory += template_directory_split[i] + "/"
 		}
 	}
+	println("Template Directory: " + template_directory)
 	return template_directory
 }
 
@@ -394,25 +395,6 @@ func checkSign(num float64) string {
 	} else {
 		return "+"
 	}
-}
-
-func addBackgroundMusic(backgroundAudio string, backgroundVolume string) {
-	tempVol := 0.0
-	// Convert the background volume to a number between 0 and 1, if it exists
-	if backgroundVolume != "" {
-		if s, err := strconv.ParseFloat(backgroundVolume, 64); err == nil {
-			tempVol = s
-		} else {
-			fmt.Println("Error converting volume to float")
-		}
-		tempVol = tempVol / 100
-	} else {
-		tempVol = .5
-	}
-
-	cmd := cmdAddBackgroundMusic(backgroundAudio, fmt.Sprintf("%f", tempVol))
-	output, e := cmd.CombinedOutput()
-	checkCMDError(output, e)
 }
 
 func createZoomCommand(Motions [][]float64, TimingDuration []float64) string {
