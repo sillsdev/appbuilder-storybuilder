@@ -22,19 +22,19 @@ When installing with Homebrew (`brew install ffmpeg –ANY-OPTIONS-YOU-WANT`), i
 5. Run code in a CLI set to directory of executable with "./executable_name" or just "executable_name" for Windows
 6. There are also several flags you can include at runtime to alter the output or inputs:
 
-    -v : Verbosity, used to modify how much output is reported on the commandline for debugging purposes (less verbose by default)
-  
-    -s : Save files, used to specify if user wants to preserve the temporary files used in the video production (videos are deleted by default)
-
-    -td : Temporary Directory, used to specify a location to store the temporary files used in video production (default is in your OS' temp directory/storybuilder-*)
+    -h : Help, display list of possible flags and their uses
     
     -t : Template, used to input a specific template file to use, otherwise the program searches executable's current directory for any .slideshow files and uses the first it finds
     
     -o : Output location, used to specify where to store the finished video, will use executable's current directory by default
     
     -l : Lower quality, used to generate a lower quality video for smaller file size for easier distribution (default videos will be 1280x720)
+    
+    -td : Temporary Directory, used to specify a location to store the temporary files used in video production (default is in your OS' temp directory/storybuilder-*)
 
-    -h : Help, display list of possible flags and their uses
+    -v : Verbosity, used to modify how much output is reported on the commandline for debugging purposes (less verbose by default)
+  
+    -s : Save files, used to specify if user wants to preserve the temporary files used in the video production (videos are deleted by default)
 
     -ov : Overlay video, used to specify the location of a test video to create an overlay video with the generated video
 
