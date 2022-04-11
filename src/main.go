@@ -49,7 +49,9 @@ func main() {
 	start := time.Now()
 
 	// Parse in the various pieces from the template
-	Images, Audios, Transitions, TransitionDurations, Timings, Motions := parseSlideshow(slideshowDirectory)
+	finalVideoName, Images, Audios, Transitions, TransitionDurations, Timings, Motions := parseSlideshow(slideshowDirectory)
+	finalVideoName = strings.TrimSuffix(finalVideoName, ".slideshow")
+	fmt.Println(finalVideoName)
 	fmt.Println("Parsing completed...")
 
 	// Checking FFmpeg version to use Xfade
@@ -65,10 +67,6 @@ func main() {
 	}
 
 	fmt.Println("Creating video...")
-
-	var finalVideoName string = slideshowDirectory
-	finalVideoName = strings.TrimSuffix(finalVideoName, ".slideshow")
-	fmt.Println(finalVideoName)
 
 	if fadeType == "X" && !*useOldfade {
 		fmt.Println("FFmpeg version is bigger than 4.3.0, using Xfade transition method...")
@@ -136,7 +134,7 @@ func parseFlags(templateName *string, outputPath *string, tempPath *string, over
 	return lowQuality, help, saveTemps, useOldFade
 }
 
-func removeFileNameFromDirectory(slideshowDirectory string) string {
+func splitFileNameFromDirectory(slideshowDirectory string) (string, string) {
 	var template_directory_split []string
 	if runtime.GOOS == "windows" { // Windows uses '\' for filepaths
 		template_directory_split = strings.Split(slideshowDirectory, "\\")
@@ -144,6 +142,7 @@ func removeFileNameFromDirectory(slideshowDirectory string) string {
 		template_directory_split = strings.Split(slideshowDirectory, "/")
 	}
 	template_directory := ""
+	template_name := template_directory_split[len(template_directory_split)-1]
 
 	if len(template_directory_split) == 1 {
 		template_directory = "./"
@@ -152,11 +151,10 @@ func removeFileNameFromDirectory(slideshowDirectory string) string {
 			template_directory += template_directory_split[i] + "/"
 		}
 	}
-	println("Template Directory: " + template_directory)
-	return template_directory
+	return template_directory, template_name
 }
 
-func parseSlideshow(slideshowDirectory string) ([]string, []string, []string, []string, []string, [][][]float64) {
+func parseSlideshow(slideshowDirectory string) (string, []string, []string, []string, []string, []string, [][][]float64) {
 	Images := []string{}
 	Audios := []string{}
 	Transitions := []string{}
@@ -166,7 +164,7 @@ func parseSlideshow(slideshowDirectory string) ([]string, []string, []string, []
 	fmt.Println("Parsing .slideshow file...")
 	var slideshow = readData(slideshowDirectory)
 
-	template_directory := removeFileNameFromDirectory(slideshowDirectory)
+	template_directory, template_name := splitFileNameFromDirectory(slideshowDirectory)
 
 	for _, slide := range slideshow.Slide {
 		if slide.Audio.Background_Filename.Path != "" {
@@ -200,7 +198,7 @@ func parseSlideshow(slideshowDirectory string) ([]string, []string, []string, []
 		Timings = append(Timings, slide.Timing.Duration)
 	}
 
-	return Images, Audios, Transitions, TransitionDurations, Timings, Motions
+	return template_name, Images, Audios, Transitions, TransitionDurations, Timings, Motions
 }
 
 func deleteTemporaryVideos(tempPath string) {
@@ -250,7 +248,7 @@ func copyFinal(tempPath string, outputFolder string, name string) {
 		output, err := cmd.CombinedOutput()
 		checkCMDError(output, err)
 	} else { // If -o is not specified, save the final video at the default location
-		cmd := cmdCopyFile(tempPath+"/final.mp4", "/"+name+".mp4")
+		cmd := cmdCopyFile(tempPath+"/final.mp4", "./"+name+".mp4")
 		output, err := cmd.CombinedOutput()
 		checkCMDError(output, err)
 	}
