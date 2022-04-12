@@ -21,7 +21,7 @@ func init() {
 func TestParse(t *testing.T) {
 	templateName := "../TestInput/test.slideshow"
 
-	Images, Audios, BackAudioPath, BackAudioVolume, Transitions, TransitionDurations, Timings, Motions := parseSlideshow(templateName)
+	Images, Audios, Transitions, TransitionDurations, Timings, Motions := parseSlideshow(templateName)
 
 	expectedImages := []string{"../TestInput/Jn01.1-18-title.jpg", "../TestInput/./VB-John 1v1.jpg", "../TestInput/./VB-John 1v3.jpg", "../TestInput/./VB-John 1v4.jpg", "../TestInput/./VB-John 1v5a.jpg",
 		"../TestInput/./VB-John 1v5b.jpg", "../TestInput/./VB-John 1v6.jpg", "../TestInput/Gospel of John-credits.jpg"}
@@ -36,16 +36,6 @@ func TestParse(t *testing.T) {
 		if expectedAudios[i] != Audios[i] {
 			t.Error(fmt.Sprintf("expected audio filename to be %s, but got %s", expectedAudios[i], Audios[i]))
 		}
-	}
-
-	expectedBackAudioPath := "./music-intro-Jn.mp3"
-	if expectedBackAudioPath != BackAudioPath {
-		t.Error(fmt.Sprintf("expected audio filename to be %s, but got %s", expectedBackAudioPath, BackAudioPath))
-	}
-
-	expectedBackAudioVolume := ""
-	if expectedBackAudioVolume != BackAudioVolume {
-		t.Error(fmt.Sprintf("expected audio filename to be %s, but got %s", expectedBackAudioVolume, BackAudioVolume))
 	}
 
 	expectedTransitions := []string{"fade", "fade", "circleopen", "fade", "fade", "fade", "wipeleft", "fade"}

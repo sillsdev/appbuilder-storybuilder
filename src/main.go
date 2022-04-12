@@ -26,11 +26,7 @@ var overlayVideoPath string
 // Main function
 func main() {
 	// Ask the user for options
-	lowQuality, helpFlag, saveTemps, useOldfade := parseFlags(&slideshowDirectory, &outputLocation, &tempLocation, &overlayVideoPath)
-	if *helpFlag {
-		displayHelpMessage()
-		return
-	}
+	lowQuality, saveTemps, useOldfade := parseFlags(&slideshowDirectory, &outputLocation, &tempLocation, &overlayVideoPath)
 
 	// Create a temporary folder to store temporary files created when created a video
 	tempLocation = createTemporaryFolder(tempLocation)
@@ -118,18 +114,17 @@ func createDirectory(location string) {
 	}
 }
 
-func parseFlags(templateName *string, outputPath *string, tempPath *string, overlayVideoPath *string) (*bool, *bool, *bool, *bool) {
-	var lowQuality = flag.Bool("l", false, "-l (boolean): Low Quality, include to generate a lower quality video (480p instead of 720p)")
-	var help = flag.Bool("h", false, "-h (boolean): Help, include to display this help message and quit")
-	var saveTemps = flag.Bool("s", false, "-s (boolean): Save Temporaries, include to save temporary files generated during video process)")
-	var useOldFade = flag.Bool("f", false, "-f (boolean): Fadetype, include to use the non-xfade default transitions for video")
-	flag.StringVar(templateName, "t", "", "-t [filepath]: Template Name, specify a template to use (if not included searches current folder for template)")
-	flag.StringVar(outputPath, "o", "", "-o [filepath]: Output Location, specify where to store final result (default is current directory)")
-	flag.StringVar(tempPath, "td", "", "-td [filepath]: Temporary Directory, used to specify a location to store the temporary files used in video production (default is OS' temp folder/storybuilder-*)")
-	flag.StringVar(overlayVideoPath, "ov", "", "-ov [filepath]: Overlay Video, specify test video location to create overlay video")
+func parseFlags(templateName *string, outputPath *string, tempPath *string, overlayVideoPath *string) (*bool, *bool, *bool) {
+	var lowQuality = flag.Bool("l", false, "(boolean): Low Quality, include to generate a lower quality video (480p instead of 720p)")
+	var saveTemps = flag.Bool("s", false, "(boolean): Save Temporaries, include to save temporary files generated during video process)")
+	var useOldFade = flag.Bool("f", false, "(boolean): Fadetype, include to use the non-xfade default transitions for video")
+	flag.StringVar(templateName, "t", "", "[filepath]: Template Name, specify a template to use (if not included searches current folder for template)")
+	flag.StringVar(outputPath, "o", "", "[filepath]: Output Location, specify where to store final result (default is current directory)")
+	flag.StringVar(tempPath, "td", "", "[filepath]: Temporary Directory, used to specify a location to store the temporary files used in video production (default is OS' temp folder/storybuilder-*)")
+	flag.StringVar(overlayVideoPath, "ov", "", "[filepath]: Overlay Video, specify test video location to create overlay video")
 	flag.Parse()
 
-	return lowQuality, help, saveTemps, useOldFade
+	return lowQuality, saveTemps, useOldFade
 }
 
 func removeFileNameFromDirectory(slideshowDirectory string) string {
@@ -734,19 +729,4 @@ func createOverlaidVideoForTesting(trueVideo string, destinationLocation string)
 
 	output, err := cmd.CombinedOutput()
 	checkCMDError(output, err)
-}
-
-func displayHelpMessage() {
-	println("Usage: program-name [OPTIONS]\n")
-	println("Options list:\n")
-	println("            -h (boolean): Help, include to display this help message and quit\n")
-	println("            -t [filepath]: Template Name, specify a template to use (if not included searches current folder for template)\n")
-	println("            -o [filepath]: Output Location, specify where to store final result (default is current directory)\n")
-	println("            -l (boolean): Low Quality, include to generate a lower quality video (480p instead of 720p)\n")
-	println("            -td [filepath]: Temporary Directory, used to specify a location to store the temporary files used in video production (default is OS' temp folder/storybuilder-*)\n")
-	println("            -v (boolean): Verbosity, include to increase the verbosity of the status messages printed during video process\n")
-	println("            -s (boolean): Save Temporaries, include to save temporary files generated during video process)\n")
-	println("            -f (boolean): Fadetype, include to use the non-xfade default transitions for video")
-	println("            -ov [filepath]: Overlay Video, specify test video location to create overlay video")
-
 }
