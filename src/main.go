@@ -51,6 +51,7 @@ func main() {
 
 	// Parse in the various pieces from the template
 	slideshow := slideshow.NewSlideshow(slideshowDirectory)
+	Images := slideshow.GetImages()
 
 	// Checking FFmpeg version to use Xfade
 	fmt.Println("Checking FFmpeg version...")
@@ -59,22 +60,22 @@ func main() {
 	//Scaling images depending on video quality option
 	fmt.Println("Scaling images...")
 	if *lowQuality {
-		scaleImages(slideshow.Images, "852", "480")
+		scaleImages(Images, "852", "480")
 	} else {
-		scaleImages(slideshow.Images, "1280", "720")
+		scaleImages(Images, "1280", "720")
 	}
 
 	fmt.Println("Creating video...")
 
 	if fadeType == "X" {
 		fmt.Println("FFmpeg version is bigger than 4.3.0, using Xfade transition method...")
-		makeTempVideosWithoutAudio(slideshow.Images, slideshow.Transitions, slideshow.TransitionDurations, slideshow.Timings, slideshow.Audios, slideshow.Motions)
-		MergeTempVideos(slideshow.Images, slideshow.Transitions, slideshow.TransitionDurations, slideshow.Timings)
+		makeTempVideosWithoutAudio(Images, slideshow.Transitions, slideshow.TransitionDurations, slideshow.Timings, slideshow.Audios, slideshow.Motions)
+		MergeTempVideos(Images, slideshow.Transitions, slideshow.TransitionDurations, slideshow.Timings)
 		addAudio(slideshow.Timings, slideshow.Audios)
 		copyFinal()
 	} else {
 		fmt.Println("FFmpeg version is smaller than 4.3.0, using old fade transition method...")
-		combineVideos(slideshow.Images, slideshow.Transitions, slideshow.TransitionDurations, slideshow.Timings, slideshow.Audios, slideshow.Motions)
+		combineVideos(Images, slideshow.Transitions, slideshow.TransitionDurations, slideshow.Timings, slideshow.Audios, slideshow.Motions)
 		fmt.Println("Adding intro music...")
 		addBackgroundMusic(slideshow.BackAudioPath, slideshow.BackAudioVolume)
 	}
