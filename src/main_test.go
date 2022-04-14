@@ -10,7 +10,7 @@ import (
 var ffmpeg string
 
 func init() {
-	cmd := exec.Command("where", "ffmpeg")
+	cmd := exec.Command("which", "ffmpeg")
 	output, err := cmd.CombinedOutput()
 	checkCMDError(output, err)
 
@@ -203,13 +203,13 @@ func Test_cmdGetVideoLength(t *testing.T) {
 	}{
 		{
 			"get correct video duration",
-			args{inputDirectory: "../TestInput/sample_video.mp4"},
+			args{inputDirectory: "./TestInput/sample_video.mp4"},
 			// check the command that we are running is the right command.
 			exec.Command("ffprobe",
 				"-v", "error",
 				"-show_entries", "format=duration",
 				"-of", "default=noprint_wrappers=1:nokey=1",
-				"../TestInput/sample_video.mp4"),
+				"./TestInput/sample_video.mp4"),
 		},
 	}
 
@@ -246,11 +246,11 @@ func Test_cmdTrimLengthOfVideo(t *testing.T) {
 	}{
 		{
 			" ffmpeg command for triming video",
-			args{duration: "30",
+			args{duration: "30ms",
 				tempPath: "./temp"},
 			exec.Command("ffmpeg",
 				"-i", "./temp"+"/merged_video.mp4",
-				"-c", "copy", "-t", "1000ms",
+				"-c", "copy", "-t", "30ms",
 				"-y",
 				"./temp"+"/final.mp4"),
 		},
@@ -312,10 +312,10 @@ func Test_cmdCopyFile(t *testing.T) {
 	}{
 		{
 			" checking the video oldpath and NewpPath ",
-			args{oldPath: "./oldPath",
-				newPath: "./newPath"},
+			args{oldPath: "./temp/final.pm4",
+				newPath: "./output/final.mp4"},
 
-			exec.Command("ffmpeg", "-i", "./oldPath", "-y", "./newPath"),
+			exec.Command("ffmpeg", "-i", "./temp/final.pm4", "-y", "./output/final.mp4"),
 		},
 	}
 
