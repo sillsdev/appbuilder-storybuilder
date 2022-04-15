@@ -48,6 +48,7 @@ func main() {
 
 	start := time.Now()
 
+	fmt.Println("Parsing .slideshow file...")
 	// Parse in the various pieces from the template
 	finalVideoName, Images, Audios, Transitions, TransitionDurations, Timings, Motions := parseSlideshow(slideshowDirectory)
 	finalVideoName = strings.TrimSuffix(finalVideoName, ".slideshow")
@@ -145,7 +146,9 @@ func splitFileNameFromDirectory(slideshowDirectory string) (string, string) {
 	template_name := template_directory_split[len(template_directory_split)-1]
 
 	if len(template_directory_split) == 1 {
-		template_directory = "./"
+		if runtime.GOOS != "windows" {
+			template_directory = "./"
+		}
 	} else {
 		for i := 0; i < len(template_directory_split)-1; i++ {
 			template_directory += template_directory_split[i] + "/"
@@ -161,7 +164,6 @@ func parseSlideshow(slideshowDirectory string) (string, []string, []string, []st
 	TransitionDurations := []string{}
 	Timings := []string{}
 	Motions := [][][]float64{}
-	fmt.Println("Parsing .slideshow file...")
 	var slideshow = readData(slideshowDirectory)
 
 	template_directory, template_name := splitFileNameFromDirectory(slideshowDirectory)
@@ -176,7 +178,7 @@ func parseSlideshow(slideshowDirectory string) (string, []string, []string, []st
 				Audios = append(Audios, template_directory+slide.Audio.Filename.Name)
 			}
 		}
-		Images = append(Images, template_directory+slide.Image.Name)
+		Images = append(Images, template_directory+slide.Image.Name) //
 		if slide.Transition.Type == "" {
 			Transitions = append(Transitions, "fade")
 		} else {
@@ -382,8 +384,6 @@ func combineVideos(Images []string, Transitions []string, TransitionDurations []
 
 	fmt.Println("Creating video...")
 	cmd := exec.Command("ffmpeg", input_images...)
-
-	fmt.Println(cmd)
 
 	output, err := cmd.CombinedOutput()
 	checkCMDError(output, err)
