@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os/exec"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -10,7 +11,12 @@ import (
 var ffmpeg string
 
 func init() {
-	cmd := exec.Command("which", "ffmpeg")
+	var cmd *exec.Cmd
+	if runtime.GOOS == "windows" {
+		cmd = exec.Command("where", "ffmpeg")
+	} else {
+		cmd = exec.Command("which", "ffmpeg")
+	}
 	output, err := cmd.CombinedOutput()
 	checkCMDError(output, err)
 
@@ -22,15 +28,15 @@ func TestParse(t *testing.T) {
 
 	Images, Audios, Transitions, TransitionDurations, Timings, Motions := parseSlideshow(templateName)
 
-	expectedImages := []string{"../TestInput/Jn01.1-18-title.jpg", "../TestInput/./VB-John 1v1.jpg", "../TestInput/./VB-John 1v3.jpg", "../TestInput/./VB-John 1v4.jpg", "../TestInput/./VB-John 1v5a.jpg",
-		"../TestInput/./VB-John 1v5b.jpg", "../TestInput/./VB-John 1v6.jpg", "../TestInput/Gospel of John-credits.jpg"}
+	expectedImages := []string{"Jn01.1-18-title.jpg", "./VB-John 1v1.jpg", "./VB-John 1v3.jpg", "./VB-John 1v4.jpg", "./VB-John 1v5a.jpg",
+		"./VB-John 1v5b.jpg", "./VB-John 1v6.jpg", "Gospel of John-credits.jpg"}
 	for i := 0; i < len(expectedImages); i++ {
 		if expectedImages[i] != Images[i] {
 			t.Error(fmt.Sprintf("expected image filename to be %s, but got %s", expectedImages[i], Images[i]))
 		}
 	}
 
-	expectedAudios := []string{"../TestInput/./music-intro-Jn.mp3", "../TestInput/narration-j-001.mp3", "../TestInput/narration-j-001.mp3", "../TestInput/narration-j-001.mp3", "../TestInput/narration-j-001.mp3", "../TestInput/narration-j-001.mp3", "../TestInput/narration-j-001.mp3", ""}
+	expectedAudios := []string{"./music-intro-Jn.mp3", "narration-j-001.mp3", "narration-j-001.mp3", "narration-j-001.mp3", "narration-j-001.mp3", "narration-j-001.mp3", "narration-j-001.mp3", ""}
 	for i := 0; i < len(expectedAudios); i++ {
 		if expectedAudios[i] != Audios[i] {
 			t.Error(fmt.Sprintf("expected audio filename to be %s, but got %s", expectedAudios[i], Audios[i]))
@@ -127,7 +133,7 @@ func Test_scaleImages(t *testing.T) {
 
 	expectedOutput := "1280x720"
 
-	t.Log(output_string)
+	//t.Log(output_string)
 
 	if output_string != expectedOutput {
 		t.Error(fmt.Sprintf("expected image %s to have widthxheight = %s, but got %s", "Jn01.1-18-title.jpg", expectedOutput, output_string))
@@ -158,7 +164,6 @@ func Test_cmdCreateTempVideo(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			fmt.Println(cmdCreateTempVideo(tt.args.ImageDirectory, tt.args.duration, tt.args.zoom_cmd, tt.args.finalOutputDirectory).String())
 			if got := cmdCreateTempVideo(tt.args.ImageDirectory, tt.args.duration, tt.args.zoom_cmd, tt.args.finalOutputDirectory).String(); got != tt.want.String() {
 				t.Errorf("cmdCreateTempVideo() = %v, want %v", got, tt.want)
 			}
@@ -246,7 +251,6 @@ func Test_cmdTrimLengthOfVideo(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			fmt.Println(cmdTrimLengthOfVideo(tt.args.duration, tt.args.tempPath).String())
 			if got := cmdTrimLengthOfVideo(tt.args.duration, tt.args.tempPath).String(); got != tt.want.String() {
 				t.Errorf("cmdTrimLengthOfVideo() = %v, want %v", got, tt.want)
 			}
@@ -280,7 +284,6 @@ func Test_cmdAddBackgroundMusic(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			fmt.Println(cmdAddBackgroundMusic(tt.args.backgroundAudioPath, tt.args.volume).String())
 			if got := cmdAddBackgroundMusic(tt.args.backgroundAudioPath, tt.args.volume).String(); got != tt.want.String() {
 				t.Errorf("cmdAddBackgroundMusic() = %v, want %v", got, tt.want)
 			}
@@ -309,7 +312,6 @@ func Test_cmdCopyFile(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			fmt.Println(cmdCopyFile(tt.args.oldPath, tt.args.newPath).String())
 			if got := cmdCopyFile(tt.args.oldPath, tt.args.newPath).String(); got != tt.want.String() {
 				t.Errorf("cmdAddBackgroundMusic() = %v, want %v", got, tt.want)
 			}

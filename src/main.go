@@ -48,6 +48,7 @@ func main() {
 
 	start := time.Now()
 
+	fmt.Println("Parsing .slideshow file...")
 	// Parse in the various pieces from the template
 	Images, Audios, Transitions, TransitionDurations, Timings, Motions := parseSlideshow(slideshowDirectory)
 	fmt.Println("Parsing completed...")
@@ -142,7 +143,9 @@ func removeFileNameFromDirectory(slideshowDirectory string) string {
 	template_directory := ""
 
 	if len(template_directory_split) == 1 {
-		template_directory = "./"
+		if runtime.GOOS != "windows" {
+			template_directory = "./"
+		}
 	} else {
 		for i := 0; i < len(template_directory_split)-1; i++ {
 			template_directory += template_directory_split[i] + "/"
@@ -158,7 +161,6 @@ func parseSlideshow(slideshowDirectory string) ([]string, []string, []string, []
 	TransitionDurations := []string{}
 	Timings := []string{}
 	Motions := [][][]float64{}
-	fmt.Println("Parsing .slideshow file...")
 	var slideshow = readData(slideshowDirectory)
 
 	template_directory := removeFileNameFromDirectory(slideshowDirectory)
@@ -379,8 +381,6 @@ func combineVideos(Images []string, Transitions []string, TransitionDurations []
 
 	fmt.Println("Creating video...")
 	cmd := exec.Command("ffmpeg", input_images...)
-
-	fmt.Println(cmd)
 
 	output, err := cmd.CombinedOutput()
 	checkCMDError(output, err)
