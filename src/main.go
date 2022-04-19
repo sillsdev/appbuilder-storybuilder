@@ -22,18 +22,27 @@ var slideshowDirectory string
 var outputLocation string
 var tempLocation string
 var overlayVideoPath string
+var verbose bool
 
 // Main function
 func main() {
 	// Ask the user for options
-	lowQuality, saveTemps, useOldfade := parseFlags(&slideshowDirectory, &outputLocation, &tempLocation, &overlayVideoPath)
-
+	lowQuality, saveTemps, useOldfade, v := parseFlags(&slideshowDirectory, &outputLocation, &tempLocation, &overlayVideoPath)
+	verbose = *v
+	if verbose {
+		println("Verbose feedback enabled...")
+	}
 	// Create a temporary folder to store temporary files created when created a video
 	tempLocation = createTemporaryFolder(tempLocation)
-
+	if verbose {
+		println("Temporary folder created at", tempLocation)
+	}
 	// Create directory if output directory does not exist
 	if outputLocation != "" {
 		createDirectory(outputLocation)
+		if verbose {
+			println("Output file to be created at", outputLocation)
+		}
 	}
 
 	// Search for a template in local folder if no template is provided
@@ -42,13 +51,19 @@ func main() {
 		filepath.WalkDir(".", findTemplate)
 	}
 
+	if verbose {
+		println(".slideshow file being used:", slideshowDirectory)
+	}
+
 	start := time.Now()
 
 	fmt.Println("Parsing .slideshow file...")
 	// Parse in the various pieces from the template
 	finalVideoName, Images, Audios, Transitions, TransitionDurations, Timings, Motions := parseSlideshow(slideshowDirectory)
+	if verbose {
+		println("Using", finalVideoName, "with", len(Images), "slides...")
+	}
 	finalVideoName = strings.TrimSuffix(finalVideoName, ".slideshow")
-	fmt.Println(finalVideoName)
 	fmt.Println("Parsing completed...")
 
 	// Checking FFmpeg version to use Xfade
@@ -56,30 +71,30 @@ func main() {
 	var fadeType string = checkFFmpegVersion()
 
 	//Scaling images depending on video quality option
-	fmt.Println("Scaling images...")
 	if *lowQuality {
+		println("-l specified, producing 480p video...")
 		scaleImages(Images, "852", "480")
 	} else {
 		scaleImages(Images, "1280", "720")
 	}
 
-	fmt.Println("Creating video...")
+	fmt.Println("Beginning video creation process...")
 
 	if fadeType == "X" && !*useOldfade {
-		fmt.Println("FFmpeg version is bigger than 4.3.0, using Xfade transition method...")
-		makeTempVideosWithoutAudio(Images, Transitions, TransitionDurations, Timings, Audios, Motions, tempLocation)
+		fmt.Println("FFmpeg version is greater than 4.3.0, using Xfade transition method...")
+		makeTempVideosWithoutAudio(Images, Timings, Motions, tempLocation)
 		MergeTempVideos(Images, Transitions, TransitionDurations, Timings, tempLocation)
 		addAudio(Timings, Audios, tempLocation)
 		copyFinal(tempLocation, outputLocation, finalVideoName)
 	} else {
-		fmt.Println("FFmpeg version is smaller than 4.3.0, using old fade transition method...")
-		makeTempVideosWithoutAudio(Images, Transitions, TransitionDurations, Timings, Audios, Motions, tempLocation)
+		fmt.Println("FFmpeg version is less than 4.3.0, using traditional fade transition method...")
+		makeTempVideosWithoutAudio(Images, Timings, Motions, tempLocation)
 		MergeTempVideosOldFade(Images, TransitionDurations, Timings, tempLocation)
 		addAudio(Timings, Audios, tempLocation)
 		copyFinal(tempLocation, outputLocation, finalVideoName)
 	}
 
-	fmt.Println("Finished making video...")
+	fmt.Println("Finished creating video...")
 
 	// If user did not specify the -s flag at runtime, delete all the temporary videos
 	if !*saveTemps {
@@ -117,17 +132,18 @@ func createDirectory(location string) {
 	}
 }
 
-func parseFlags(templateName *string, outputPath *string, tempPath *string, overlayVideoPath *string) (*bool, *bool, *bool) {
+func parseFlags(templateName *string, outputPath *string, tempPath *string, overlayVideoPath *string) (*bool, *bool, *bool, *bool) {
 	var lowQuality = flag.Bool("l", false, "(boolean): Low Quality, include to generate a lower quality video (480p instead of 720p)")
 	var saveTemps = flag.Bool("s", false, "(boolean): Save Temporaries, include to save temporary files generated during video process)")
 	var useOldFade = flag.Bool("f", false, "(boolean): Fadetype, include to use the non-xfade default transitions for video")
+	var verbose = flag.Bool("v", false, "(boolean): Verbose, include to increase the amount of detail reported for the production process")
 	flag.StringVar(templateName, "t", "", "[filepath]: Template Name, specify a template to use (if not included searches current folder for template)")
 	flag.StringVar(outputPath, "o", "", "[filepath]: Output Location, specify where to store final result (default is current directory)")
 	flag.StringVar(tempPath, "td", "", "[filepath]: Temporary Directory, used to specify a location to store the temporary files used in video production (default is OS' temp folder/storybuilder-*)")
 	flag.StringVar(overlayVideoPath, "ov", "", "[filepath]: Overlay Video, specify test video location to create overlay video")
 	flag.Parse()
 
-	return lowQuality, saveTemps, useOldFade
+	return lowQuality, saveTemps, useOldFade, verbose
 }
 
 func splitFileNameFromDirectory(slideshowDirectory string) (string, string) {
@@ -257,6 +273,9 @@ func copyFinal(tempPath string, outputFolder string, name string) {
  */
 func scaleImages(Images []string, height string, width string) {
 	totalNumImages := len(Images)
+	if verbose {
+		println("Scaling images to", height, "H and", width, "W...")
+	}
 	var wg sync.WaitGroup
 	// Tell the 'wg' WaitGroup how many threads/goroutines
 	//   that are about to run concurrently.
@@ -286,6 +305,9 @@ func findTemplate(s string, d fs.DirEntry, err error) error {
 			slideshowDirectory = s
 		}
 	}
+	if slideshowDirectory == "" {
+		log.Fatalln("Unable to find .slideshow in current folder, exiting...")
+	}
 	return nil
 }
 
@@ -303,7 +325,7 @@ func checkFFmpegVersion() string {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("Version is %s\n", version)
+	fmt.Printf("Current ffmpeg version installed is %s\n", version)
 	var result = ""
 	char := []rune(version)
 
@@ -326,62 +348,6 @@ func checkFFmpegVersion() string {
 		result = "X" // use new fade
 	}
 	return result
-}
-
-/* Function to create the video with all images + transitions
- * Parameters:
- *		Images: ([]string) - Array of filenames for the images
- *		Transitions: ([]string) - Array of Xfade transition names to use
- *		TransitionDurations: ([]string) - Array of durations for each transition
- *		Timings: ([]string) - array of timing duration for the audio for each image
- *		Audios: ([]string) - Array of filenames for the audios to be used
- */
-func combineVideos(Images []string, Transitions []string, TransitionDurations []string, Timings []string, Audios []string, Motions [][][]float64, tempPath string) {
-	input_images := []string{}
-	input_filters := ""
-	totalNumImages := len(Images)
-	concatTransitions := ""
-
-	fmt.Println("Getting list of images and filters...")
-	for i := 0; i < totalNumImages; i++ {
-		// Everything needs to be concatenated so always add the image to concatTransitions
-		concatTransitions += fmt.Sprintf("[v%d]", i)
-		// Everything needs to be cropped so add the crop filter to every image
-		input_filters += fmt.Sprintf("[%d:v]crop=trunc(iw/2)*2:trunc(ih/2)*2", i)
-		if i == totalNumImages-1 { // Credits image has no timings/transitions
-			input_images = append(input_images, "-i", Images[i])
-		} else {
-			input_images = append(input_images, "-loop", "1", "-ss", "0ms", "-t", Timings[i]+"ms", "-i", Images[i])
-
-			if i == 0 {
-				input_filters += fmt.Sprintf(",fade=t=out:st=%sms:d=%sms", Timings[1], TransitionDurations[i])
-			} else {
-				half_duration, err := strconv.Atoi(TransitionDurations[i])
-				check(err)
-				// generate params for ffmpeg zoompan filter
-				input_filters += createZoomCommand(Motions[i], convertStringToFloat(Timings[i]))
-				input_filters += fmt.Sprintf(",fade=t=in:st=0:d=%dms,fade=t=out:st=%sms:d=%dms", half_duration/2, Timings[i], half_duration/2)
-
-			}
-		}
-		input_filters += fmt.Sprintf("[v%d];", i)
-
-	}
-
-	concatTransitions += fmt.Sprintf("concat=n=%d:v=1:a=0,format=yuv420p[v]", totalNumImages)
-	input_filters += concatTransitions
-
-	input_images = append(input_images, "-i", "./narration-001.mp3",
-		"-max_muxing_queue_size", "9999",
-		"-filter_complex", input_filters, "-map", "[v]",
-		"-map", fmt.Sprintf("%d:a", totalNumImages),
-		"-shortest", "-y", tempPath+"/mergedVideo.mp4")
-
-	fmt.Println("Creating video...")
-	cmd := exec.Command("ffmpeg", input_images...)
-
-	output, err := cmd.CombinedOutput()
-	checkCMDError(output, err)
 }
 
 func checkSign(num float64) string {
@@ -430,7 +396,7 @@ func createZoomCommand(Motions [][]float64, TimingDuration []float64) string {
  *		Timings: ([]string) - array of timing duration for the audio for each image
  *		Audios: ([]string) - Array of filenames for the audios to be used
  */
-func makeTempVideosWithoutAudio(Images []string, Transitions []string, TransitionDurations []string, Timings []string, Audios []string, Motions [][][]float64, tempPath string) {
+func makeTempVideosWithoutAudio(Images []string, Timings []string, Motions [][][]float64, tempPath string) {
 	fmt.Println("Making temporary videos in parallel...")
 	totalNumImages := len(Images)
 
@@ -450,7 +416,11 @@ func makeTempVideosWithoutAudio(Images []string, Transitions []string, Transitio
 			// At the end of the goroutine, tell the WaitGroup
 			//   that another thread has completed.
 			defer wg.Done()
-			fmt.Printf("Making temp%d-%d.mp4 video\n", i, totalNumImages)
+			if verbose {
+				fmt.Printf("Making temp%d-%d.mp4 video with:\n	Image: %s\n	Duration: %s ms\n	Start Rectangle: %f\n	End Rectangle: %f\n", i+1, totalNumImages, Images[i], duration, Motions[i][0], Motions[i][1])
+			} else {
+				fmt.Printf("Making temp%d-%d.mp4 video", i+1, totalNumImages)
+			}
 			zoom_cmd := createZoomCommand(Motions[i], convertStringToFloat(duration))
 
 			var cmd *exec.Cmd
