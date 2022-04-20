@@ -1,12 +1,9 @@
 package main
 
 import (
-	"errors"
 	"flag"
 	"fmt"
 	"io/fs"
-	"log"
-	"os"
 	"path/filepath"
 	"regexp"
 	"runtime"
@@ -14,7 +11,7 @@ import (
 	"time"
 
 	"github.com/gordon-cs/SIL-Video/Compiler/ffmpeg_pkg"
-	"github.com/gordon-cs/SIL-Video/Compiler/helper"
+	opSys "github.com/gordon-cs/SIL-Video/Compiler/os"
 	"github.com/gordon-cs/SIL-Video/Compiler/slideshow"
 )
 
@@ -24,6 +21,7 @@ var tempLocation string
 var overlayVideoPath string
 
 var FFmpeg = ffmpeg_pkg.NewFfmpeg()
+var OS = opSys.NewOS()
 
 // Main function
 func main() {
@@ -35,11 +33,11 @@ func main() {
 	}
 
 	// Create a temporary folder to store temporary files created when created a video
-	tempLocation = createTemporaryFolder(tempLocation)
+	tempLocation = OS.CreateTemporaryFolder(tempLocation)
 
 	// Create directory if output directory does not exist
 	if outputLocation != "" {
-		createDirectory(outputLocation)
+		OS.CreateDirectory(outputLocation)
 	}
 
 	// Search for a template in local folder if no template is provided
@@ -94,7 +92,7 @@ func main() {
 
 	// If user did not specify the -s flag at runtime, delete all the temporary videos
 	if !*saveTemps {
-		deleteTemporaryVideos(saveTemps)
+		OS.DeleteTemporaryVideos(saveTemps)
 	}
 
 	fmt.Println("Video production completed!")
@@ -105,26 +103,6 @@ func main() {
 		fmt.Println("Creating overlay video...")
 		FFmpeg.CreateOverlaidVideoForTesting(overlayVideoPath, outputLocation)
 		fmt.Println("Finished creating overlay video")
-	}
-}
-
-func createTemporaryFolder(tempPath string) string {
-	if tempPath == "" {
-		dir, err := os.MkdirTemp("", "storybuilder-*")
-		helper.Check(err)
-		tempPath = dir
-	} else {
-		createDirectory(tempPath)
-	}
-	return tempPath
-}
-
-func createDirectory(location string) {
-	if _, err := os.Stat(location); errors.Is(err, os.ErrNotExist) {
-		err := os.Mkdir(location, os.ModePerm)
-		if err != nil {
-			log.Println(err)
-		}
 	}
 }
 
@@ -159,14 +137,6 @@ func removeFileNameFromDirectory(slideshowDirectory string) string {
 		}
 	}
 	return template_directory
-}
-
-func deleteTemporaryVideos(saveTemps *bool) {
-	if !*saveTemps {
-		fmt.Println("-s not specified, removing temporary videos...")
-		err := os.RemoveAll("./temp")
-		helper.Check(err)
-	}
 }
 
 // Function to find the .slideshow template if none provided
