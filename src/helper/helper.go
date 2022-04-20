@@ -33,17 +33,3 @@ func Check(err error) {
 		log.Fatalln(err)
 	}
 }
-
-func RemoveFileNameFromDirectory(slideshowDirectory string) string {
-	template_directory_split := strings.Split(slideshowDirectory, "/")
-	template_directory := ""
-
-	if len(template_directory_split) == 1 {
-		template_directory = "./"
-	} else {
-		for i := 0; i < len(template_directory_split)-1; i++ {
-			template_directory += template_directory_split[i] + "/"
-		}
-	}
-	return template_directory
-}
