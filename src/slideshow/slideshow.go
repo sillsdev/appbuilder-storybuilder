@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/gordon-cs/SIL-Video/Compiler/helper"
-	"github.com/gordon-cs/SIL-Video/Compiler/xml"
 )
 
 type slideshow struct {
@@ -20,7 +19,7 @@ type slideshow struct {
 }
 
 func NewSlideshow(filePath string) slideshow {
-	slideshow_template := xml.ReadSlideshowXML(filePath)
+	slideshow_template := ReadSlideshowXML(filePath)
 
 	Images := []string{}
 	Audios := []string{}

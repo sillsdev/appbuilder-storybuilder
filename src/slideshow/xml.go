@@ -1,4 +1,4 @@
-package xml
+package slideshow
 
 import (
 	"encoding/xml"
