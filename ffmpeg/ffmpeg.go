@@ -52,28 +52,6 @@ func CheckVersion() string {
 	return result
 }
 
-/* Function to scale all the input images to a uniform height/width
- * to prevent issues in the video creation process
- */
-func ScaleImages(Images []string, height string, width string) {
-	totalNumImages := len(Images)
-	var wg sync.WaitGroup
-	// Tell the 'wg' WaitGroup how many threads/goroutines
-	//   that are about to run concurrently.
-	wg.Add(totalNumImages)
-
-	for i := 0; i < totalNumImages; i++ {
-		go func(i int) {
-			defer wg.Done()
-			cmd := CmdScaleImage(Images[i], height, width, Images[i])
-			output, err := cmd.CombinedOutput()
-			CheckCMDError(output, err)
-		}(i)
-	}
-
-	wg.Wait()
-}
-
 /* Function to create temporary videos with the corresponding zoom filters for each slide without any audio
  * Parameters:
  *		Images: ([]string) - Array of filenames for the images
@@ -372,12 +350,15 @@ func AddAudio(Timings []string, Audios []string, tempPath string) {
 	trimEnd(tempPath)
 }
 
-func CopyFinal(tempPath string, outputFolder string) {
+func CopyFinal(tempPath string, outputFolder string, name string) {
+	// If -o is specified, save the final video at the specified location
+
 	var cmd *exec.Cmd
+
 	if len(outputFolder) > 0 {
-		cmd = CmdCopyFile(tempPath+"/final.mp4", outputFolder+"/final.mp4")
+		cmd = CmdCopyFile(tempPath+"/final.mp4", outputFolder+"/"+name+".mp4")
 	} else { // If -o is not specified, save the final video at the default location
-		cmd = CmdCopyFile(tempPath+"/final.mp4", "./final.mp4")
+		cmd = CmdCopyFile(tempPath+"/final.mp4", "./"+name+".mp4")
 	}
 
 	output, err := cmd.CombinedOutput()

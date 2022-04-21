@@ -2,7 +2,9 @@ package slideshow
 
 import (
 	"fmt"
+	"runtime"
 	"strings"
+	"sync"
 
 	FFmpeg "github.com/sillsdev/appbuilder-storybuilder/ffmpeg"
 	"github.com/sillsdev/appbuilder-storybuilder/helper"
@@ -15,10 +17,11 @@ type slideshow struct {
 	transitionDurations []string
 	timings             []string
 	motions             [][][]float64
+	templateName        string
 }
 
-func NewSlideshow(filePath string) slideshow {
-	slideshow_template := readSlideshowXML(filePath)
+func NewSlideshow(slideshowDirectory string) slideshow {
+	slideshow_template := readSlideshowXML(slideshowDirectory)
 
 	Images := []string{}
 	Audios := []string{}
@@ -29,19 +32,19 @@ func NewSlideshow(filePath string) slideshow {
 
 	fmt.Println("Parsing .slideshow file...")
 
-	template_directory := removeFileNameFromDirectory(filePath)
+	templateDir, template_name := splitFileNameFromDirectory(slideshowDirectory)
 
 	for _, slide := range slideshow_template.Slide {
 		if slide.Audio.Background_Filename.Path != "" {
-			Audios = append(Audios, template_directory+slide.Audio.Background_Filename.Path)
+			Audios = append(Audios, templateDir+slide.Audio.Background_Filename.Path)
 		} else {
 			if slide.Audio.Filename.Name == "" {
 				Audios = append(Audios, "")
 			} else {
-				Audios = append(Audios, template_directory+slide.Audio.Filename.Name)
+				Audios = append(Audios, templateDir+slide.Audio.Filename.Name)
 			}
 		}
-		Images = append(Images, template_directory+slide.Image.Name)
+		Images = append(Images, templateDir+slide.Image.Name)
 		if slide.Transition.Type == "" {
 			Transitions = append(Transitions, "fade")
 		} else {
@@ -63,41 +66,64 @@ func NewSlideshow(filePath string) slideshow {
 		Timings = append(Timings, slide.Timing.Duration)
 	}
 
-	slideshow := slideshow{Images, Audios, Transitions, TransitionDurations, Timings, Motions}
+	slideshow := slideshow{Images, Audios, Transitions, TransitionDurations, Timings, Motions, template_name}
 
 	fmt.Println("Parsing completed...")
 
 	return slideshow
 }
 
+/* Function to scale all the input images depending on video quality
+ * option to a uniform height/width to prevent issues in the video creation process.
+ */
+
 func (s slideshow) ScaleImages(lowQuality *bool) {
-	//Scaling images depending on video quality option
+	width := "1280"
+	height := "720"
+
 	if *lowQuality {
-		FFmpeg.ScaleImages(s.images, "852", "480")
-	} else {
-		FFmpeg.ScaleImages(s.images, "1280", "720")
+		width = "852"
+		height = "480"
 	}
+
+	totalNumImages := len(s.images)
+	var wg sync.WaitGroup
+	// Tell the 'wg' WaitGroup how many threads/goroutines
+	//   that are about to run concurrently.
+	wg.Add(totalNumImages)
+
+	for i := 0; i < totalNumImages; i++ {
+		go func(i int) {
+			defer wg.Done()
+			cmd := FFmpeg.CmdScaleImage(s.images[i], height, width, s.images[i])
+			output, err := cmd.CombinedOutput()
+			FFmpeg.CheckCMDError(output, err)
+		}(i)
+	}
+
+	wg.Wait()
 }
 
 func (s slideshow) CreateVideo(useOldfade *bool, tempDirectory string, outputDirectory string) {
 	// Checking FFmpeg version to use Xfade
 	fmt.Println("Checking FFmpeg version...")
 	var fadeType string = FFmpeg.CheckVersion()
-
 	useXfade := fadeType == "X" && !*useOldfade
+
+	final_template_name := strings.TrimSuffix(s.templateName, ".slideshow")
 
 	if useXfade {
 		fmt.Println("FFmpeg version is bigger than 4.3.0, using Xfade transition method...")
 		FFmpeg.MakeTempVideosWithoutAudio(s.images, s.transitions, s.transitionDurations, s.timings, s.audios, s.motions, tempDirectory)
 		FFmpeg.MergeTempVideos(s.images, s.transitions, s.transitionDurations, s.timings, tempDirectory)
 		FFmpeg.AddAudio(s.timings, s.audios, tempDirectory)
-		FFmpeg.CopyFinal(tempDirectory, outputDirectory)
+		FFmpeg.CopyFinal(tempDirectory, outputDirectory, final_template_name)
 	} else {
 		fmt.Println("FFmpeg version is smaller than 4.3.0, using old fade transition method...")
 		FFmpeg.MakeTempVideosWithoutAudio(s.images, s.transitions, s.transitionDurations, s.timings, s.audios, s.motions, tempDirectory)
 		FFmpeg.MergeTempVideosOldFade(s.images, s.transitionDurations, s.timings, tempDirectory)
 		FFmpeg.AddAudio(s.timings, s.audios, tempDirectory)
-		FFmpeg.CopyFinal(tempDirectory, outputDirectory)
+		FFmpeg.CopyFinal(tempDirectory, outputDirectory, final_template_name)
 	}
 
 	fmt.Println("Finished making video...")
@@ -107,16 +133,23 @@ func (s slideshow) CreateOverlaidVideo(testVideoDirectory string, finalVideoDire
 	FFmpeg.CreateOverlaidVideoForTesting(testVideoDirectory, finalVideoDirectory)
 }
 
-func removeFileNameFromDirectory(slideshowDirectory string) string {
-	template_directory_split := strings.Split(slideshowDirectory, "/")
+func splitFileNameFromDirectory(slideshowDirectory string) (string, string) {
+	var template_directory_split []string
+
+	template_directory_split = strings.Split(slideshowDirectory, "/")
+
 	template_directory := ""
+	template_name := template_directory_split[len(template_directory_split)-1]
 
 	if len(template_directory_split) == 1 {
-		template_directory = "./"
+		if runtime.GOOS != "windows" {
+			template_directory = "./"
+		}
 	} else {
 		for i := 0; i < len(template_directory_split)-1; i++ {
 			template_directory += template_directory_split[i] + "/"
 		}
 	}
-	return template_directory
+
+	return template_directory, template_name
 }
