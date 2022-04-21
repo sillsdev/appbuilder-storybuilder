@@ -6,42 +6,36 @@ import (
 	"io/fs"
 	"path/filepath"
 	"regexp"
-	"runtime"
-	"strings"
 	"time"
 
-	"github.com/gordon-cs/SIL-Video/Compiler/ffmpeg_pkg"
-	opSys "github.com/gordon-cs/SIL-Video/Compiler/os"
+	OS "github.com/gordon-cs/SIL-Video/Compiler/os"
 	"github.com/gordon-cs/SIL-Video/Compiler/slideshow"
 )
 
-var slideshowDirectory string
-var outputLocation string
-var tempLocation string
-var overlayVideoPath string
-
-var FFmpeg = ffmpeg_pkg.NewFfmpeg()
-var OS = opSys.NewOS()
+var slideshowDirFlag string
+var outputDirFlag string
+var tempDirFlag string
+var overlayVideoDirFlag string
 
 // Main function
 func main() {
 	// Ask the user for options
-	lowQuality, helpFlag, saveTemps, useOldfade := parseFlags(&slideshowDirectory, &outputLocation, &tempLocation, &overlayVideoPath)
+	lowQuality, helpFlag, saveTemps, useOldfade := parseFlags(&slideshowDirFlag, &outputDirFlag, &tempDirFlag, &overlayVideoDirFlag)
 	if *helpFlag {
 		displayHelpMessage()
 		return
 	}
 
-	// Create a temporary folder to store temporary files created when created a video
-	tempLocation = OS.CreateTemporaryFolder(tempLocation)
+	// Create a temporary folder to store temporary files
+	tempDirectory := OS.CreateDirectory(tempDirFlag)
 
 	// Create directory if output directory does not exist
-	if outputLocation != "" {
-		OS.CreateDirectory(outputLocation)
+	if outputDirFlag != "" {
+		OS.CreateDirectory(outputDirFlag)
 	}
 
 	// Search for a template in local folder if no template is provided
-	if slideshowDirectory == "" {
+	if slideshowDirFlag == "" {
 		fmt.Println("No template provided, searching local folder...")
 		filepath.WalkDir(".", findTemplate)
 	}
@@ -49,46 +43,13 @@ func main() {
 	start := time.Now()
 
 	// Parse in the various pieces from the template
+	slideshow := slideshow.NewSlideshow(slideshowDirFlag)
 
-	slideshow := slideshow.NewSlideshow(slideshowDirectory)
-
-	Images := slideshow.GetImages()
-	Transitions := slideshow.GetTransitions()
-	TransitionDurations := slideshow.GetTransitionDurations()
-	Timings := slideshow.GetTimings()
-	Audios := slideshow.GetAudios()
-	Motions := slideshow.GetMotions()
-
-	// Checking FFmpeg version to use Xfade
-	fmt.Println("Checking FFmpeg version...")
-
-	var fadeType string = FFmpeg.CheckFFmpegVersion()
-
-	//Scaling images depending on video quality option
 	fmt.Println("Scaling images...")
-	if *lowQuality {
-		FFmpeg.ScaleImages(Images, "852", "480")
-	} else {
-		FFmpeg.ScaleImages(Images, "1280", "720")
-	}
+	slideshow.ScaleImages(lowQuality)
 
 	fmt.Println("Creating video...")
-
-	if fadeType == "X" && !*useOldfade {
-		fmt.Println("FFmpeg version is bigger than 4.3.0, using Xfade transition method...")
-		FFmpeg.MakeTempVideosWithoutAudio(Images, Transitions, TransitionDurations, Timings, Audios, Motions, tempLocation)
-		FFmpeg.MergeTempVideos(Images, Transitions, TransitionDurations, Timings, tempLocation)
-		FFmpeg.AddAudio(Timings, Audios, tempLocation)
-		FFmpeg.CopyFinal(tempLocation, outputLocation)
-	} else {
-		fmt.Println("FFmpeg version is smaller than 4.3.0, using old fade transition method...")
-		FFmpeg.MakeTempVideosWithoutAudio(Images, Transitions, TransitionDurations, Timings, Audios, Motions, tempLocation)
-		FFmpeg.MergeTempVideosOldFade(Images, TransitionDurations, Timings, tempLocation)
-		FFmpeg.AddAudio(Timings, Audios, tempLocation)
-		FFmpeg.CopyFinal(tempLocation, outputLocation)
-	}
-
-	fmt.Println("Finished making video...")
+	slideshow.CreateVideo(useOldfade, tempDirectory, outputDirFlag)
 
 	// If user did not specify the -s flag at runtime, delete all the temporary videos
 	if !*saveTemps {
@@ -99,14 +60,14 @@ func main() {
 	duration := time.Since(start)
 	fmt.Sprintln(fmt.Sprintf("Time Taken: %f seconds", duration.Seconds()))
 
-	if overlayVideoPath != "" {
+	if overlayVideoDirFlag != "" {
 		fmt.Println("Creating overlay video...")
-		FFmpeg.CreateOverlaidVideoForTesting(overlayVideoPath, outputLocation)
+		slideshow.CreateOverlaidVideo(overlayVideoDirFlag, outputDirFlag)
 		fmt.Println("Finished creating overlay video")
 	}
 }
 
-func parseFlags(templateName *string, outputPath *string, tempPath *string, overlayVideoPath *string) (*bool, *bool, *bool, *bool) {
+func parseFlags(templateName *string, outputPath *string, tempPath *string, overlayVideoDirFlag *string) (*bool, *bool, *bool, *bool) {
 	var lowQuality = flag.Bool("l", false, "Include to produce a lower quality video (1280x720 => 852x480)")
 	var help = flag.Bool("h", false, "Include option flag to display list of possible flags and their uses")
 	var saveTemps = flag.Bool("s", false, "Include to save the temporary files after production")
@@ -114,29 +75,10 @@ func parseFlags(templateName *string, outputPath *string, tempPath *string, over
 	flag.StringVar(templateName, "t", "", "Specify template to use")
 	flag.StringVar(outputPath, "o", "", "Specify output location")
 	flag.StringVar(tempPath, "td", "", "Specify temp directory location (If user wishes to save temporary files created during production)")
-	flag.StringVar(overlayVideoPath, "ov", "", "Specify test video location to create overlay video")
+	flag.StringVar(overlayVideoDirFlag, "ov", "", "Specify test video location to create overlay video")
 	flag.Parse()
 
 	return lowQuality, help, saveTemps, useOldFade
-}
-
-func removeFileNameFromDirectory(slideshowDirectory string) string {
-	var template_directory_split []string
-	if runtime.GOOS == "windows" { // Windows uses '\' for filepaths
-		template_directory_split = strings.Split(slideshowDirectory, "\\")
-	} else {
-		template_directory_split = strings.Split(slideshowDirectory, "/")
-	}
-	template_directory := ""
-
-	if len(template_directory_split) == 1 {
-		template_directory = "./"
-	} else {
-		for i := 0; i < len(template_directory_split)-1; i++ {
-			template_directory += template_directory_split[i] + "/"
-		}
-	}
-	return template_directory
 }
 
 // Function to find the .slideshow template if none provided
@@ -146,9 +88,9 @@ func findTemplate(s string, d fs.DirEntry, err error) error {
 		return err
 	}
 	if slideRegEx.MatchString(d.Name()) {
-		if slideshowDirectory == "" {
+		if slideshowDirFlag == "" {
 			fmt.Println("Found template: " + s + "\nUsing found template...")
-			slideshowDirectory = s
+			slideshowDirFlag = s
 		}
 	}
 	return nil

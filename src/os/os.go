@@ -9,14 +9,7 @@ import (
 	"github.com/gordon-cs/SIL-Video/Compiler/helper"
 )
 
-type opSys struct {
-}
-
-func NewOS() opSys {
-	return opSys{}
-}
-
-func (o opSys) DeleteTemporaryVideos(saveTemps *bool) {
+func DeleteTemporaryVideos(saveTemps *bool) {
 	if !*saveTemps {
 		fmt.Println("-s not specified, removing temporary videos...")
 		err := os.RemoveAll("./temp")
@@ -24,21 +17,18 @@ func (o opSys) DeleteTemporaryVideos(saveTemps *bool) {
 	}
 }
 
-func (o opSys) CreateTemporaryFolder(tempPath string) string {
-	if tempPath == "" {
+func CreateDirectory(directory string) string {
+	if directory == "" {
 		dir, err := os.MkdirTemp("", "storybuilder-*")
 		helper.Check(err)
-		tempPath = dir
+		directory = dir
 	} else {
-		o.CreateDirectory(tempPath)
-	}
-	return tempPath
-}
-func (o opSys) CreateDirectory(location string) {
-	if _, err := os.Stat(location); errors.Is(err, os.ErrNotExist) {
-		err := os.Mkdir(location, os.ModePerm)
-		if err != nil {
-			log.Println(err)
+		if _, err := os.Stat(directory); errors.Is(err, os.ErrNotExist) {
+			err := os.Mkdir(directory, os.ModePerm)
+			if err != nil {
+				log.Println(err)
+			}
 		}
 	}
+	return directory
 }

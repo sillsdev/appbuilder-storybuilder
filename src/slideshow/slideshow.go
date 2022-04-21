@@ -4,14 +4,13 @@ import (
 	"fmt"
 	"strings"
 
+	FFmpeg "github.com/gordon-cs/SIL-Video/Compiler/ffmpeg_pkg"
 	"github.com/gordon-cs/SIL-Video/Compiler/helper"
 )
 
 type slideshow struct {
 	images              []string
 	audios              []string
-	backAudioPath       string
-	backAudioVolume     string
 	transitions         []string
 	transitionDurations []string
 	timings             []string
@@ -19,12 +18,10 @@ type slideshow struct {
 }
 
 func NewSlideshow(filePath string) slideshow {
-	slideshow_template := ReadSlideshowXML(filePath)
+	slideshow_template := readSlideshowXML(filePath)
 
 	Images := []string{}
 	Audios := []string{}
-	BackAudioPath := ""
-	BackAudioVolume := ""
 	Transitions := []string{}
 	TransitionDurations := []string{}
 	Timings := []string{}
@@ -37,8 +34,6 @@ func NewSlideshow(filePath string) slideshow {
 	for _, slide := range slideshow_template.Slide {
 		if slide.Audio.Background_Filename.Path != "" {
 			Audios = append(Audios, template_directory+slide.Audio.Background_Filename.Path)
-			BackAudioPath = slide.Audio.Background_Filename.Path
-			BackAudioVolume = slide.Audio.Background_Filename.Volume
 		} else {
 			if slide.Audio.Filename.Name == "" {
 				Audios = append(Audios, "")
@@ -68,35 +63,48 @@ func NewSlideshow(filePath string) slideshow {
 		Timings = append(Timings, slide.Timing.Duration)
 	}
 
-	slideshow := slideshow{Images, Audios, BackAudioPath, BackAudioVolume, Transitions, TransitionDurations, Timings, Motions}
+	slideshow := slideshow{Images, Audios, Transitions, TransitionDurations, Timings, Motions}
 
 	fmt.Println("Parsing completed...")
 
 	return slideshow
 }
 
-func (s slideshow) GetImages() []string {
-	return s.images
+func (s slideshow) ScaleImages(lowQuality *bool) {
+	//Scaling images depending on video quality option
+	if *lowQuality {
+		FFmpeg.ScaleImages(s.images, "852", "480")
+	} else {
+		FFmpeg.ScaleImages(s.images, "1280", "720")
+	}
 }
 
-func (s slideshow) GetAudios() []string {
-	return s.audios
+func (s slideshow) CreateVideo(useOldfade *bool, tempDirectory string, outputDirectory string) {
+	// Checking FFmpeg version to use Xfade
+	fmt.Println("Checking FFmpeg version...")
+	var fadeType string = FFmpeg.CheckVersion()
+
+	useXfade := fadeType == "X" && !*useOldfade
+
+	if useXfade {
+		fmt.Println("FFmpeg version is bigger than 4.3.0, using Xfade transition method...")
+		FFmpeg.MakeTempVideosWithoutAudio(s.images, s.transitions, s.transitionDurations, s.timings, s.audios, s.motions, tempDirectory)
+		FFmpeg.MergeTempVideos(s.images, s.transitions, s.transitionDurations, s.timings, tempDirectory)
+		FFmpeg.AddAudio(s.timings, s.audios, tempDirectory)
+		FFmpeg.CopyFinal(tempDirectory, outputDirectory)
+	} else {
+		fmt.Println("FFmpeg version is smaller than 4.3.0, using old fade transition method...")
+		FFmpeg.MakeTempVideosWithoutAudio(s.images, s.transitions, s.transitionDurations, s.timings, s.audios, s.motions, tempDirectory)
+		FFmpeg.MergeTempVideosOldFade(s.images, s.transitionDurations, s.timings, tempDirectory)
+		FFmpeg.AddAudio(s.timings, s.audios, tempDirectory)
+		FFmpeg.CopyFinal(tempDirectory, outputDirectory)
+	}
+
+	fmt.Println("Finished making video...")
 }
 
-func (s slideshow) GetTransitions() []string {
-	return s.transitions
-}
-
-func (s slideshow) GetTransitionDurations() []string {
-	return s.transitionDurations
-}
-
-func (s slideshow) GetTimings() []string {
-	return s.timings
-}
-
-func (s slideshow) GetMotions() [][][]float64 {
-	return s.motions
+func CreateOverlaidVideo(testVideoDirectory string, finalVideoDirectory string) {
+	FFmpeg.CreateOverlaidVideoForTesting(testVideoDirectory, finalVideoDirectory)
 }
 
 func removeFileNameFromDirectory(slideshowDirectory string) string {
