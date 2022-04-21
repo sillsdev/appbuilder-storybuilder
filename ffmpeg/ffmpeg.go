@@ -3,21 +3,20 @@ package ffmpeg_pkg
 import (
 	"fmt"
 	"log"
-	"math"
 	"os/exec"
 	"regexp"
 	"strconv"
 	"strings"
 	"sync"
 
-	"github.com/gordon-cs/SIL-Video/Compiler/helper"
+	"github.com/sillsdev/appbuilder-storybuilder/helper"
 )
 
 // Function to Check FFmpeg version and choose Xfade or traditional fade accordingly
 func CheckVersion() string {
-	cmd := getVersion()
+	cmd := CmdGetVersion()
 	output, err := cmd.Output()
-	checkCMDError(output, err)
+	CheckCMDError(output, err)
 
 	re := regexp.MustCompile(`version (?P<num>\d+\.\d+(\.\d+)?)`) // Regular expression to fetch the version number, also made last number optional
 	match := re.FindSubmatch(output)                              // Returns an array with the matching string, if found
@@ -66,9 +65,9 @@ func ScaleImages(Images []string, height string, width string) {
 	for i := 0; i < totalNumImages; i++ {
 		go func(i int) {
 			defer wg.Done()
-			cmd := scaleImage(Images[i], height, width, Images[i])
+			cmd := CmdScaleImage(Images[i], height, width, Images[i])
 			output, err := cmd.CombinedOutput()
-			checkCMDError(output, err)
+			CheckCMDError(output, err)
 		}(i)
 	}
 
@@ -104,11 +103,11 @@ func MakeTempVideosWithoutAudio(Images []string, Transitions []string, Transitio
 			//   that another thread has completed.
 			defer wg.Done()
 			fmt.Printf("Making temp%d-%d.mp4 video\n", i, totalNumImages)
-			zoom_cmd := createZoomCommand(Motions[i], helper.ConvertStringToFloat(duration))
+			zoom_cmd := CreateZoomCommand(Motions[i], helper.ConvertStringToFloat(duration))
 
-			cmd := createTempVideo(Images[i], duration, zoom_cmd, fmt.Sprintf(tempPath+"/temp%d-%d.mp4", i, totalNumImages))
+			cmd := CmdCreateTempVideo(Images[i], duration, zoom_cmd, fmt.Sprintf(tempPath+"/temp%d-%d.mp4", i, totalNumImages))
 			output, err := cmd.CombinedOutput()
-			checkCMDError(output, err)
+			CheckCMDError(output, err)
 		}(i)
 	}
 
@@ -150,7 +149,7 @@ func CombineVideos(Images []string, Transitions []string, TransitionDurations []
 				half_duration, err := strconv.Atoi(TransitionDurations[i])
 				helper.Check(err)
 				// generate params for ffmpeg zoompan filter
-				input_filters += createZoomCommand(Motions[i], helper.ConvertStringToFloat(Timings[i]))
+				input_filters += CreateZoomCommand(Motions[i], helper.ConvertStringToFloat(Timings[i]))
 				input_filters += fmt.Sprintf(",fade=t=in:st=0:d=%dms,fade=t=out:st=%sms:d=%dms", half_duration/2, Timings[i], half_duration/2)
 
 			}
@@ -172,7 +171,7 @@ func CombineVideos(Images []string, Transitions []string, TransitionDurations []
 	cmd := exec.Command("ffmpeg", input_images...)
 
 	output, err := cmd.CombinedOutput()
-	checkCMDError(output, err)
+	CheckCMDError(output, err)
 }
 
 /* Function to merge the temporary videos with transition filters between them
@@ -214,10 +213,10 @@ func MergeTempVideos(Images []string, Transitions []string, TransitionDurations 
 		settb += fmt.Sprintf("[%d:v]tpad=stop_mode=clone:stop_duration=%f[v%d];", i, transition_duration/2, i)
 
 		//get the current video length in seconds
-		cmd := getVideoLength(fmt.Sprintf(tempPath+"/temp%d-%d.mp4", i, totalNumImages))
+		cmd := CmdGetVideoLength(fmt.Sprintf(tempPath+"/temp%d-%d.mp4", i, totalNumImages))
 
 		output, err := cmd.CombinedOutput()
-		checkCMDError(output, err)
+		CheckCMDError(output, err)
 
 		//store the video length in an array
 		video_each_length[i], err = strconv.ParseFloat(strings.TrimSpace(string(output)), 8)
@@ -250,7 +249,7 @@ func MergeTempVideos(Images []string, Transitions []string, TransitionDurations 
 	cmd := exec.Command("ffmpeg", input_files...)
 
 	output, err := cmd.CombinedOutput()
-	checkCMDError(output, err)
+	CheckCMDError(output, err)
 }
 
 /** Merges the temporary videos using the old fade method with just plain crossfade transitions
@@ -287,9 +286,9 @@ func MergeTempVideosOldFade(Images []string, TransitionDurations []string, Timin
 		transition_duration = transition_duration / 1000
 
 		//get the current video length in seconds
-		cmd := getVideoLength(fmt.Sprintf(tempLocation+"/temp%d-%d.mp4", i, totalNumImages))
+		cmd := CmdGetVideoLength(fmt.Sprintf(tempLocation+"/temp%d-%d.mp4", i, totalNumImages))
 		output, err := cmd.CombinedOutput()
-		checkCMDError(output, err)
+		CheckCMDError(output, err)
 
 		video_each_length[i], err = strconv.ParseFloat(strings.TrimSpace(string(output)), 8)
 
@@ -324,7 +323,7 @@ func MergeTempVideosOldFade(Images []string, TransitionDurations []string, Timin
 	cmd := exec.Command("ffmpeg", input_files...)
 
 	output, err := cmd.CombinedOutput()
-	checkCMDError(output, err)
+	CheckCMDError(output, err)
 }
 
 /* Function to add the background and narration audio onto the video_with_no_audio.mp4
@@ -368,18 +367,21 @@ func AddAudio(Timings []string, Audios []string, tempPath string) {
 
 	cmd := exec.Command("ffmpeg", audio_inputs...)
 	output, err := cmd.CombinedOutput()
-	checkCMDError(output, err)
+	CheckCMDError(output, err)
 
 	trimEnd(tempPath)
 }
 
 func CopyFinal(tempPath string, outputFolder string) {
+	var cmd *exec.Cmd
 	if len(outputFolder) > 0 {
-		copyFile(tempPath+"/final.mp4", outputFolder+"/final.mp4")
+		cmd = CmdCopyFile(tempPath+"/final.mp4", outputFolder+"/final.mp4")
 	} else { // If -o is not specified, save the final video at the default location
-		copyFile(tempPath+"/final.mp4", "./final.mp4")
+		cmd = CmdCopyFile(tempPath+"/final.mp4", "./final.mp4")
 	}
 
+	output, err := cmd.CombinedOutput()
+	CheckCMDError(output, err)
 }
 
 /* Function that creates an overlaid video between created video and testing video to see the differences between the two.
@@ -402,33 +404,5 @@ func CreateOverlaidVideoForTesting(trueVideo string, destinationLocation string)
 	)
 
 	output, err := cmd.CombinedOutput()
-	checkCMDError(output, err)
-}
-
-func createZoomCommand(Motions [][]float64, TimingDuration []float64) string {
-	num_frames := int(TimingDuration[0] / (1000.0 / 25.0))
-
-	size_init := Motions[0][3]
-	size_change := Motions[1][3] - size_init
-	size_incr := size_change / float64(num_frames)
-
-	var x_init float64 = Motions[0][0]
-	var x_end float64 = Motions[1][0]
-	var x_change float64 = x_end - x_init
-	var x_incr float64 = x_change / float64(num_frames)
-
-	var y_init float64 = Motions[0][1]
-	var y_end float64 = Motions[1][1]
-	var y_change float64 = y_end - y_init
-	var y_incr float64 = y_change / float64(num_frames)
-
-	zoom_cmd := fmt.Sprintf("1/((%.3f)%s(%.3f)*on)", size_init-size_incr, checkSign(size_incr), math.Abs(size_incr))
-	x_cmd := fmt.Sprintf("%0.3f*iw%s%0.3f*iw*on", x_init-x_incr, checkSign(x_incr), math.Abs(x_incr))
-	y_cmd := fmt.Sprintf("%0.3f*ih%s%0.3f*ih*on", y_init-y_incr, checkSign(y_incr), math.Abs(y_incr))
-	final_cmd := fmt.Sprintf("scale=8000:-1,zoompan=z='%s':x='%s':y='%s':d=%d:fps=25,scale=1280:720,setsar=1:1", zoom_cmd, x_cmd, y_cmd, num_frames)
-
-	// Test zoompan example from documentation (Zoom in up to 1.5x and pan always at center of picture)
-	//final_cmd = "zoompan=z='min(zoom+0.0015,1.5)':d=700:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)',scale=1500:900,setsar=1:1"
-
-	return final_cmd
+	CheckCMDError(output, err)
 }

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	FFmpeg "github.com/gordon-cs/SIL-Video/Compiler/ffmpeg_pkg"
-	"github.com/gordon-cs/SIL-Video/Compiler/helper"
+	FFmpeg "github.com/sillsdev/appbuilder-storybuilder/ffmpeg"
+	"github.com/sillsdev/appbuilder-storybuilder/helper"
 )
 
 type slideshow struct {
@@ -103,7 +103,7 @@ func (s slideshow) CreateVideo(useOldfade *bool, tempDirectory string, outputDir
 	fmt.Println("Finished making video...")
 }
 
-func CreateOverlaidVideo(testVideoDirectory string, finalVideoDirectory string) {
+func (s slideshow) CreateOverlaidVideo(testVideoDirectory string, finalVideoDirectory string) {
 	FFmpeg.CreateOverlaidVideoForTesting(testVideoDirectory, finalVideoDirectory)
 }
 

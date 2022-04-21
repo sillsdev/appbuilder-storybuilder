@@ -6,10 +6,10 @@ import (
 	"log"
 	"os"
 
-	"github.com/gordon-cs/SIL-Video/Compiler/helper"
+	"github.com/sillsdev/appbuilder-storybuilder/helper"
 )
 
-func DeleteTemporaryVideos(saveTemps *bool) {
+func DeleteTemporaryDirectory(saveTemps *bool) {
 	if !*saveTemps {
 		fmt.Println("-s not specified, removing temporary videos...")
 		err := os.RemoveAll("./temp")

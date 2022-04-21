@@ -4,7 +4,7 @@ import (
 	"encoding/xml"
 	"io/ioutil"
 
-	"github.com/gordon-cs/SIL-Video/Compiler/helper"
+	"github.com/sillsdev/appbuilder-storybuilder/helper"
 )
 
 type slideshow_template struct {

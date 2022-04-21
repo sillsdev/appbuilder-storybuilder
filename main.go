@@ -8,8 +8,8 @@ import (
 	"regexp"
 	"time"
 
-	OS "github.com/gordon-cs/SIL-Video/Compiler/os"
-	"github.com/gordon-cs/SIL-Video/Compiler/slideshow"
+	OS "github.com/sillsdev/appbuilder-storybuilder/os"
+	"github.com/sillsdev/appbuilder-storybuilder/slideshow"
 )
 
 var slideshowDirFlag string
@@ -53,7 +53,7 @@ func main() {
 
 	// If user did not specify the -s flag at runtime, delete all the temporary videos
 	if !*saveTemps {
-		OS.DeleteTemporaryVideos(saveTemps)
+		OS.DeleteTemporaryDirectory(saveTemps)
 	}
 
 	fmt.Println("Video production completed!")
