@@ -55,7 +55,8 @@ func main() {
 
 	// If user did not specify the -s flag at runtime, delete all the temporary videos
 	if !(optionFlags.SaveTemps) {
-		OS.DeleteTemporaryDirectory(optionFlags.SaveTemps)
+		err := OS.DeleteTemporaryDirectory(tempDirectory)
+		helper.Check(err)
 	}
 
 	fmt.Println("Video production completed!")

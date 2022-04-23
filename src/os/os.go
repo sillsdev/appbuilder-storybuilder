@@ -4,16 +4,13 @@ import (
 	"errors"
 	"fmt"
 	"os"
-
-	"github.com/sillsdev/appbuilder-storybuilder/src/helper"
 )
 
-func DeleteTemporaryDirectory(saveTemps bool) {
-	if !saveTemps {
-		fmt.Println("-s not specified, removing temporary videos...")
-		err := os.RemoveAll("./temp")
-		helper.Check(err)
-	}
+func DeleteTemporaryDirectory(tempDirectory string) error {
+	fmt.Println("-s not specified, removing temporary videos...")
+	err := os.RemoveAll(tempDirectory)
+
+	return err
 }
 
 func CreateDirectory(directory string) (string, error) {
