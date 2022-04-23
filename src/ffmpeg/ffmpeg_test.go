@@ -83,12 +83,12 @@ func Test_CmdTrimLengthOfVideo(t *testing.T) {
 	}{
 		{
 			"trim length of video ffmpeg cmd",
-			args{duration: "19200ms", tempPath: "./temp"},
+			args{duration: "19200ms", tempPath: "temp"},
 			exec.Command("ffmpeg",
-				"-i", "./temp"+"/merged_video.mp4",
+				"-i", "temp"+"/merged_video.mp4",
 				"-c", "copy", "-t", "19200ms",
 				"-y",
-				"./temp"+"/final.mp4"),
+				"temp"+"/final.mp4"),
 		},
 	}
 	for _, tt := range tests {
@@ -146,9 +146,9 @@ func Test_CmdCreateTempVideo(t *testing.T) {
 			args{ImageDirectory: "../TestInput/VB-John 1v1.jpg",
 				duration:             "9400",
 				zoom_cmd:             "scale=8000:-1,zoompan=z='1/((0.718)-(0.001)*on)':x='0.282*iw+0.000*iw*on':y='0.088*ih+0.000*ih*on':d=235:fps=25,scale=1280:720,setsar=1:1",
-				finalOutputDirectory: "./temp/temp1-8.mp4"},
-			exec.Command(ffmpeg+" -loop", "1", "-i", "./../TestInput/VB-John 1v1.jpg", "-t",
-				"9400ms", "-filter_complex", "scale=8000:-1,zoompan=z='1/((0.718)-(0.001)*on)':x='0.282*iw+0.000*iw*on':y='0.088*ih+0.000*ih*on':d=235:fps=25,scale=1280:720,setsar=1:1", "-shortest", "-pix_fmt", "yuv420p", "-y", "./temp/temp1-8.mp4"),
+				finalOutputDirectory: "temp/temp1-8.mp4"},
+			exec.Command(ffmpeg+" -loop", "1", "-i", "../TestInput/VB-John 1v1.jpg", "-t",
+				"9400ms", "-filter_complex", "scale=8000:-1,zoompan=z='1/((0.718)-(0.001)*on)':x='0.282*iw+0.000*iw*on':y='0.088*ih+0.000*ih*on':d=235:fps=25,scale=1280:720,setsar=1:1", "-shortest", "-pix_fmt", "yuv420p", "-y", "temp/temp1-8.mp4"),
 		},
 	}
 	for _, tt := range tests {
@@ -198,8 +198,8 @@ func Test_CmdCopyFile(t *testing.T) {
 	}{
 		{
 			"copy file ffmpeg cmd",
-			args{to: "./temp/final.mp4", from: "../final.mp4"},
-			exec.Command("ffmpeg", "-i", "./temp/final.mp4", "-y", "../final.mp4"),
+			args{to: "temp/final.mp4", from: "../final.mp4"},
+			exec.Command("ffmpeg", "-i", "temp/final.mp4", "-y", "../final.mp4"),
 		},
 	}
 	for _, tt := range tests {
