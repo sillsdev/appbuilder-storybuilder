@@ -8,7 +8,13 @@ import (
 
 func DeleteTemporaryDirectory(tempDirectory string) error {
 	fmt.Println("-s not specified, removing temporary videos...")
-	err := os.RemoveAll(tempDirectory)
+
+	var err error
+	if tempDirectory == "" {
+		err = os.RemoveAll("./temp")
+	} else {
+		err = os.RemoveAll(tempDirectory)
+	}
 
 	return err
 }
