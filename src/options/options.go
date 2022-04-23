@@ -38,3 +38,7 @@ func ParseFlags() options {
 	return options
 
 }
+
+func (o *options) SetSlideshowDirectory(directory string) {
+	o.SlideshowDirectory = directory
+}

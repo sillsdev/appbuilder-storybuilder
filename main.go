@@ -35,7 +35,7 @@ func main() {
 		err := filepath.WalkDir(".", findTemplate(optionFlags.SlideshowDirectory))
 
 		if err.Error() == "FOUND TEMPLATE" {
-			optionFlags.SlideshowDirectory = (filePath)
+			optionFlags.SetSlideshowDirectory(filePath)
 		}
 	}
 
