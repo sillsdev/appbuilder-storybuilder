@@ -9,8 +9,8 @@ import (
 	"github.com/sillsdev/appbuilder-storybuilder/src/helper"
 )
 
-func DeleteTemporaryDirectory(saveTemps *bool) {
-	if !*saveTemps {
+func DeleteTemporaryDirectory(saveTemps bool) {
+	if !saveTemps {
 		fmt.Println("-s not specified, removing temporary videos...")
 		err := os.RemoveAll("./temp")
 		helper.Check(err)

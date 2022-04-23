@@ -78,11 +78,11 @@ func NewSlideshow(slideshowDirectory string) slideshow {
  * option to a uniform height/width to prevent issues in the video creation process.
  */
 
-func (s slideshow) ScaleImages(lowQuality *bool) {
+func (s slideshow) ScaleImages(lowQuality bool) {
 	width := "1280"
 	height := "720"
 
-	if *lowQuality {
+	if lowQuality {
 		width = "852"
 		height = "480"
 	}
@@ -105,11 +105,11 @@ func (s slideshow) ScaleImages(lowQuality *bool) {
 	wg.Wait()
 }
 
-func (s slideshow) CreateVideo(useOldfade *bool, tempDirectory string, outputDirectory string) {
+func (s slideshow) CreateVideo(useOldfade bool, tempDirectory string, outputDirectory string) {
 	// Checking FFmpeg version to use Xfade
 	fmt.Println("Checking FFmpeg version...")
 	var fadeType string = FFmpeg.CheckVersion()
-	useXfade := fadeType == "X" && !*useOldfade
+	useXfade := fadeType == "X" && !useOldfade
 
 	final_template_name := strings.TrimSuffix(s.templateName, ".slideshow")
 
