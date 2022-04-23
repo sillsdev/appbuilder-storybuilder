@@ -3,7 +3,6 @@ package os
 import (
 	"errors"
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/sillsdev/appbuilder-storybuilder/src/helper"
@@ -17,18 +16,16 @@ func DeleteTemporaryDirectory(saveTemps bool) {
 	}
 }
 
-func CreateDirectory(directory string) string {
+func CreateDirectory(directory string) (string, error) {
 	if directory == "" {
 		dir, err := os.MkdirTemp("", "storybuilder-*")
-		helper.Check(err)
 		directory = dir
+		return directory, err
 	} else {
 		if _, err := os.Stat(directory); errors.Is(err, os.ErrNotExist) {
 			err := os.Mkdir(directory, os.ModePerm)
-			if err != nil {
-				log.Println(err)
-			}
+			return directory, err
 		}
 	}
-	return directory
+	return directory, nil
 }

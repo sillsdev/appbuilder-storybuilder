@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/sillsdev/appbuilder-storybuilder/src/helper"
 	"github.com/sillsdev/appbuilder-storybuilder/src/options"
 	OS "github.com/sillsdev/appbuilder-storybuilder/src/os"
 	"github.com/sillsdev/appbuilder-storybuilder/src/slideshow"
@@ -21,11 +22,13 @@ func main() {
 	optionFlags := options.ParseFlags()
 
 	// Create a temporary folder to store temporary files
-	tempDirectory := OS.CreateDirectory(optionFlags.TemporaryDirectory)
+	tempDirectory, err := OS.CreateDirectory(optionFlags.TemporaryDirectory)
+	helper.Check(err)
 
 	// Create directory if output directory does not exist
 	if optionFlags.OutputDirectory != "" {
-		OS.CreateDirectory(optionFlags.OutputDirectory)
+		_, err := OS.CreateDirectory(optionFlags.OutputDirectory)
+		helper.Check(err)
 	}
 
 	// Search for a template in local folder if no template is provided
