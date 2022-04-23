@@ -7,8 +7,8 @@ import (
 	"strings"
 	"sync"
 
-	FFmpeg "github.com/sillsdev/appbuilder-storybuilder/ffmpeg"
-	"github.com/sillsdev/appbuilder-storybuilder/helper"
+	FFmpeg "github.com/sillsdev/appbuilder-storybuilder/src/ffmpeg"
+	"github.com/sillsdev/appbuilder-storybuilder/src/helper"
 )
 
 type slideshow struct {

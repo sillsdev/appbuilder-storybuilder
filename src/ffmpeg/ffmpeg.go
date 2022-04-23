@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/sillsdev/appbuilder-storybuilder/helper"
+	"github.com/sillsdev/appbuilder-storybuilder/src/helper"
 )
 
 // Function to Check FFmpeg version and choose Xfade or traditional fade accordingly

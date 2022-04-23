@@ -8,8 +8,8 @@ import (
 	"regexp"
 	"time"
 
-	OS "github.com/sillsdev/appbuilder-storybuilder/os"
-	"github.com/sillsdev/appbuilder-storybuilder/slideshow"
+	OS "github.com/sillsdev/appbuilder-storybuilder/src/os"
+	"github.com/sillsdev/appbuilder-storybuilder/src/slideshow"
 )
 
 var slideshowDirFlag string

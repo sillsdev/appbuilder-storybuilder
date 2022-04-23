@@ -4,7 +4,7 @@ import (
 	"encoding/xml"
 	"io/ioutil"
 
-	"github.com/sillsdev/appbuilder-storybuilder/helper"
+	"github.com/sillsdev/appbuilder-storybuilder/src/helper"
 )
 
 type slideshow_template struct {

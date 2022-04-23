@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/sillsdev/appbuilder-storybuilder/helper"
+	"github.com/sillsdev/appbuilder-storybuilder/src/helper"
 )
 
 func DeleteTemporaryDirectory(saveTemps *bool) {
