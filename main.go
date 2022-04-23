@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io/fs"
 	"path/filepath"
@@ -11,6 +12,8 @@ import (
 	OS "github.com/sillsdev/appbuilder-storybuilder/src/os"
 	"github.com/sillsdev/appbuilder-storybuilder/src/slideshow"
 )
+
+var filePath string
 
 // Main function
 func main() {
@@ -28,7 +31,12 @@ func main() {
 	// Search for a template in local folder if no template is provided
 	if optionFlags.SlideshowDirectory == "" {
 		fmt.Println("No template provided, searching local folder...")
-		filepath.WalkDir(".", findTemplate(optionFlags))
+
+		err := filepath.WalkDir(".", findTemplate(optionFlags.SlideshowDirectory))
+
+		if err.Error() == "FOUND TEMPLATE" {
+			optionFlags.SlideshowDirectory = (filePath)
+		}
 	}
 
 	start := time.Now()
@@ -58,19 +66,21 @@ func main() {
 	}
 }
 
-// Function to find the .slideshow template if none provided
-func findTemplate(optionFlags options.Options) fs.WalkDirFunc {
-	return func(path string, d fs.DirEntry, err error) error {
+func findTemplate(slideshowDirectory string) fs.WalkDirFunc {
+	return func(path string, d fs.DirEntry, e error) error {
 		slideRegEx := regexp.MustCompile(`.+(.slideshow)$`) // Regular expression to find the .slideshow file
-		if err != nil {
-			return err
+		if e != nil {
+			return e
 		}
 		if slideRegEx.MatchString(d.Name()) {
-			if optionFlags.SlideshowDirectory == "" {
+			if slideshowDirectory == "" {
 				fmt.Println("Found template: " + path + "\nUsing found template...")
-				optionFlags.SetSlideshowDirectory(path)
+
+				filePath = path
+				return errors.New("FOUND TEMPLATE")
 			}
 		}
+
 		return nil
 	}
 }

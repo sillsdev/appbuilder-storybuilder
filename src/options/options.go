@@ -4,7 +4,7 @@ import (
 	"flag"
 )
 
-type Options struct {
+type options struct {
 	SlideshowDirectory    string
 	OutputDirectory       string
 	TemporaryDirectory    string
@@ -14,7 +14,7 @@ type Options struct {
 	UseOldFade            bool
 }
 
-func ParseFlags() Options {
+func ParseFlags() options {
 	var slideshowDirectory string
 	var outputDirectory string
 	var temporaryDirectory string
@@ -33,12 +33,8 @@ func ParseFlags() Options {
 	flag.StringVar(&overlayVideoDirectory, "ov", "", "[filepath]: Overlay Video, specify test video location to create overlay video")
 	flag.Parse()
 
-	options := Options{slideshowDirectory, outputDirectory, temporaryDirectory, overlayVideoDirectory, lowQuality, saveTemps, useOldFade}
+	options := options{slideshowDirectory, outputDirectory, temporaryDirectory, overlayVideoDirectory, lowQuality, saveTemps, useOldFade}
 
 	return options
 
-}
-
-func (o Options) SetSlideshowDirectory(newDirectory string) {
-	o.SlideshowDirectory = newDirectory
 }
