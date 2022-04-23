@@ -46,7 +46,7 @@ func CmdGetVideoLength(inputDirectory string) *exec.Cmd {
 }
 
 func CmdCreateTempVideo(ImageDirectory string, duration string, zoom_cmd string, finalOutputDirectory string) *exec.Cmd {
-	cmd := exec.Command("ffmpeg", "-loop", "1", "-i", "./"+ImageDirectory,
+	cmd := exec.Command("ffmpeg", "-loop", "1", "-i", ImageDirectory,
 		"-t", duration+"ms", "-filter_complex", zoom_cmd,
 		"-shortest", "-pix_fmt", "yuv420p", "-y", finalOutputDirectory)
 

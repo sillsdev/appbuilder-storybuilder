@@ -135,8 +135,11 @@ func (s slideshow) CreateOverlaidVideo(testVideoDirectory string, finalVideoDire
 
 func splitFileNameFromDirectory(slideshowDirectory string) (string, string) {
 	var template_directory_split []string
-
-	template_directory_split = strings.Split(slideshowDirectory, "/")
+	if runtime.GOOS == "windows" { // Windows uses '\' for filepaths
+		template_directory_split = strings.Split(slideshowDirectory, "\\")
+	} else {
+		template_directory_split = strings.Split(slideshowDirectory, "/")
+	}
 
 	template_directory := ""
 	template_name := template_directory_split[len(template_directory_split)-1]
