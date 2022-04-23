@@ -370,13 +370,13 @@ func CopyFinal(tempPath string, outputFolder string, name string) {
  * Parameters:
  *		trueVideo: (string) - file path to the testing video
 */
-func CreateOverlaidVideoForTesting(trueVideo string, destinationLocation string) {
+func CreateOverlaidVideoForTesting(finalVideoDirectory string, trueVideo string, destinationLocation string) {
 	outputDir := "./overlayVideo.mp4"
 	if destinationLocation != "" {
 		outputDir = destinationLocation + "/overlayVideo.mp4"
 	}
 	cmd := exec.Command("ffmpeg",
-		"-i", "./final.mp4",
+		"-i", finalVideoDirectory,
 		"-i", trueVideo,
 		"-filter_complex", "[1:v]format=yuva444p,lut=c3=128,negate[video2withAlpha],[0:v][video2withAlpha]overlay[out]",
 		"-map", "[out]",

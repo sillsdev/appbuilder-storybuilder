@@ -130,8 +130,8 @@ func (s slideshow) CreateVideo(useOldfade bool, tempDirectory string, outputDire
 	fmt.Println("Finished making video...")
 }
 
-func (s slideshow) CreateOverlaidVideo(testVideoDirectory string, finalVideoDirectory string) {
-	FFmpeg.CreateOverlaidVideoForTesting(testVideoDirectory, finalVideoDirectory)
+func (s slideshow) CreateOverlaidVideo(finalVideoDirectory string, testVideoDirectory string, overlaidVideoDirectory string) {
+	FFmpeg.CreateOverlaidVideoForTesting(finalVideoDirectory, testVideoDirectory, overlaidVideoDirectory)
 }
 
 func splitFileNameFromDirectory(slideshowDirectory string) (string, string) {

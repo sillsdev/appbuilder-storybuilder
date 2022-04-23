@@ -53,21 +53,25 @@ func main() {
 	fmt.Println("Creating video...")
 	slideshow.CreateVideo(optionFlags.UseOldFade, tempDirectory, optionFlags.OutputDirectory)
 
-	// If user did not specify the -s flag at runtime, delete all the temporary videos
-	if !(optionFlags.SaveTemps) {
-		err := OS.DeleteTemporaryDirectory(tempDirectory)
-		helper.Check(err)
-	}
-
 	fmt.Println("Video production completed!")
 	duration := time.Since(start)
 	fmt.Sprintln(fmt.Sprintf("Time Taken: %f seconds", duration.Seconds()))
 
 	if optionFlags.OverlayVideoDirectory != "" {
 		fmt.Println("Creating overlay video...")
-		slideshow.CreateOverlaidVideo(optionFlags.OverlayVideoDirectory, optionFlags.OutputDirectory)
+
+		finalVideoDirectory := tempDirectory + "/final.mp4"
+
+		slideshow.CreateOverlaidVideo(finalVideoDirectory, optionFlags.OverlayVideoDirectory, optionFlags.OutputDirectory)
 		fmt.Println("Finished creating overlay video")
 	}
+
+	// If user did not specify the -s flag at runtime, delete all the temporary videos
+	if !(optionFlags.SaveTemps) {
+		err := OS.DeleteTemporaryDirectory(tempDirectory)
+		helper.Check(err)
+	}
+
 }
 
 func findTemplate(slideshowDirectory string) fs.WalkDirFunc {
