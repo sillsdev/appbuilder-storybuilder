@@ -358,7 +358,7 @@ func CopyFinal(tempPath string, outputFolder string, name string) {
 	if len(outputFolder) > 0 {
 		cmd = CmdCopyFile(tempPath+"/final.mp4", outputFolder+"/"+name+".mp4")
 	} else { // If -o is not specified, save the final video at the default location
-		cmd = CmdCopyFile(tempPath+"/final.mp4", "./"+name+".mp4")
+		cmd = CmdCopyFile(tempPath+"/final.mp4", name+".mp4")
 	}
 
 	output, err := cmd.CombinedOutput()

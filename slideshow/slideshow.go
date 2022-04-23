@@ -144,7 +144,7 @@ func splitFileNameFromDirectory(slideshowDirectory string) (string, string) {
 
 	if len(template_directory_split) == 1 {
 		if runtime.GOOS != "windows" {
-			template_directory = "./"
+			template_directory = ""
 		}
 	} else {
 		for i := 0; i < len(template_directory_split)-1; i++ {
