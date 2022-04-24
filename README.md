@@ -35,6 +35,8 @@ When installing with Homebrew (`brew install ffmpeg –ANY-OPTIONS-YOU-WANT`), i
     -v : Verbosity, used to modify how much output is reported on the commandline for debugging purposes (less verbose by default)
   
     -s : Save files, used to specify if user wants to preserve the temporary files used in the video production (videos are deleted by default)
+    
+    -f : Fadetype, include to use the non-xfade default transitions for video
 
     -ov : Overlay video, used to specify the location of a test video to create an overlay video with the generated video
 
