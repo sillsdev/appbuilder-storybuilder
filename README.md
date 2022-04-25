@@ -53,6 +53,8 @@ Design Document: [Link](https://docs.google.com/document/d/1vjogjaWZ0ww7rJtKz3J4
     -v : Verbosity, used to modify how much output is reported on the commandline for debugging purposes (less verbose by default)
 
     -s : Save files, used to specify if user wants to preserve the temporary files used in the video production (videos are deleted by default)
+    
+    -f : Fadetype, include to use the non-xfade default transitions for video
 
 > > > > > > > main
 
