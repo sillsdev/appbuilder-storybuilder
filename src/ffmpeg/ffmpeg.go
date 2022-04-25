@@ -28,28 +28,25 @@ func CheckVersion() string {
 		log.Fatal(err)
 	}
 	fmt.Printf("Version is %s\n", version)
-	var result = ""
-	char := []rune(version)
+	return version
+}
 
-	intArr := []int{4, 3, 0} /// 4.3.0 = 4 3 0
-	for i := 0; i < len(intArr); i++ {
-		var temp = string(char[i])
-		if temp == "." {
-			break
+// Function to Check FFmpeg version and choose Xfade or traditional fade accordingly
+func checkFFmpegVersion(version string) string {
+	char := []rune(version) // Convert the string "X.X.X" into a char array [X, ., X, ., X]
+	num, _ := strconv.Atoi(string(char[0]))
+	if num > 4 { // Version is > 4.x.x
+		return "X"
+	} else if num == 4 { // Version is 4.x.x
+		num, _ = strconv.Atoi(string(char[2]))
+		if num >= 3 { // Version is >= 4.3.x
+			return "X"
+		} else { // Version is < 4.3.x
+			return "F"
 		}
-		num, err := strconv.Atoi(temp) // 4
-
-		if err != nil {
-			return err.Error()
-		}
-
-		if intArr[i] > num {
-			result = "F" // use old fade
-			return result
-		}
-		result = "X" // use new fade
+	} else { // Version is < 4.x.x
+		return "F"
 	}
-	return result
 }
 
 /* Function to create temporary videos with the corresponding zoom filters for each slide without any audio
