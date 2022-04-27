@@ -11,6 +11,15 @@ import (
 	"github.com/sillsdev/appbuilder-storybuilder/src/helper"
 )
 
+/* Structure of a .slideshow
+ * 	images: filepath strings to the images to be used for each slide
+ *	audios: filepath strings to the narration audios to be used for each slide
+ *	transitions: strings describing which (Xfade only) transition to be used in between each slide
+ *	transitionDurations: strings describing the time (in milliseconds) for each transition to last
+ *	timings: strings describing the time (in milliseconds) for each slide to last, also used for motions
+ *	motions: arrays of floats describing the dimensions and positions for the start and end rectangles for zoom/pan effects
+ *	templateName: string parsed from the .slideshow filename to be used for the final video product
+ */
 type slideshow struct {
 	images              []string
 	audios              []string
@@ -21,7 +30,16 @@ type slideshow struct {
 	templateName        string
 }
 
-func NewSlideshow(slideshowDirectory string) slideshow {
+/* Function to create a new slideshow from a .slideshow template. The code parses the pieces out
+ * and stores them in the slideshow struct
+ *
+ * Parameters:
+ *			slideshowDirectory - the filepath to the .slideshow to be parsed
+ *			v - verbose flag to determine what feedback to print
+ * Returns:
+ *			slideshow - the filled slideshow structure, containing all the data parsed
+ */
+func NewSlideshow(slideshowDirectory string, v bool) slideshow {
 	slideshow_template := readSlideshowXML(slideshowDirectory)
 
 	Images := []string{}
@@ -36,7 +54,7 @@ func NewSlideshow(slideshowDirectory string) slideshow {
 	templateDir, template_name := splitFileNameFromDirectory(slideshowDirectory)
 
 	for _, slide := range slideshow_template.Slide {
-		if slide.Audio.Background_Filename.Path != "" {
+		if slide.Audio.Background_Filename.Path != "" { // Intro music is stored differently in the xml
 			Audios = append(Audios, templateDir+slide.Audio.Background_Filename.Path)
 		} else {
 			if slide.Audio.Filename.Name == "" {
@@ -46,27 +64,30 @@ func NewSlideshow(slideshowDirectory string) slideshow {
 			}
 		}
 		Images = append(Images, templateDir+slide.Image.Name)
-		if slide.Transition.Type == "" {
+		if slide.Transition.Type == "" { // Default to a basic crossfade if no transition provided
 			Transitions = append(Transitions, "fade")
 		} else {
 			Transitions = append(Transitions, slide.Transition.Type)
 		}
-		if slide.Transition.Duration == "" {
+		if slide.Transition.Duration == "" { // Default to 1000ms transition if none provided
 			TransitionDurations = append(TransitionDurations, "1000")
 		} else {
 			TransitionDurations = append(TransitionDurations, slide.Transition.Duration)
 		}
 		var motions = [][]float64{}
-		if slide.Motion.Start == "" {
+		if slide.Motion.Start == "" { // If no motion specified, default to a static "zoom/pan" effect
 			motions = [][]float64{{0, 0, 1, 1}, {0, 0, 1, 1}}
 		} else {
 			motions = [][]float64{helper.ConvertStringToFloat(slide.Motion.Start), helper.ConvertStringToFloat(slide.Motion.End)}
 		}
-
 		Motions = append(Motions, motions)
 		Timings = append(Timings, slide.Timing.Duration)
 	}
 
+	if v {
+		fmt.Printf("Parsed %d images, %d audios, %d transitions, %d transition durations, %d timings, and %d motions, from %s\n",
+			len(Images), len(Audios), len(Transitions), len(TransitionDurations), len(Timings), len(Motions), template_name)
+	}
 	slideshow := slideshow{Images, Audios, Transitions, TransitionDurations, Timings, Motions, template_name}
 
 	fmt.Println("Parsing completed...")
@@ -76,13 +97,16 @@ func NewSlideshow(slideshowDirectory string) slideshow {
 
 /* Function to scale all the input images depending on video quality
  * option to a uniform height/width to prevent issues in the video creation process.
+ *
+ * Parameters:
+ *			lowQuality - specifies whether to generate a lower quality video by scaling the images to a smaller dimension
  */
-
 func (s slideshow) ScaleImages(lowQuality bool) {
 	width := "1280"
 	height := "720"
 
 	if lowQuality {
+		println("-l specified, producing lower quality video")
 		width = "852"
 		height = "480"
 	}
@@ -105,23 +129,31 @@ func (s slideshow) ScaleImages(lowQuality bool) {
 	wg.Wait()
 }
 
-func (s slideshow) CreateVideo(useOldfade bool, tempDirectory string, outputDirectory string) {
+/* Function to create a video with all the data parsed from the .slideshow
+ *
+ * Parameters:
+ *			useOldFade - specifies whether to use the old fade style instead of XFade, if desired
+ *			tempDirectory - filepath to the temp folder to store the temporary videos created
+ *			outputDirectory - filepath to the location to store the final completed video
+ *			v - verbose flag to determine what feedback to print
+ */
+func (s slideshow) CreateVideo(useOldfade bool, tempDirectory string, outputDirectory string, v bool) {
 	// Checking FFmpeg version to use Xfade
 	fmt.Println("Checking FFmpeg version...")
-	var fadeType string = FFmpeg.CheckVersion()
+	var fadeType string = FFmpeg.ParseVersion()
 	useXfade := fadeType == "X" && !useOldfade
 
 	final_template_name := strings.TrimSuffix(s.templateName, ".slideshow")
 
 	if useXfade {
 		fmt.Println("FFmpeg version is bigger than 4.3.0, using Xfade transition method...")
-		FFmpeg.MakeTempVideosWithoutAudio(s.images, s.transitions, s.transitionDurations, s.timings, s.audios, s.motions, tempDirectory)
+		FFmpeg.MakeTempVideosWithoutAudio(s.images, s.timings, s.audios, s.motions, tempDirectory, v)
 		FFmpeg.MergeTempVideos(s.images, s.transitions, s.transitionDurations, s.timings, tempDirectory)
 		FFmpeg.AddAudio(s.timings, s.audios, tempDirectory)
 		FFmpeg.CopyFinal(tempDirectory, outputDirectory, final_template_name)
 	} else {
 		fmt.Println("FFmpeg version is smaller than 4.3.0, using old fade transition method...")
-		FFmpeg.MakeTempVideosWithoutAudio(s.images, s.transitions, s.transitionDurations, s.timings, s.audios, s.motions, tempDirectory)
+		FFmpeg.MakeTempVideosWithoutAudio(s.images, s.timings, s.audios, s.motions, tempDirectory, v)
 		FFmpeg.MergeTempVideosOldFade(s.images, s.transitionDurations, s.timings, tempDirectory)
 		FFmpeg.AddAudio(s.timings, s.audios, tempDirectory)
 		FFmpeg.CopyFinal(tempDirectory, outputDirectory, final_template_name)

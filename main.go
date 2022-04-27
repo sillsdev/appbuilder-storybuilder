@@ -22,12 +22,12 @@ func main() {
 	optionFlags := options.ParseFlags()
 
 	// Create a temporary folder to store temporary files
-	tempDirectory, err := OS.CreateDirectory(optionFlags.TemporaryDirectory)
+	tempDirectory, err := OS.CreateDirectory(optionFlags.TemporaryDirectory, optionFlags.Verbose)
 	helper.Check(err)
 
 	// Create directory if output directory does not exist
 	if optionFlags.OutputDirectory != "" {
-		_, err := OS.CreateDirectory(optionFlags.OutputDirectory)
+		_, err := OS.CreateDirectory(optionFlags.OutputDirectory, optionFlags.Verbose)
 		helper.Check(err)
 	}
 
@@ -45,20 +45,20 @@ func main() {
 	start := time.Now()
 
 	// Parse in the various pieces from the template
-	slideshow := slideshow.NewSlideshow(optionFlags.SlideshowDirectory)
+	slideshow := slideshow.NewSlideshow(optionFlags.SlideshowDirectory, optionFlags.Verbose)
 
 	fmt.Println("Scaling images...")
 	slideshow.ScaleImages(optionFlags.LowQuality)
 
 	fmt.Println("Creating video...")
-	slideshow.CreateVideo(optionFlags.UseOldFade, tempDirectory, optionFlags.OutputDirectory)
+	slideshow.CreateVideo(optionFlags.UseOldFade, tempDirectory, optionFlags.OutputDirectory, optionFlags.Verbose)
 
 	fmt.Println("Video production completed!")
 	duration := time.Since(start)
 	fmt.Sprintln(fmt.Sprintf("Time Taken: %f seconds", duration.Seconds()))
 
 	if optionFlags.OverlayVideoDirectory != "" {
-		fmt.Println("Creating overlay video...")
+		fmt.Println("-ov specified, creating overlay video with ", optionFlags.OverlayVideoDirectory)
 
 		finalVideoDirectory := tempDirectory + "/final.mp4"
 
