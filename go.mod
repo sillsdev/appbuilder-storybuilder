@@ -1,3 +1,3 @@
-module github.com/gordon-cs/SIL-Video/Compiler
+module github.com/sillsdev/appbuilder-storybuilder
 
 go 1.17
