@@ -15,6 +15,7 @@ type options struct {
 	Verbose               bool
 }
 
+// Function to parse the command line options flags
 func ParseFlags() options {
 	var slideshowDirectory string
 	var outputDirectory string
@@ -42,6 +43,7 @@ func ParseFlags() options {
 
 }
 
+// Function to set the slideshow directory of the options struct
 func (o *options) SetSlideshowDirectory(directory string) {
 	o.SlideshowDirectory = directory
 }

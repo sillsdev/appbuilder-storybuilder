@@ -148,24 +148,33 @@ func (s slideshow) CreateVideo(useOldfade bool, tempDirectory string, outputDire
 	if useXfade {
 		fmt.Println("FFmpeg version is bigger than 4.3.0, using Xfade transition method...")
 		FFmpeg.MakeTempVideosWithoutAudio(s.images, s.timings, s.audios, s.motions, tempDirectory, v)
-		FFmpeg.MergeTempVideos(s.images, s.transitions, s.transitionDurations, s.timings, tempDirectory)
-		FFmpeg.AddAudio(s.timings, s.audios, tempDirectory)
+		FFmpeg.MergeTempVideos(s.images, s.transitions, s.transitionDurations, s.timings, tempDirectory, v)
+		FFmpeg.AddAudio(s.timings, s.audios, tempDirectory, v)
 		FFmpeg.CopyFinal(tempDirectory, outputDirectory, final_template_name)
 	} else {
 		fmt.Println("FFmpeg version is smaller than 4.3.0, using old fade transition method...")
 		FFmpeg.MakeTempVideosWithoutAudio(s.images, s.timings, s.audios, s.motions, tempDirectory, v)
-		FFmpeg.MergeTempVideosOldFade(s.images, s.transitionDurations, s.timings, tempDirectory)
-		FFmpeg.AddAudio(s.timings, s.audios, tempDirectory)
+		FFmpeg.MergeTempVideosOldFade(s.images, s.transitionDurations, s.timings, tempDirectory, v)
+		FFmpeg.AddAudio(s.timings, s.audios, tempDirectory, v)
 		FFmpeg.CopyFinal(tempDirectory, outputDirectory, final_template_name)
 	}
 
 	fmt.Println("Finished making video...")
 }
 
+// Helper function to generate an overlaid video of the software's result and a comparison video
 func (s slideshow) CreateOverlaidVideo(finalVideoDirectory string, testVideoDirectory string, overlaidVideoDirectory string) {
 	FFmpeg.CreateOverlaidVideoForTesting(finalVideoDirectory, testVideoDirectory, overlaidVideoDirectory)
 }
 
+/* Function to separate the .slideshow filename from the directory path
+ *
+ * Parameters:
+ *		slideshowDirectory - path to the .slideshow file
+ * Returns:
+ *		template_directory - folder path leading up to the .slideshow file
+ *		template_name - name of the .slideshow file
+ */
 func splitFileNameFromDirectory(slideshowDirectory string) (string, string) {
 	var template_directory_split []string
 

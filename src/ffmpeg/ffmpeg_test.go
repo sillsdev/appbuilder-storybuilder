@@ -163,7 +163,7 @@ func Test_CmdCreateTempVideo(t *testing.T) {
 func Test_CreateZoomCommand(t *testing.T) {
 	type args struct {
 		Motions  [][]float64
-		Duration []float64
+		Duration float64
 	}
 	tests := []struct {
 		name string
@@ -173,7 +173,7 @@ func Test_CreateZoomCommand(t *testing.T) {
 		{
 			"Creating zoom command for VB-John 1v1.jpg",
 			args{Motions: [][]float64{{0.282, 0.088, 0.718, 0.717}, {0.391, 0.115, 0.475, 0.478}},
-				Duration: []float64{9400}},
+				Duration: 9400},
 			"scale=8000:-1,zoompan=z='1/((0.718)-(0.001)*on)':x='0.282*iw+0.000*iw*on':y='0.088*ih+0.000*ih*on':d=235:fps=25,scale=1280:720,setsar=1:1",
 		},
 	}

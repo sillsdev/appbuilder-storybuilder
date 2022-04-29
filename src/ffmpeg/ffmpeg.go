@@ -89,12 +89,12 @@ func MakeTempVideosWithoutAudio(Images []string, Timings []string, Audios []stri
 			//   that another thread has completed.
 			defer wg.Done()
 			if v {
-				fmt.Printf("Making temp%d-%d.mp4 video with:\n	Image: %s\n	Duration: %s ms\n	Start Rectangle: %f\n	End Rectangle: %f\n",
+				fmt.Printf("Making temp%d-%d.mp4 video with:\n	Image: %s\n	Duration: %s ms\n	Start Rectangle (x, y, height width): %f\n	End Rectangle (x, y, height width): %f\n",
 					i+1, totalNumImages, Images[i], duration, Motions[i][0], Motions[i][1])
 			} else {
 				fmt.Printf("Making temp%d-%d.mp4 video", i+1, totalNumImages)
 			}
-			zoom_cmd := CreateZoomCommand(Motions[i], helper.ConvertStringToFloat(duration))
+			zoom_cmd := CreateZoomCommand(Motions[i], helper.ConvertStringToFloat(duration)[0])
 
 			cmd := CmdCreateTempVideo(Images[i], duration, zoom_cmd, fmt.Sprintf(tempPath+"/temp%d-%d.mp4", i, totalNumImages))
 			output, err := cmd.CombinedOutput()
@@ -111,12 +111,14 @@ func MakeTempVideosWithoutAudio(Images []string, Timings []string, Audios []stri
 
 /* Function to merge the temporary videos with transition filters between them
  * Parameters:
- *		Images: ([]string) - Array of filenames for the images
- *		Transitions: ([]string) - Array of Xfade transition names to use
- *		TransitionDurations: ([]string) - Array of durations for each transition
- *		Timings: ([]string) - array of timing duration for the audio for each image
+ *		Images - Array of filenames for the images
+ *		Transitions - Array of Xfade transition names to use
+ *		TransitionDurations - Array of durations for each transition
+ *		Timings - array of timing duration for the audio for each image
+ *		tempPath - path to the temp folder where the videos are stored
+ *		v - verbose flag to determine what feedback to print
  */
-func MergeTempVideos(Images []string, Transitions []string, TransitionDurations []string, Timings []string, tempPath string) {
+func MergeTempVideos(Images []string, Transitions []string, TransitionDurations []string, Timings []string, tempPath string, v bool) {
 	fmt.Println("Merging temporary videos...")
 	video_fade_filter := ""
 	settb := ""
@@ -140,10 +142,14 @@ func MergeTempVideos(Images []string, Transitions []string, TransitionDurations 
 
 	for i := 0; i < totalNumImages-1; i++ {
 		transition := Transitions[i]
+
 		transition_duration, err := strconv.ParseFloat(strings.TrimSpace(string(TransitionDurations[i])), 8)
 		helper.Check(err)
 		transition_duration = transition_duration / 1000
 
+		if v {
+			fmt.Printf("%dth merge has transition %s and duration %f\n", i, transition, transition_duration)
+		}
 		//add time to the video that is sacrificied to xfade
 		settb += fmt.Sprintf("[%d:v]tpad=stop_mode=clone:stop_duration=%f[v%d];", i, transition_duration/2, i)
 
@@ -190,11 +196,13 @@ func MergeTempVideos(Images []string, Transitions []string, TransitionDurations 
 /** Merges the temporary videos using the old fade method with just plain crossfade transitions
  *
  *	Parameters:
- *		Images: ([]string) - Array of filenames for the images
- *		TransitionDurations: ([]string) - Array of durations for each transition
- *		Timings: ([]string) - array of timing duration for the audio for each image
+ *		Images - Array of filenames for the images
+ *		TransitionDurations - Array of durations for each transition
+ *		Timings - array of timing duration for the audio for each image
+ *		tempLocation - path to the temp folder where the videos are stored
+ *		v - verbose flag to determine what feedback to print
  */
-func MergeTempVideosOldFade(Images []string, TransitionDurations []string, Timings []string, tempLocation string) {
+func MergeTempVideosOldFade(Images []string, TransitionDurations []string, Timings []string, tempLocation string, v bool) {
 	fmt.Println("Merging temporary videos with traditional fade...")
 	video_fade_filter := ""
 	last_fade_output := ""
@@ -219,6 +227,10 @@ func MergeTempVideosOldFade(Images []string, TransitionDurations []string, Timin
 		transition_duration, err := strconv.ParseFloat(strings.TrimSpace(string(TransitionDurations[i])), 8)
 		helper.Check(err)
 		transition_duration = transition_duration / 1000
+
+		if v {
+			fmt.Printf("%dth merge has default fade transition and duration %f\n", i, transition_duration)
+		}
 
 		//get the current video length in seconds
 		cmd := CmdGetVideoLength(fmt.Sprintf(tempLocation+"/temp%d-%d.mp4", i, totalNumImages))
@@ -263,10 +275,12 @@ func MergeTempVideosOldFade(Images []string, TransitionDurations []string, Timin
 
 /* Function to add the background and narration audio onto the video_with_no_audio.mp4
  * Parameters:
- *		Timings: ([]string) - array of timing duration for the audio for each image
- *		Audios: ([]string) - Array of filenames for the audios to be used
+ *		Timings - array of timing duration for the audio for each image
+ *		Audios - Array of filenames for the audios to be used
+ *		tempPath - path to the temp folder where the audioless video is stored
+ *		v - verbose flag to determine what feedback to print
  */
-func AddAudio(Timings []string, Audios []string, tempPath string) {
+func AddAudio(Timings []string, Audios []string, tempPath string, v bool) {
 	fmt.Println("Adding audio...")
 	audio_inputs := []string{}
 
@@ -292,6 +306,10 @@ func AddAudio(Timings []string, Audios []string, tempPath string) {
 			//place the audio at the start of each slide
 			audio_filter += fmt.Sprintf("[%d:a]atrim=start=%f:duration=%sms,asetpts=expr=PTS-STARTPTS[a%d];", i+1, totalDuration, strings.TrimSpace(Timings[i]), i+1)
 			audio_last_filter += fmt.Sprintf("[a%d]", i+1)
+
+			if v {
+				fmt.Printf("Adding audio snippet from %s to video. Total duration = %.2f seconds\n", Audios[i], totalDuration)
+			}
 		}
 	}
 
@@ -300,6 +318,9 @@ func AddAudio(Timings []string, Audios []string, tempPath string) {
 
 	audio_inputs = append(audio_inputs, "-filter_complex", audio_filter, "-map", "0:v", "-map", "[a]", "-codec:v", "copy", "-codec:a", "libmp3lame", tempPath+"/merged_video.mp4")
 
+	if v {
+		println("Adding compiled audio to merged video and generating final result...")
+	}
 	cmd := exec.Command("ffmpeg", audio_inputs...)
 	output, err := cmd.CombinedOutput()
 	CheckCMDError(output, err)
@@ -307,26 +328,37 @@ func AddAudio(Timings []string, Audios []string, tempPath string) {
 	trimEnd(tempPath)
 }
 
+/* Function to copy the final video from the temp folder to the output location specified
+ * and change the filename
+ *
+ * Parameters:
+ *		tempPath - path to the temp folder
+ *		outputFolder - path to the folder to store the final result
+ *		name - name to label the final video
+ */
 func CopyFinal(tempPath string, outputFolder string, name string) {
 	// If -o is specified, save the final video at the specified location
-
-	var cmd *exec.Cmd
-
+	// Else save it to the folder of the executable
+	var outputName string
 	if len(outputFolder) > 0 {
-		cmd = CmdCopyFile(tempPath+"/final.mp4", outputFolder+"/"+name+".mp4")
+		outputName = outputFolder + "/" + name + ".mp4"
 	} else { // If -o is not specified, save the final video at the default location
-		cmd = CmdCopyFile(tempPath+"/final.mp4", name+".mp4")
+		outputName = name + ".mp4"
 	}
 
+	fmt.Printf("Copying final video from temp folder to %s...\n", outputName)
+	cmd := CmdCopyFile(tempPath+"/final.mp4", outputName)
 	output, err := cmd.CombinedOutput()
 	CheckCMDError(output, err)
 }
 
 /* Function that creates an overlaid video between created video and testing video to see the differences between the two.
-	One video is made half-transparent, changed to its negative image, and overlaid on the other video so that all similarities would cancel out and leave only the differences.
+ *	One video is made half-transparent, changed to its negative image, and overlaid on the other video so that all similarities would cancel out and leave only the differences.
  * Parameters:
- *		trueVideo: (string) - file path to the testing video
-*/
+ *		finalVideoDirectory - folder where the final video produced is held
+ *		trueVideo - file path to the comparison video
+ *		destinationLocation - filepath to the folder to store the overlaid video
+ */
 func CreateOverlaidVideoForTesting(finalVideoDirectory string, trueVideo string, destinationLocation string) {
 	outputDir := "./overlayVideo.mp4"
 	if destinationLocation != "" {

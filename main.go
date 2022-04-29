@@ -74,6 +74,11 @@ func main() {
 
 }
 
+/* Function to search the current directory for any .slideshow files and return the first found
+ *
+ * Parameters:
+ *		slideshowDirectory - the path to the directory to be stored
+ */
 func findTemplate(slideshowDirectory string) fs.WalkDirFunc {
 	return func(path string, d fs.DirEntry, e error) error {
 		slideRegEx := regexp.MustCompile(`.+(.slideshow)$`) // Regular expression to find the .slideshow file
