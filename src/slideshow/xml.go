@@ -54,6 +54,7 @@ type transition struct {
 	Type     string `xml:",chardata"`
 }
 
+// Function to parse and return the xml from the .slideshow
 func readSlideshowXML(filePath string) *slideshow_template {
 	data, err := ioutil.ReadFile(filePath)
 	helper.Check(err)
