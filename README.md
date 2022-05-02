@@ -13,6 +13,7 @@ MVP Document: [Link](https://docs.google.com/document/d/1ZZWAUzAl-bXXmUvLlqPjvj4
 Proof of Work Repo (Python): [Link](https://github.com/sillsdev/storybuilder/tree/v2)<br>
 Inputs Template Documentation: [Link](slideshow.md)<br>
 Design Document: [Link](https://docs.google.com/document/d/1vjogjaWZ0ww7rJtKz3J4iuVbbFrZF3KASdHBW-zPYfE/edit#)
+Final Presentation Slides: [Link](https://docs.google.com/presentation/d/1OxTRJqiOaVFwTOPpruyL800moecj-uWdPVHe_ZXdusA/)
 
 # How-To Documentation
 
