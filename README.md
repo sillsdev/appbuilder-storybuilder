@@ -12,7 +12,7 @@ End-To-End Proposal [Link](https://docs.google.com/document/d/1h8e6FNbOrI4lRuMVR
 MVP Document: [Link](https://docs.google.com/document/d/1ZZWAUzAl-bXXmUvLlqPjvj4Cw5By6yFNDDiA70PlY2E/edit?usp=sharing)<br>
 Proof of Work Repo (Python): [Link](https://github.com/sillsdev/storybuilder/tree/v2)<br>
 Inputs Template Documentation: [Link](slideshow.md)<br>
-Design Document: [Link](https://docs.google.com/document/d/1vjogjaWZ0ww7rJtKz3J4iuVbbFrZF3KASdHBW-zPYfE/edit#)
+Design Document: [Link](https://docs.google.com/document/d/1vjogjaWZ0ww7rJtKz3J4iuVbbFrZF3KASdHBW-zPYfE/edit#)<br>
 Final Presentation Slides: [Link](https://docs.google.com/presentation/d/1OxTRJqiOaVFwTOPpruyL800moecj-uWdPVHe_ZXdusA/)
 
 # How-To Documentation
