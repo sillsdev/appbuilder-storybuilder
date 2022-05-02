@@ -12,7 +12,7 @@ import (
 	"github.com/sillsdev/appbuilder-storybuilder/src/helper"
 )
 
-/* Function to Check FFmpeg version and choose Xfade or traditional fade accordingly
+/* Function to parse FFmpeg version from string and choose Xfade or traditional fade accordingly
  *
  * Returns:
  * 		The string returned from checkFFmpegVersion, either "X" or "F"
@@ -35,7 +35,7 @@ func ParseVersion() string {
 	return compareVersion(version)
 }
 
-/* Function to check the ffmpeg version and choose Xfade or traditional fade accordingly
+/* Private function to check the ffmpeg version and choose Xfade or traditional fade accordingly
  *
  * Parameters:
  *		version - the version number to be checked
