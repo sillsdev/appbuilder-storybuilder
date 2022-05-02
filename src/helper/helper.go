@@ -26,7 +26,10 @@ func ConvertStringToFloat(stringData string) []float64 {
 	return floatData
 }
 
-// Function to check errors from non-CMD output
+/* Function to check errors from non-CMD output and prints out the error accordingly
+ *  Parameters:
+ *			err (error): error
+ */
 func Check(err error) {
 	if err != nil {
 		fmt.Println("Error", err)

@@ -9,14 +9,27 @@ import (
 	"strings"
 )
 
-// ffmpeg command to get the version number
+/* Function to get the ffmpeg version
+ *
+ * Returns:
+		executable "ffmpeg -version" cmd
+*/
 func CmdGetVersion() *exec.Cmd {
 	cmd := exec.Command("ffmpeg", "-version")
 
 	return cmd
 }
 
-// ffmpeg command to scale an image by specified height and width
+/* Function to scale an image to specified height and width
+ *
+ * Parameters:
+ *		imagePath - directory of the jpg image location
+ *		height - pixel height
+ *		width - pixel width
+ *		imageOutputPath - directory to save the scaled image
+ * Returns:
+		exectauble command
+*/
 func CmdScaleImage(imagePath string, height string, width string, imageOutputPath string) *exec.Cmd {
 	cmd := exec.Command("ffmpeg", "-i", imagePath,
 		"-vf", fmt.Sprintf("scale=%s:%s", height, width)+",setsar=1:1",
@@ -25,7 +38,14 @@ func CmdScaleImage(imagePath string, height string, width string, imageOutputPat
 	return cmd
 }
 
-// ffmpeg command to trim the video to a specific duration
+/* Function to trim the video to a specified duration
+ *
+ * Parameters:
+ *		duration - the length of the video in seconds
+ *		tempPath - temporary directory path where all the temp files are saved
+ * Returns:
+		exectauble command
+*/
 func CmdTrimLengthOfVideo(duration string, tempPath string) *exec.Cmd {
 	cmd := exec.Command("ffmpeg",
 		"-i", tempPath+"/merged_video.mp4",
@@ -37,7 +57,13 @@ func CmdTrimLengthOfVideo(duration string, tempPath string) *exec.Cmd {
 	return cmd
 }
 
-// ffmpeg command to get the length (in seconds) of a video
+/* Function to get the length (seconds) of a video
+ *
+ * Parameters:
+ *		inputDirectory - the directory of the video to find the length of
+ * Returns:
+		exectauble command
+*/
 func CmdGetVideoLength(inputDirectory string) *exec.Cmd {
 	cmd := exec.Command("ffprobe",
 		"-v", "error",
@@ -49,7 +75,16 @@ func CmdGetVideoLength(inputDirectory string) *exec.Cmd {
 	return cmd
 }
 
-// ffmpeg command to generate a single audioless video with the provided image and zoom/pan effects
+/* Function to generate a single audioless video with the provided image and zoom/pan effects
+ *
+ * Parameters:
+ *		imageDirectory - directory of the image location
+ *		duration - duration of the generated video (milliseconds)
+ *		zoom_cmd - zoompan filter command
+ *		finalOutputDirectory - directory to save the output video
+ * Returns:
+		exectauble command
+*/
 func CmdCreateTempVideo(ImageDirectory string, duration string, zoom_cmd string, finalOutputDirectory string) *exec.Cmd {
 	cmd := exec.Command("ffmpeg", "-loop", "1", "-i", ImageDirectory,
 		"-t", duration+"ms", "-filter_complex", zoom_cmd,
@@ -90,20 +125,38 @@ func CreateZoomCommand(Motions [][]float64, TimingDuration float64) string {
 	return final_cmd
 }
 
-// Function to check CMD error output when running commands
+/* Function to check CMD error output when running commands
+ *
+ * Parameters:
+ *		output - cmd output
+ *		err - error of the cmd result
+ */
 func CheckCMDError(output []byte, err error) {
 	if err != nil {
 		log.Fatalln(fmt.Sprint(err) + ": " + string(output))
 	}
 }
 
-// ffmpeg command to copy a video from one location to another
+/* Function to copy a video from one location to another
+ *
+ * Parameters:
+ *		to - directory of the video
+ *		from - directory to move the video
+ * Returns:
+ *		exectauble ffmpeg cmd
+ */
 func CmdCopyFile(to string, from string) *exec.Cmd {
 	cmd := exec.Command("ffmpeg", "-i", to, "-y", from)
 	return cmd
 }
 
-// ffmpeg command to check the sign of a number
+/* Function to check the sign of a number
+ *
+ * Parameters:
+ *		num: float number to check the sign of
+ * Returns:
+ *		- or + depending on the sign of the number
+ */
 func checkSign(num float64) string {
 	result := math.Signbit(num)
 
@@ -115,6 +168,9 @@ func checkSign(num float64) string {
 }
 
 /* Function to trim the end of the video and remove excess empty audio when the audio file is longer than the video file
+ *
+ * Parameters:
+ *		tempPath - directory of where all the temporary files are saved
  */
 func trimEnd(tempPath string) {
 	fmt.Println("Trimming end of merged video...")
