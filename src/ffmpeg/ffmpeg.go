@@ -398,8 +398,5 @@ func GetVideoLength(inputPath string) float64 {
 	output, err := cmd.CombinedOutput()
 	CheckCMDError(output, err)
 
-	outputString := string(output)
-	fmt.Println("Output: " + outputString)
-
-	return ParseVideoLength(outputString)
+	return ParseVideoLength(string(output))
 }
