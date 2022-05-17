@@ -24,24 +24,23 @@ Final Presentation Slides: [Link](https://docs.google.com/presentation/d/1OxTRJq
 4. Run code in a CLI set to directory of executable with "./executable_name" or just "executable_name" for Windows
 5. There are also several flags you can include at runtime to alter the output or inputs:
 
+   -h : Help, display list of possible flags and their uses
 
-      -h : Help, display list of possible flags and their uses
+   -t : Template, used to input a specific template file to use, otherwise the program searches executable's current directory for any .slideshow files and uses the first it finds
 
-      -t : Template, used to input a specific template file to use, otherwise the program searches executable's current directory for any .slideshow files and uses the first it finds
+   -o : Output location, used to specify where to store the finished video, will use executable's current directory by default
 
-      -o : Output location, used to specify where to store the finished video, will use executable's current directory by default
+   -l : Lower quality, used to generate a lower quality video for smaller file size for easier distribution (default videos will be 1280x720)
 
-      -l : Lower quality, used to generate a lower quality video for smaller file size for easier distribution (default videos will be 1280x720)
+   -td : Temporary Directory, used to specify a location to store the temporary files used in video production (default is in your OS' temp directory/storybuilder-\*)
 
-      -td : Temporary Directory, used to specify a location to store the temporary files used in video production (default is in your OS' temp directory/storybuilder-\*)
+   -v : Verbosity, used to modify how much output is reported on the commandline for debugging purposes (less verbose by default)
 
-      -v : Verbosity, used to modify how much output is reported on the commandline for debugging purposes (less verbose by default)
+   -s : Save files, used to specify if user wants to preserve the temporary files used in the video production (videos are deleted by default)
 
-      -s : Save files, used to specify if user wants to preserve the temporary files used in the video production (videos are deleted by default)
+   -f : Fadetype, include to use the non-xfade default transitions for video
 
-      -f : Fadetype, include to use the non-xfade default transitions for video
-   
-      -ov : Overlay video, used to specify the location of a test video to create an overlay video with the generated video
+   -ov : Overlay video, used to specify the location of a test video to create an overlay video with the generated video
 
 # Testing Documentation
 
@@ -53,17 +52,14 @@ Our source code contains unit tests per packages, to which we are adding more te
 
 # Release Documentation
 
-In order to generate a release version for our code after making adjustments you will need to follow the steps below:
+GitHub Actions are configured to build a release on tagged commits.
+
+In order to generate a release version locally, follow the steps below:
 
 1. Install GoReleaser [link](https://goreleaser.com/install/)
-2. In a CLI, navigate to the directory containing the source code (main.go and read.go)
-3. Run `goreleaser init` to generate a `.goreleaser.yaml` file
-4. Ensure you have proper write access to the repository and generate a GitHub [personal access token](https://github.com/settings/tokens) for your account, making sure it has at least the `write:packages` option checked
-5. Create a folder in your `homedirectory~/.config/` directory labeled `goreleaser` if it doesn't already exist
-6. Copy your token into a file called `github_token` and place it into the `goreleaser` folder you created.
-7. With your CLI set to the folder with your source code and the `.goreleaser.yaml` file, create a tag for your release with `git tag -a TAG_ID -m TAG_MESSAGE`(e.g. `git tag -a v0.1.0 -m "Release Version 0.1.0"`)
-8. Push your tag using `git push origin TAG_ID` (e.g. `git push origin v0.1.0`), and GitHub Actions will take care of the building!
+2. In a CLI, navigate to the root directory (contains main.go)
+3. Run `goreleaser release --snapshow --rm-dist`
 
-(Optional) 9. If you wish to compile without releasing to GitHub you can use `goreleaser build` or `goreleaser release --skip-publish` in your source code directory to prevent publishing to GitHub
+Binaries will be located in the `dist` folder.
 
 If any of these steps cause issues you can reference the [GoReleaser documentation](https://goreleaser.com/)
