@@ -5,8 +5,6 @@ import (
 	"log"
 	"math"
 	"os/exec"
-	"strconv"
-	"strings"
 )
 
 /* Function to get the ffmpeg version
@@ -60,16 +58,21 @@ func CmdTrimLengthOfVideo(duration string, tempPath string) *exec.Cmd {
 /* Function to get the length (seconds) of a video
  *
  * Parameters:
- *		inputDirectory - the directory of the video to find the length of
+ *		inputPath - the path of the video to find the length of
  * Returns:
 		exectauble command
 */
-func CmdGetVideoLength(inputDirectory string) *exec.Cmd {
-	cmd := exec.Command("ffprobe",
-		"-v", "error",
-		"-show_entries", "format=duration",
-		"-of", "default=noprint_wrappers=1:nokey=1",
-		inputDirectory,
+func CmdGetVideoLength(inputPath string) *exec.Cmd {
+	// cmd := exec.Command("ffprobe",
+	// 	"-v", "error",
+	// 	"-show_entries", "format=duration",
+	// 	"-of", "default=noprint_wrappers=1:nokey=1",
+	// 	inputPath,
+	// )
+	cmd := exec.Command("ffmpeg",
+		"-hide_banner",
+		"-i", inputPath,
+		"-f", "null", "-",
 	)
 
 	return cmd
@@ -175,14 +178,10 @@ func checkSign(num float64) string {
 func trimEnd(tempPath string) {
 	fmt.Println("Trimming end of merged video...")
 
-	cmd := CmdGetVideoLength(tempPath + "/video_with_no_audio.mp4")
-	output, err := cmd.CombinedOutput()
-	CheckCMDError(output, err)
-
-	video_length, err := strconv.ParseFloat(strings.TrimSpace(string(output)), 8)
+	video_length := GetVideoLength(tempPath + "/video_with_no_audio.mp4")
 
 	//match the video length of the merged video with the true length of the video
-	cmd = CmdTrimLengthOfVideo(fmt.Sprintf("%f", video_length), tempPath)
-	output, err = cmd.CombinedOutput()
+	cmd := CmdTrimLengthOfVideo(fmt.Sprintf("%f", video_length), tempPath)
+	output, err := cmd.CombinedOutput()
 	CheckCMDError(output, err)
 }
