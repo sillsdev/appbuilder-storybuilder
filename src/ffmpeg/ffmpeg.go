@@ -154,13 +154,7 @@ func MergeTempVideos(Images []string, Transitions []string, TransitionDurations 
 		settb += fmt.Sprintf("[%d:v]tpad=stop_mode=clone:stop_duration=%f[v%d];", i, transition_duration/2, i)
 
 		//get the current video length in seconds
-		cmd := CmdGetVideoLength(fmt.Sprintf(tempPath+"/temp%d-%d.mp4", i, totalNumImages))
-
-		output, err := cmd.CombinedOutput()
-		CheckCMDError(output, err)
-
-		//store the video length in an array
-		video_each_length[i], err = strconv.ParseFloat(strings.TrimSpace(string(output)), 8)
+		video_each_length[i] = GetVideoLength(fmt.Sprintf(tempPath+"/temp%d-%d.mp4", i, totalNumImages))
 
 		//get the total video length of the videos combined thus far in seconds
 		video_total_length += video_each_length[i]
@@ -233,11 +227,7 @@ func MergeTempVideosOldFade(Images []string, TransitionDurations []string, Timin
 		}
 
 		//get the current video length in seconds
-		cmd := CmdGetVideoLength(fmt.Sprintf(tempLocation+"/temp%d-%d.mp4", i, totalNumImages))
-		output, err := cmd.CombinedOutput()
-		CheckCMDError(output, err)
-
-		video_each_length[i], err = strconv.ParseFloat(strings.TrimSpace(string(output)), 8)
+		video_each_length[i] = GetVideoLength(fmt.Sprintf(tempLocation+"/temp%d-%d.mp4", i, totalNumImages))
 
 		//get the total video length of the videos combined thus far in seconds
 		video_total_duration += video_each_length[i]
@@ -375,4 +365,41 @@ func CreateOverlaidVideoForTesting(finalVideoDirectory string, trueVideo string,
 
 	output, err := cmd.CombinedOutput()
 	CheckCMDError(output, err)
+}
+
+func ParseVideoLength(output string) float64 {
+	re := regexp.MustCompile(`Duration: (?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2}\.\d{2})`)
+	match := re.FindStringSubmatch(output)
+	if match == nil {
+		log.Fatal(match)
+	}
+
+	hour, err := strconv.ParseInt(string(match[1]), 10, 8)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	minute, err := strconv.ParseInt(string(match[2]), 10, 8)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	second, err := strconv.ParseFloat(string(match[3]), 8)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return second + float64(60*minute) + float64(3600*hour)
+}
+
+func GetVideoLength(inputPath string) float64 {
+	fmt.Println("File: " + inputPath)
+	cmd := CmdGetVideoLength(inputPath)
+	output, err := cmd.CombinedOutput()
+	CheckCMDError(output, err)
+
+	outputString := string(output)
+	fmt.Println("Output: " + outputString)
+
+	return ParseVideoLength(outputString)
 }

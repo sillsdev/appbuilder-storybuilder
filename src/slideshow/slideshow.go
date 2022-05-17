@@ -138,6 +138,10 @@ func (s slideshow) ScaleImages(lowQuality bool) {
  *			v - verbose flag to determine what feedback to print
  */
 func (s slideshow) CreateVideo(useOldfade bool, tempDirectory string, outputDirectory string, v bool) {
+	if v {
+		fmt.Println("Temp Directory: " + tempDirectory)
+		fmt.Println("Output Directory: " + outputDirectory)
+	}
 	// Checking FFmpeg version to use Xfade
 	fmt.Println("Checking FFmpeg version...")
 	var fadeType string = FFmpeg.ParseVersion()
