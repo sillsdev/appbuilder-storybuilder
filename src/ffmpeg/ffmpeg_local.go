@@ -120,9 +120,9 @@ func CreateZoomCommand(Motions [][]float64, TimingDuration float64) string {
 	var y_change float64 = y_end - y_init
 	var y_incr float64 = y_change / float64(num_frames)
 
-	zoom_cmd := fmt.Sprintf("1/((%.3f)%s(%.3f)*on)", size_init-size_incr, checkSign(size_incr), math.Abs(size_incr))
-	x_cmd := fmt.Sprintf("%0.3f*iw%s%0.3f*iw*on", x_init-x_incr, checkSign(x_incr), math.Abs(x_incr))
-	y_cmd := fmt.Sprintf("%0.3f*ih%s%0.3f*ih*on", y_init-y_incr, checkSign(y_incr), math.Abs(y_incr))
+	zoom_cmd := fmt.Sprintf("1/((%.6f)%s(%.6f)*on)", size_init-size_incr, checkSign(size_incr), math.Abs(size_incr))
+	x_cmd := fmt.Sprintf("%0.6f*iw%s%0.6f*iw*on", x_init-x_incr, checkSign(x_incr), math.Abs(x_incr))
+	y_cmd := fmt.Sprintf("%0.6f*ih%s%0.6f*ih*on", y_init-y_incr, checkSign(y_incr), math.Abs(y_incr))
 	final_cmd := fmt.Sprintf("scale=8000:-1,zoompan=z='%s':x='%s':y='%s':d=%d:fps=25,scale=1280:720,setsar=1:1", zoom_cmd, x_cmd, y_cmd, num_frames)
 
 	return final_cmd

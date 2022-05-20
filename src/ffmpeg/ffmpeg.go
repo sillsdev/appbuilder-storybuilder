@@ -88,13 +88,13 @@ func MakeTempVideosWithoutAudio(Images []string, Timings []string, Audios []stri
 			// At the end of the goroutine, tell the WaitGroup
 			//   that another thread has completed.
 			defer wg.Done()
+			zoom_cmd := CreateZoomCommand(Motions[i], helper.ConvertStringToFloat(duration)[0])
 			if v {
-				fmt.Println(fmt.Sprintf("Making temp%d-%d.mp4 video with:\n	Image: %s\n	Duration: %s ms\n	Start Rectangle (x, y, height width): %f\n	End Rectangle (x, y, height width): %f\n",
-					i+1, totalNumImages, Images[i], duration, Motions[i][0], Motions[i][1]))
+				fmt.Println(fmt.Sprintf("Making temp%d-%d.mp4 video with:\n	Image: %s\n	Duration: %s ms\n	Start Rectangle (left, top, width, height): %f\n	End Rectangle (left, top, width, height): %f\n	Zoom Cmd: %s\n",
+					i+1, totalNumImages, Images[i], duration, Motions[i][0], Motions[i][1], zoom_cmd))
 			} else {
 				fmt.Println(fmt.Sprintf("Making temp%d-%d.mp4 video", i+1, totalNumImages))
 			}
-			zoom_cmd := CreateZoomCommand(Motions[i], helper.ConvertStringToFloat(duration)[0])
 
 			cmd := CmdCreateTempVideo(Images[i], duration, zoom_cmd, fmt.Sprintf(tempPath+"/temp%d-%d.mp4", i, totalNumImages))
 			output, err := cmd.CombinedOutput()
