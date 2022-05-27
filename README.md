@@ -58,7 +58,7 @@ In order to generate a release version locally, follow the steps below:
 
 1. Install GoReleaser [link](https://goreleaser.com/install/)
 2. In a CLI, navigate to the root directory (contains main.go)
-3. Run `goreleaser release --snapshow --rm-dist`
+3. Run `goreleaser release --snapshot --rm-dist`
 
 Binaries will be located in the `dist` folder.
 
