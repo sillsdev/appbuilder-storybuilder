@@ -20,9 +20,10 @@ import (
  *	motions: arrays of floats describing the dimensions and positions for the start and end rectangles for zoom/pan effects
  *	templateName: string parsed from the .slideshow filename to be used for the final video product
  */
+
 type slideshow struct {
 	images              []string
-	audios              []string
+	audioTracks         map[string]*FFmpeg.AudioTrack
 	transitions         []string
 	transitionDurations []string
 	timings             []string
@@ -43,7 +44,7 @@ func NewSlideshow(slideshowDirectory string, v bool) slideshow {
 	slideshow_template := readSlideshowXML(slideshowDirectory)
 
 	Images := []string{}
-	Audios := []string{}
+	Audios := make(map[string]*FFmpeg.AudioTrack)
 	Transitions := []string{}
 	TransitionDurations := []string{}
 	Timings := []string{}
@@ -53,14 +54,36 @@ func NewSlideshow(slideshowDirectory string, v bool) slideshow {
 
 	templateDir, template_name := splitFileNameFromDirectory(slideshowDirectory)
 
-	for _, slide := range slideshow_template.Slide {
-		if slide.Audio.Background_Filename.Path != "" { // Intro music is stored differently in the xml
-			Audios = append(Audios, templateDir+slide.Audio.Background_Filename.Path)
-		} else {
-			if slide.Audio.Filename.Name == "" {
-				Audios = append(Audios, "")
+	for i, slide := range slideshow_template.Slide {
+		if v {
+			fmt.Printf("slide[%d] = %+v\n", i, slide)
+		}
+		if slide.Audio.Background_Filename.Path != "" {
+			// Intro music is stored differently in the xml
+			filename := slide.Audio.Background_Filename.Path
+			if v {
+				fmt.Println("-- Background Audio: " + filename)
+			}
+			value, ok := Audios[filename]
+			if ok {
+				value.FrameCount += 1
 			} else {
-				Audios = append(Audios, templateDir+slide.Audio.Filename.Name)
+				value = &FFmpeg.AudioTrack{Filename: templateDir + filename, FrameStart: i, FrameCount: 1}
+				Audios[filename] = value
+			}
+		}
+		if slide.Audio.Filename.Name != "" {
+			// Narration audio
+			filename := slide.Audio.Filename.Name
+			if v {
+				fmt.Println("-- Narration Audio: " + filename)
+			}
+			value, ok := Audios[filename]
+			if ok {
+				value.FrameCount += 1
+			} else {
+				value = &FFmpeg.AudioTrack{Filename: templateDir + filename, FrameStart: i, FrameCount: 1}
+				Audios[filename] = value
 			}
 		}
 		Images = append(Images, templateDir+slide.Image.Name)
@@ -151,15 +174,17 @@ func (s slideshow) CreateVideo(useOldfade bool, tempDirectory string, outputDire
 
 	if useXfade {
 		fmt.Println("FFmpeg version is bigger than 4.3.0, using Xfade transition method...")
-		FFmpeg.MakeTempVideosWithoutAudio(s.images, s.timings, s.audios, s.motions, tempDirectory, v)
-		FFmpeg.MergeTempVideos(s.images, s.transitions, s.transitionDurations, s.timings, tempDirectory, v)
-		FFmpeg.AddAudio(s.timings, s.audios, tempDirectory, v)
+		fmt.Println("Skipping MakeTemp and MergeTemp")
+		//Temp: Skipping MakeTemp and MergeTemp
+		//FFmpeg.MakeTempVideosWithoutAudio(s.images, s.timings, s.audios, s.motions, tempDirectory, v)
+		//FFmpeg.MergeTempVideos(s.images, s.transitions, s.transitionDurations, s.timings, tempDirectory, v)
+		FFmpeg.AddAudio(s.timings, s.audioTracks, tempDirectory, v)
 		FFmpeg.CopyFinal(tempDirectory, outputDirectory, final_template_name)
 	} else {
 		fmt.Println("FFmpeg version is smaller than 4.3.0, using old fade transition method...")
-		FFmpeg.MakeTempVideosWithoutAudio(s.images, s.timings, s.audios, s.motions, tempDirectory, v)
+		FFmpeg.MakeTempVideosWithoutAudio(s.images, s.timings, s.motions, tempDirectory, v)
 		FFmpeg.MergeTempVideosOldFade(s.images, s.transitionDurations, s.timings, tempDirectory, v)
-		FFmpeg.AddAudio(s.timings, s.audios, tempDirectory, v)
+		FFmpeg.AddAudio(s.timings, s.audioTracks, tempDirectory, v)
 		FFmpeg.CopyFinal(tempDirectory, outputDirectory, final_template_name)
 	}
 

@@ -63,12 +63,11 @@ func compareVersion(version string) string {
  * Parameters:
  *		Images - Array of filenames for the images
  *		Timings - Array of timing duration for the audio for each image
- *		Audios - Array of filenames for the audios to be used
  *		Motions - Array of start and end rectangles to use for the zoom/pan effects
  *		tempPath - Filepath to the temporary directory to store each temp video
  *		v - verbose flag to determine what feedback to print
  */
-func MakeTempVideosWithoutAudio(Images []string, Timings []string, Audios []string, Motions [][][]float64, tempPath string, v bool) {
+func MakeTempVideosWithoutAudio(Images []string, Timings []string, Motions [][][]float64, tempPath string, v bool) {
 	fmt.Println("Making temporary videos in parallel...")
 	totalNumImages := len(Images)
 
@@ -270,46 +269,52 @@ func MergeTempVideosOldFade(Images []string, TransitionDurations []string, Timin
  *		tempPath - path to the temp folder where the audioless video is stored
  *		v - verbose flag to determine what feedback to print
  */
-func AddAudio(Timings []string, Audios []string, tempPath string, v bool) {
+func AddAudio(Timings []string, Audios map[string]*AudioTrack, tempPath string, v bool) {
 	fmt.Println("Adding audio...")
 	audio_inputs := []string{}
 
-	audio_filter := ""
-	audio_last_filter := ""
-
-	audio_inputs = append(audio_inputs, "-y", "-i", tempPath+"/video_with_no_audio.mp4")
-
-	for i := 0; i < len(Audios); i++ {
-		if Audios[i] != "" {
-			audio_inputs = append(audio_inputs, "-i", Audios[i])
-			totalDuration := 0.0
-
-			for j := 0; j < i; j++ {
-				if Audios[i] == Audios[j] {
-					transition_duration, err := strconv.ParseFloat(strings.TrimSpace(Timings[j]), 8)
-					helper.Check(err)
-					transition_duration = transition_duration / 1000
-					totalDuration += transition_duration
-				}
-			}
-
-			//place the audio at the start of each slide
-			audio_filter += fmt.Sprintf("[%d:a]atrim=start=%f:duration=%sms,asetpts=expr=PTS-STARTPTS[a%d];", i+1, totalDuration, strings.TrimSpace(Timings[i]), i+1)
-			audio_last_filter += fmt.Sprintf("[a%d]", i+1)
-
-			if v {
-				fmt.Printf("Adding audio snippet from %s to video. Total duration = %.2f seconds\n", Audios[i], totalDuration)
-			}
-		}
+	if v {
+		fmt.Printf("Timings: %#v\n", Timings)
+		fmt.Printf("Audios: %#v\n", Audios)
+		fmt.Printf("TempPath: %s\n", tempPath)
 	}
 
-	audio_last_filter += fmt.Sprintf("concat=n=%d:v=0:a=1[a]", len(Audios)-1)
-	audio_filter += audio_last_filter
+	audio_filter := ""
+	audio_inputs = append(audio_inputs, "-y", "-i", tempPath+"/video_with_no_audio.mp4")
 
-	audio_inputs = append(audio_inputs, "-filter_complex", audio_filter, "-map", "0:v", "-map", "[a]", "-codec:v", "copy", "-codec:a", "libmp3lame", tempPath+"/merged_video.mp4")
+	i := 1
+	for _, audioTrack := range Audios {
+		audio_inputs = append(audio_inputs, "-i", audioTrack.Filename)
+		//i var time_start int64
+		time_start := 0.0
+		// Sum up the durations from the start to the FrameStart to know when to start this audio
+		for j := 0; j < audioTrack.FrameStart; j++ {
+			//i transition_duration, err := strconv.ParseInt(strings.TrimSpace(Timings[j]), 10, 64)
+			transition_duration, err := strconv.ParseFloat(strings.TrimSpace(Timings[j]), 64)
+			helper.Check(err)
+			time_start += transition_duration
+		}
+		var time_duration int64
+		for k := 0; k < audioTrack.FrameCount; k++ {
+			transition_duration, err := strconv.ParseInt(strings.TrimSpace(Timings[audioTrack.FrameStart+k]), 10, 64)
+			helper.Check(err)
+			time_duration += transition_duration
+		}
+
+		// apply filter for this audio input
+		time_start = time_start / 1000.0
+		if len(audio_filter) > 0 {
+			audio_filter += ";"
+		}
+		audio_filter += fmt.Sprintf("[%d:a]atrim=start=0:duration=%dms,asetpts=expr=PTS+%f", i, time_duration, time_start)
+		i++
+	}
+
+	audio_inputs = append(audio_inputs, "-filter_complex", audio_filter, "-map", "0:v", "-codec:v", "copy", "-codec:a", "libmp3lame", tempPath+"/merged_video.mp4")
 
 	if v {
 		println("Adding compiled audio to merged video and generating final result...")
+		fmt.Printf("Command: %#v\n", audio_inputs)
 	}
 	cmd := exec.Command("ffmpeg", audio_inputs...)
 	output, err := cmd.CombinedOutput()
