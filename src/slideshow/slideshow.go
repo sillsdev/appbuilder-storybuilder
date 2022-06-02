@@ -22,7 +22,7 @@ import (
  */
 type slideshow struct {
 	images              []string
-	audios              []string
+	audios              [][]string
 	transitions         []string
 	transitionDurations []string
 	timings             []string
@@ -43,7 +43,7 @@ func NewSlideshow(slideshowDirectory string, v bool) slideshow {
 	slideshow_template := readSlideshowXML(slideshowDirectory)
 
 	Images := []string{}
-	Audios := []string{}
+	Audios := [][]string{}
 	Transitions := []string{}
 	TransitionDurations := []string{}
 	Timings := []string{}
@@ -55,12 +55,16 @@ func NewSlideshow(slideshowDirectory string, v bool) slideshow {
 
 	for _, slide := range slideshow_template.Slide {
 		if slide.Audio.Background_Filename.Path != "" { // Intro music is stored differently in the xml
-			Audios = append(Audios, templateDir+slide.Audio.Background_Filename.Path)
-		} else {
-			if slide.Audio.Filename.Name == "" {
-				Audios = append(Audios, "")
+			if slide.Audio.Filename.Name != "" {
+				Audios = append(Audios, []string{templateDir + slide.Audio.Background_Filename.Path, templateDir + slide.Audio.Filename.Name})
 			} else {
-				Audios = append(Audios, templateDir+slide.Audio.Filename.Name)
+				Audios = append(Audios, []string{templateDir + slide.Audio.Background_Filename.Path, ""})
+			}
+		} else {
+			if slide.Audio.Filename.Name != "" {
+				Audios = append(Audios, []string{"", templateDir + slide.Audio.Filename.Name})
+			} else {
+				Audios = append(Audios, []string{"", ""})
 			}
 		}
 		Images = append(Images, templateDir+slide.Image.Name)
