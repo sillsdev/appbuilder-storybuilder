@@ -175,9 +175,8 @@ func (s slideshow) CreateVideo(useOldfade bool, tempDirectory string, outputDire
 	if useXfade {
 		fmt.Println("FFmpeg version is bigger than 4.3.0, using Xfade transition method...")
 		fmt.Println("Skipping MakeTemp and MergeTemp")
-		//Temp: Skipping MakeTemp and MergeTemp
-		//FFmpeg.MakeTempVideosWithoutAudio(s.images, s.timings, s.audios, s.motions, tempDirectory, v)
-		//FFmpeg.MergeTempVideos(s.images, s.transitions, s.transitionDurations, s.timings, tempDirectory, v)
+		FFmpeg.MakeTempVideosWithoutAudio(s.images, s.timings, s.motions, tempDirectory, v)
+		FFmpeg.MergeTempVideos(s.images, s.transitions, s.transitionDurations, s.timings, tempDirectory, v)
 		FFmpeg.AddAudio(s.timings, s.audioTracks, tempDirectory, v)
 		FFmpeg.CopyFinal(tempDirectory, outputDirectory, final_template_name)
 	} else {
