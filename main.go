@@ -45,7 +45,7 @@ func main() {
 	start := time.Now()
 
 	// Parse in the various pieces from the template
-	slideshow := slideshow.NewSlideshow(optionFlags.SlideshowDirectory, optionFlags.Verbose)
+	slideshow := slideshow.NewSlideshow(optionFlags.SlideshowDirectory, optionFlags.Verbose, tempDirectory)
 
 	fmt.Println("Scaling images...")
 	slideshow.ScaleImages(optionFlags.LowQuality)

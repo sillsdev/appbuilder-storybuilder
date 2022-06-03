@@ -68,7 +68,7 @@ func compareVersion(version string) string {
  *		tempPath - Filepath to the temporary directory to store each temp video
  *		v - verbose flag to determine what feedback to print
  */
-func MakeTempVideosWithoutAudio(Images []string, Timings []string, Audios [][]string, Motions [][][]float64, tempPath string, v bool) {
+func MakeTempVideosWithoutAudio(Images []string, Timings []string, Audios []string, Motions [][][]float64, tempPath string, v bool) {
 	fmt.Println("Making temporary videos in parallel...")
 	totalNumImages := len(Images)
 
@@ -270,7 +270,7 @@ func MergeTempVideosOldFade(Images []string, TransitionDurations []string, Timin
  *		tempPath - path to the temp folder where the audioless video is stored
  *		v - verbose flag to determine what feedback to print
  */
-func AddAudio(Timings []string, Audios [][]string, tempPath string, v bool) {
+func AddAudio(Timings []string, Audios []string, tempPath string, v bool) {
 	fmt.Println("Adding audio...")
 	audio_inputs := []string{}
 
@@ -279,14 +279,7 @@ func AddAudio(Timings []string, Audios [][]string, tempPath string, v bool) {
 
 	audio_inputs = append(audio_inputs, "-y", "-i", tempPath+"/video_with_no_audio.mp4")
 
-	mergedAudio := false
-
 	for i := 0; i < len(Audios); i++ {
-		if Audios[i][0] != "" && Audios[i][1] != "" {
-			MergeAudios(Audios[i][1], Audios[i][1], Timings[i-1], Timings[i], tempPath)
-			mergedAudio = true
-		}
-
 		if Audios[i] != "" {
 			audio_inputs = append(audio_inputs, "-i", Audios[i])
 			totalDuration := 0.0
@@ -325,9 +318,17 @@ func AddAudio(Timings []string, Audios [][]string, tempPath string, v bool) {
 	trimEnd(tempPath)
 }
 
+/* Function to merge the background and narration audio to a temporary merged audio
+ * Parameters:
+ *		backgroundMusicDir - directory to the background music mp3
+ *		narrationAudioDir - directory to the narration audio mp3
+ *		startTime - define the start time in milliseconds of the background music mp3
+ *		duration - define the max duration in milliseconds of both audios
+ *		tempPath - directory of the temporary path with all the temp items
+ */
 func MergeAudios(backgroundMusicDir string, narrationAudioDir string, startTime string, duration string, tempPath string) {
 	cmd := exec.Command("ffmpeg", "-i", backgroundMusicDir, "-i", narrationAudioDir, "-filter_complex",
-		fmt.Sprintf("[0:a]atrim=start=%s:duration=%s[a1];[1:a]atrim=start=0:duration=%ss,asetpts=expr=PTS+0[a2];[a1][a2]amix=inputs=2[a]", startTime, duration, duration),
+		fmt.Sprintf("[0:a]atrim=start=%sms:duration=%sms[a1];[1:a]atrim=start=0:duration=%sms,asetpts=expr=PTS+0[a2];[a1][a2]amix=inputs=2[a]", startTime, duration, duration),
 		"-map", "[a]", "-c:v", "copy", "-y", tempPath+"/mergedAudio.mp3")
 	output, err := cmd.CombinedOutput()
 	CheckCMDError(output, err)
