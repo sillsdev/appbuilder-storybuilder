@@ -8,7 +8,7 @@ import (
 func TestReadSlideshow(t *testing.T) {
 	templateName := "../../TestInput/test.slideshow"
 
-	slideshow := NewSlideshow(templateName, false)
+	slideshow := NewSlideshow(templateName, false, "../../TestInput")
 
 	expectedImages := []string{"../../TestInput/Jn01.1-18-title.jpg", "../../TestInput/./VB-John 1v1.jpg", "../../TestInput/./VB-John 1v3.jpg", "../../TestInput/./VB-John 1v4.jpg", "../../TestInput/./VB-John 1v5a.jpg",
 		"../../TestInput/./VB-John 1v5b.jpg", "../../TestInput/./VB-John 1v6.jpg", "../../TestInput/Gospel of John-credits.jpg"}

@@ -285,7 +285,7 @@ func AddAudio(Timings []string, Audios []string, tempPath string, v bool) {
 			totalDuration := 0.0
 
 			for j := 0; j < i; j++ {
-				if Audios[i] == Audios[j] {
+				if Audios[i] == Audios[j] || Audios[j] == tempPath+"/mergedAudio.mp3" {
 					transition_duration, err := strconv.ParseFloat(strings.TrimSpace(Timings[j]), 8)
 					helper.Check(err)
 					transition_duration = transition_duration / 1000
