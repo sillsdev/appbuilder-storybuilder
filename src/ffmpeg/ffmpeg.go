@@ -285,7 +285,7 @@ func AddAudio(Timings []string, Audios []string, tempPath string, v bool) {
 			totalDuration := 0.0
 
 			for j := 0; j < i; j++ {
-				if Audios[i] == Audios[j] {
+				if Audios[i] == Audios[j] || Audios[j] == tempPath+"/mergedAudio.mp3" {
 					transition_duration, err := strconv.ParseFloat(strings.TrimSpace(Timings[j]), 8)
 					helper.Check(err)
 					transition_duration = transition_duration / 1000
@@ -316,6 +316,22 @@ func AddAudio(Timings []string, Audios []string, tempPath string, v bool) {
 	CheckCMDError(output, err)
 
 	trimEnd(tempPath)
+}
+
+/* Function to merge the background and narration audio to a temporary merged audio
+ * Parameters:
+ *		backgroundMusicDir - directory to the background music mp3
+ *		narrationAudioDir - directory to the narration audio mp3
+ *		startTime - define the start time in milliseconds of the background music mp3
+ *		duration - define the max duration in milliseconds of both audios
+ *		tempPath - directory of the temporary path with all the temp items
+ */
+func MergeAudios(backgroundMusicDir string, narrationAudioDir string, startTime string, duration string, tempPath string) {
+	cmd := exec.Command("ffmpeg", "-i", backgroundMusicDir, "-i", narrationAudioDir, "-filter_complex",
+		fmt.Sprintf("[0:a]atrim=start=%sms:duration=%sms[a1];[1:a]atrim=start=0:duration=%sms,asetpts=expr=PTS+0[a2];[a1][a2]amix=inputs=2[a]", startTime, duration, duration),
+		"-map", "[a]", "-c:v", "copy", "-y", tempPath+"/mergedAudio.mp3")
+	output, err := cmd.CombinedOutput()
+	CheckCMDError(output, err)
 }
 
 /* Function to copy the final video from the temp folder to the output location specified

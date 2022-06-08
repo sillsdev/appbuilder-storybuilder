@@ -39,7 +39,7 @@ type slideshow struct {
  * Returns:
  *			slideshow - the filled slideshow structure, containing all the data parsed
  */
-func NewSlideshow(slideshowDirectory string, v bool) slideshow {
+func NewSlideshow(slideshowDirectory string, v bool, tempPath string) slideshow {
 	slideshow_template := readSlideshowXML(slideshowDirectory)
 
 	Images := []string{}
@@ -53,14 +53,20 @@ func NewSlideshow(slideshowDirectory string, v bool) slideshow {
 
 	templateDir, template_name := splitFileNameFromDirectory(slideshowDirectory)
 
-	for _, slide := range slideshow_template.Slide {
+	for i, slide := range slideshow_template.Slide {
+		Timings = append(Timings, slide.Timing.Duration)
 		if slide.Audio.Background_Filename.Path != "" { // Intro music is stored differently in the xml
-			Audios = append(Audios, templateDir+slide.Audio.Background_Filename.Path)
-		} else {
-			if slide.Audio.Filename.Name == "" {
-				Audios = append(Audios, "")
+			if slide.Audio.Filename.Name != "" {
+				FFmpeg.MergeAudios(templateDir+slide.Audio.Background_Filename.Path, templateDir+slide.Audio.Filename.Name, Timings[i-1], Timings[i], tempPath)
+				Audios = append(Audios, tempPath+"/mergedAudio.mp3")
 			} else {
+				Audios = append(Audios, templateDir+slide.Audio.Background_Filename.Path)
+			}
+		} else {
+			if slide.Audio.Filename.Name != "" {
 				Audios = append(Audios, templateDir+slide.Audio.Filename.Name)
+			} else {
+				Audios = append(Audios, "")
 			}
 		}
 		Images = append(Images, templateDir+slide.Image.Name)
@@ -81,7 +87,6 @@ func NewSlideshow(slideshowDirectory string, v bool) slideshow {
 			motions = [][]float64{helper.ConvertStringToFloat(slide.Motion.Start), helper.ConvertStringToFloat(slide.Motion.End)}
 		}
 		Motions = append(Motions, motions)
-		Timings = append(Timings, slide.Timing.Duration)
 	}
 
 	if v {
