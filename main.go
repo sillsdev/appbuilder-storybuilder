@@ -48,7 +48,7 @@ func main() {
 	slideshow := slideshow.NewSlideshow(optionFlags.SlideshowDirectory, optionFlags.Verbose, tempDirectory)
 
 	fmt.Println("Scaling images...")
-	slideshow.ScaleImages(optionFlags.LowQuality)
+	slideshow.ScaleImages(optionFlags.LowQuality, optionFlags.Verbose)
 
 	fmt.Println("Creating video...")
 	slideshow.CreateVideo(optionFlags.UseOldFade, tempDirectory, optionFlags.OutputDirectory, optionFlags.Verbose)
