@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os/exec"
+	"path"
 	"regexp"
 	"strconv"
 	"strings"
@@ -96,7 +97,7 @@ func MakeTempVideosWithoutAudio(Images []string, Timings []string, Audios []stri
 				fmt.Println(fmt.Sprintf("Making temp%d-%d.mp4 video", i+1, totalNumImages))
 			}
 
-			cmd := CmdCreateTempVideo(Images[i], duration, zoom_cmd, fmt.Sprintf(tempPath+"/temp%d-%d.mp4", i, totalNumImages))
+			cmd := CmdCreateTempVideo(Images[i], duration, zoom_cmd, fmt.Sprintf(path.Join(tempPath, "temp%d-%d.mp4"), i, totalNumImages))
 			output, err := cmd.CombinedOutput()
 			CheckCMDError(output, err)
 		}(i)
@@ -136,7 +137,7 @@ func MergeTempVideos(Images []string, Transitions []string, TransitionDurations 
 
 	for i := 0; i < totalNumImages; i++ {
 
-		input_files = append(input_files, "-i", fmt.Sprintf(tempPath+"/temp%d-%d.mp4", i, totalNumImages))
+		input_files = append(input_files, "-i", fmt.Sprintf(path.Join(tempPath, "temp%d-%d.mp4"), i, totalNumImages))
 
 	}
 
@@ -154,7 +155,7 @@ func MergeTempVideos(Images []string, Transitions []string, TransitionDurations 
 		settb += fmt.Sprintf("[%d:v]tpad=stop_mode=clone:stop_duration=%f[v%d];", i, transition_duration/2, i)
 
 		//get the current video length in seconds
-		video_each_length[i] = GetVideoLength(fmt.Sprintf(tempPath+"/temp%d-%d.mp4", i, totalNumImages))
+		video_each_length[i] = GetVideoLength(fmt.Sprintf(path.Join(tempPath, "temp%d-%d.mp4"), i, totalNumImages))
 
 		//get the total video length of the videos combined thus far in seconds
 		video_total_length += video_each_length[i]
@@ -179,7 +180,7 @@ func MergeTempVideos(Images []string, Transitions []string, TransitionDurations 
 
 	}
 
-	input_files = append(input_files, "-filter_complex", settb+video_fade_filter, "-y", tempPath+"/video_with_no_audio.mp4")
+	input_files = append(input_files, "-filter_complex", settb+video_fade_filter, "-y", path.Join(tempPath, "video_with_no_audio.mp4"))
 
 	cmd := exec.Command("ffmpeg", input_files...)
 
@@ -214,7 +215,7 @@ func MergeTempVideosOldFade(Images []string, TransitionDurations []string, Timin
 	prev_offset[0] = 0.0
 
 	for i := 0; i < totalNumImages; i++ {
-		input_files = append(input_files, "-i", fmt.Sprintf(tempLocation+"/temp%d-%d.mp4", i, totalNumImages))
+		input_files = append(input_files, "-i", fmt.Sprintf(path.Join(tempLocation, "temp%d-%d.mp4"), i, totalNumImages))
 	}
 
 	for i := 0; i < totalNumImages; i++ {
@@ -227,7 +228,7 @@ func MergeTempVideosOldFade(Images []string, TransitionDurations []string, Timin
 		}
 
 		//get the current video length in seconds
-		video_each_length[i] = GetVideoLength(fmt.Sprintf(tempLocation+"/temp%d-%d.mp4", i, totalNumImages))
+		video_each_length[i] = GetVideoLength(fmt.Sprintf(path.Join(tempLocation, "temp%d-%d.mp4"), i, totalNumImages))
 
 		//get the total video length of the videos combined thus far in seconds
 		video_total_duration += video_each_length[i]
@@ -255,7 +256,7 @@ func MergeTempVideosOldFade(Images []string, TransitionDurations []string, Timin
 
 	setDimensions := fmt.Sprintf("color=black:%dx%d:d=%f[base];", 1280, 720, video_total_length_minus_fade_transition)
 
-	input_files = append(input_files, "-filter_complex", setDimensions+settb+video_fade_filter+last_fade_output, "-map", "[fv]", "-y", tempLocation+"/video_with_no_audio.mp4")
+	input_files = append(input_files, "-filter_complex", setDimensions+settb+video_fade_filter+last_fade_output, "-map", "[fv]", "-y", path.Join(tempLocation, "video_with_no_audio.mp4"))
 
 	cmd := exec.Command("ffmpeg", input_files...)
 
@@ -277,7 +278,7 @@ func AddAudio(Timings []string, Audios []string, tempPath string, v bool) {
 	audio_filter := ""
 	audio_last_filter := ""
 
-	audio_inputs = append(audio_inputs, "-y", "-i", tempPath+"/video_with_no_audio.mp4")
+	audio_inputs = append(audio_inputs, "-y", "-i", path.Join(tempPath, "video_with_no_audio.mp4"))
 
 	for i := 0; i < len(Audios); i++ {
 		if Audios[i] != "" {
@@ -285,7 +286,7 @@ func AddAudio(Timings []string, Audios []string, tempPath string, v bool) {
 			totalDuration := 0.0
 
 			for j := 0; j < i; j++ {
-				if Audios[i] == Audios[j] || Audios[j] == tempPath+"/mergedAudio.mp3" {
+				if Audios[i] == Audios[j] || Audios[j] == path.Join(tempPath, "mergedAudio.mp3") {
 					transition_duration, err := strconv.ParseFloat(strings.TrimSpace(Timings[j]), 8)
 					helper.Check(err)
 					transition_duration = transition_duration / 1000
@@ -306,7 +307,7 @@ func AddAudio(Timings []string, Audios []string, tempPath string, v bool) {
 	audio_last_filter += fmt.Sprintf("concat=n=%d:v=0:a=1[a]", len(Audios)-1)
 	audio_filter += audio_last_filter
 
-	audio_inputs = append(audio_inputs, "-filter_complex", audio_filter, "-map", "0:v", "-map", "[a]", "-codec:v", "copy", "-codec:a", "libmp3lame", tempPath+"/merged_video.mp4")
+	audio_inputs = append(audio_inputs, "-filter_complex", audio_filter, "-map", "0:v", "-map", "[a]", "-codec:v", "copy", "-codec:a", "libmp3lame", path.Join(tempPath, "merged_video.mp4"))
 
 	if v {
 		println("Adding compiled audio to merged video and generating final result...")
@@ -329,7 +330,7 @@ func AddAudio(Timings []string, Audios []string, tempPath string, v bool) {
 func MergeAudios(backgroundMusicDir string, narrationAudioDir string, startTime string, duration string, tempPath string) {
 	cmd := exec.Command("ffmpeg", "-i", backgroundMusicDir, "-i", narrationAudioDir, "-filter_complex",
 		fmt.Sprintf("[0:a]atrim=start=%sms:duration=%sms[a1];[1:a]atrim=start=0:duration=%sms,asetpts=expr=PTS+0[a2];[a1][a2]amix=inputs=2[a]", startTime, duration, duration),
-		"-map", "[a]", "-c:v", "copy", "-y", tempPath+"/mergedAudio.mp3")
+		"-map", "[a]", "-c:v", "copy", "-y", path.Join(tempPath, "mergedAudio.mp3"))
 	output, err := cmd.CombinedOutput()
 	CheckCMDError(output, err)
 }
@@ -347,13 +348,13 @@ func CopyFinal(tempPath string, outputFolder string, name string) {
 	// Else save it to the folder of the executable
 	var outputName string
 	if len(outputFolder) > 0 {
-		outputName = outputFolder + "/" + name + ".mp4"
+		outputName = path.Join(outputFolder, name+".mp4")
 	} else { // If -o is not specified, save the final video at the default location
 		outputName = name + ".mp4"
 	}
 
 	fmt.Printf("Copying final video from temp folder to %s...\n", outputName)
-	cmd := CmdCopyFile(tempPath+"/final.mp4", outputName)
+	cmd := CmdCopyFile(path.Join(tempPath, "final.mp4"), outputName)
 	output, err := cmd.CombinedOutput()
 	CheckCMDError(output, err)
 }
@@ -368,7 +369,7 @@ func CopyFinal(tempPath string, outputFolder string, name string) {
 func CreateOverlaidVideoForTesting(finalVideoDirectory string, trueVideo string, destinationLocation string) {
 	outputDir := "./overlayVideo.mp4"
 	if destinationLocation != "" {
-		outputDir = destinationLocation + "/overlayVideo.mp4"
+		outputDir = path.Join(destinationLocation, "overlayVideo.mp4")
 	}
 	cmd := exec.Command("ffmpeg",
 		"-i", finalVideoDirectory,

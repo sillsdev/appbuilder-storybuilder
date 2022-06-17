@@ -2,6 +2,7 @@ package ffmpeg_pkg
 
 import (
 	"os/exec"
+	"path"
 	"runtime"
 	"strings"
 	"testing"
@@ -85,10 +86,10 @@ func Test_CmdTrimLengthOfVideo(t *testing.T) {
 			"trim length of video ffmpeg cmd",
 			args{duration: "19200ms", tempPath: "temp"},
 			exec.Command("ffmpeg",
-				"-i", "temp"+"/merged_video.mp4",
+				"-i", path.Join("temp", "merged_video.mp4"),
 				"-c", "copy", "-t", "19200ms",
 				"-y",
-				"temp"+"/final.mp4"),
+				path.Join("temp", "final.mp4")),
 		},
 	}
 	for _, tt := range tests {

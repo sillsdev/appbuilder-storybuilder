@@ -5,6 +5,7 @@ import (
 	"log"
 	"math"
 	"os/exec"
+	"path"
 )
 
 /* Function to get the ffmpeg version
@@ -30,7 +31,7 @@ func CmdGetVersion() *exec.Cmd {
 */
 func CmdScaleImage(imagePath string, height string, width string, imageOutputPath string) *exec.Cmd {
 	cmd := exec.Command("ffmpeg", "-i", imagePath,
-		"-vf", fmt.Sprintf("scale=%s:%s", height, width)+",setsar=1:1",
+		"-vf", fmt.Sprintf("scale=%s:%s", width, height)+",setsar=1:1",
 		"-y", imageOutputPath)
 
 	return cmd
@@ -46,10 +47,10 @@ func CmdScaleImage(imagePath string, height string, width string, imageOutputPat
 */
 func CmdTrimLengthOfVideo(duration string, tempPath string) *exec.Cmd {
 	cmd := exec.Command("ffmpeg",
-		"-i", tempPath+"/merged_video.mp4",
+		"-i", path.Join(tempPath, "merged_video.mp4"),
 		"-c", "copy", "-t", duration,
 		"-y",
-		tempPath+"/final.mp4",
+		path.Join(tempPath, "final.mp4"),
 	)
 
 	return cmd
@@ -120,9 +121,9 @@ func CreateZoomCommand(Motions [][]float64, TimingDuration float64) string {
 	var y_change float64 = y_end - y_init
 	var y_incr float64 = y_change / float64(num_frames)
 
-	zoom_cmd := fmt.Sprintf("1/((%.6f)%s(%.6f)*on)", size_init-size_incr, checkSign(size_incr), math.Abs(size_incr))
-	x_cmd := fmt.Sprintf("%0.6f*iw%s%0.6f*iw*on", x_init-x_incr, checkSign(x_incr), math.Abs(x_incr))
-	y_cmd := fmt.Sprintf("%0.6f*ih%s%0.6f*ih*on", y_init-y_incr, checkSign(y_incr), math.Abs(y_incr))
+	zoom_cmd := fmt.Sprintf("1/((%.10f)%s(%.10f)*on)", size_init-size_incr, checkSign(size_incr), math.Abs(size_incr))
+	x_cmd := fmt.Sprintf("%0.10f*iw%s%0.10f*iw*on", x_init-x_incr, checkSign(x_incr), math.Abs(x_incr))
+	y_cmd := fmt.Sprintf("%0.10f*ih%s%0.10f*ih*on", y_init-y_incr, checkSign(y_incr), math.Abs(y_incr))
 	final_cmd := fmt.Sprintf("scale=8000:-1,zoompan=z='%s':x='%s':y='%s':d=%d:fps=25,scale=1280:720,setsar=1:1", zoom_cmd, x_cmd, y_cmd, num_frames)
 
 	return final_cmd
