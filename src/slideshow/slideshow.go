@@ -152,15 +152,12 @@ func enlargeBoundsToAspectRatio(input Image.Rectangle, targetRatio float64) Imag
 	height := input.Dy()
 	if math.Abs(curRatio-targetRatio) < 0.01 {
 		// Current rect is fine
-		fmt.Println("No Change")
 		return input
 	} else if curRatio < targetRatio {
 		// Change width
-		fmt.Println("Change width")
 		width = int(math.Round(float64(height) * targetRatio))
 	} else {
 		// Change height
-		fmt.Println("Change height")
 		height = int(math.Round(float64(width) / targetRatio))
 	}
 	return Image.Rect(input.Min.X, input.Min.Y, width, height)
