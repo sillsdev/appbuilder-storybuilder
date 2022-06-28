@@ -64,17 +64,17 @@ func CmdTrimLengthOfVideo(duration string, tempPath string) *exec.Cmd {
 		exectauble command
 */
 func CmdGetVideoLength(inputPath string) *exec.Cmd {
-	// cmd := exec.Command("ffprobe",
-	// 	"-v", "error",
-	// 	"-show_entries", "format=duration",
-	// 	"-of", "default=noprint_wrappers=1:nokey=1",
-	// 	inputPath,
-	// )
-	cmd := exec.Command("ffmpeg",
-		"-hide_banner",
-		"-i", inputPath,
-		"-f", "null", "-",
+	cmd := exec.Command("ffprobe",
+		"-v", "error",
+		"-show_entries", "format=duration",
+		"-of", "default=noprint_wrappers=1:nokey=1",
+		inputPath,
 	)
+	// cmd := exec.Command("ffmpeg",
+	// 	"-hide_banner",
+	// 	"-i", inputPath,
+	// 	"-f", "null", "-",
+	// )
 
 	return cmd
 }

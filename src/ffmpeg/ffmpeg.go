@@ -415,5 +415,15 @@ func GetVideoLength(inputPath string) float64 {
 	output, err := cmd.CombinedOutput()
 	CheckCMDError(output, err)
 
-	return ParseVideoLength(string(output))
+	var value float64
+	if strings.Contains(cmd.Path, "ffprobe") {
+		length, err := strconv.ParseFloat(strings.TrimSpace(string(output)), 64)
+		if err != nil {
+			log.Fatal(err)
+		}
+		value = length
+	} else {
+		value = ParseVideoLength(string(output))
+	}
+	return value
 }
