@@ -152,7 +152,7 @@ func MergeTempVideos(Images []string, Transitions []string, TransitionDurations 
 			fmt.Printf("%dth merge has transition %s and duration %f\n", i, transition, transition_duration)
 		}
 		//add time to the video that is sacrificied to xfade
-		settb += fmt.Sprintf("[%d:v]tpad=stop_mode=clone:stop_duration=%f[v%d];", i, transition_duration/2, i)
+		settb += fmt.Sprintf("[%d:v]tpad=stop_mode=clone:stop_duration=%f[v%d];", i, transition_duration, i)
 
 		//get the current video length in seconds
 		video_each_length[i] = GetVideoLength(fmt.Sprintf(path.Join(tempPath, "temp%d-%d.mp4"), i, totalNumImages))
